@@ -23,6 +23,7 @@ import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ca.ontariohealth.smilecdr.BaseApplication;
 import ca.ontariohealth.smilecdr.support.config.ApplicationName;
 import ca.ontariohealth.smilecdr.support.config.EnvironmentName;
 

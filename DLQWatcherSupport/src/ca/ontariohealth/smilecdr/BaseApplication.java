@@ -1,4 +1,4 @@
-package ca.ontariohealth.smilecdr.dlqwatcher;
+package ca.ontariohealth.smilecdr;
 
 import java.io.File;
 
@@ -79,9 +79,9 @@ if ((!startProcessing) ||
 
 if (startProcessing)
 	{
-	String cliAppName = DLQWatcher.class.getSimpleName();
+	String cliAppName = this.getClass().getSimpleName();
 	String cliEnvName = null;
-	String cliCfgFile = DLQWatcher.class.getSimpleName() + ".properties";
+	String cliCfgFile = cliAppName + ".properties";
 	
 	
 	ApplicationName appName       = null;
@@ -96,6 +96,7 @@ if (startProcessing)
 	if ((cliAppName != null) && (cliAppName.length() > 0)) appName = ApplicationName.getApplicationName( cliAppName );
 	if ((cliEnvName != null) && (cliEnvName.length() > 0)) envName = EnvironmentName.getEnvironment( cliEnvName );
 	
+	logr.debug( "About to load configuration from: {}", cliCfgFile );
 	appConfig.loadConfiguration( appName, envName, cliCfgFile );
 	}
 
