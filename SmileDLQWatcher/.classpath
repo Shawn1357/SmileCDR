@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-17">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/SmileCDRLib/logback-core-1.2.10.jar"/>
+	<classpathentry kind="lib" path="/SmileCDRLib/logback-classic-1.2.10.jar"/>
+	<classpathentry kind="lib" path="/SmileCDRLib/slf4j-api-1.7.33.jar"/>
+	<classpathentry kind="lib" path="/Thirdparty/JavaBeansActivationFramework/jaf-1_1_1/activation.jar"/>
+	<classpathentry kind="lib" path="/Thirdparty/JavaMail/javax.mail-1.6.2.jar"/>
+	<classpathentry kind="lib" path="/SmileCDRLib/commons-cli-1.5.0.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
