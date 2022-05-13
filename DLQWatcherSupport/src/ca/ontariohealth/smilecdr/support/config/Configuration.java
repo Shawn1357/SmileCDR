@@ -10,6 +10,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * @author shawn.brant
  *
@@ -18,6 +21,8 @@ public class Configuration implements ConfigMap,
                                       ConfigAppNameAware,
                                       ConfigEnvironmentAware
 {
+private static final Logger	logr = LoggerFactory.getLogger(Configuration.class);
+
 /**
  * Identifies the name of the default file to load if no file is given
  * and/or there is a generic file from which to load from.
@@ -90,12 +95,18 @@ try
 	
     // Loading properties file from the path
 	//iStrm = new FileInputStream( fileNm );   
-	iStrm = ClassLoader.getSystemResourceAsStream( fileNm );  
-	cfgProps.load(iStrm);
+	iStrm = ClassLoader.getSystemResourceAsStream( fileNm ); 
+	
+	if (iStrm != null)
+		cfgProps.load(iStrm);
+	
+	else
+		logr.error("Unable to open configuration file: {}", fileNm );
 	} 
 
 catch (IOException e) 
 	{
+	logr.error( "Unable to load configuration from: {}", fileNm );
 	e.printStackTrace();
 	}
 
