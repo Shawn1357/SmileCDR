@@ -3,6 +3,7 @@
 	<name>DQLWatcherControl</name>
 	<comment></comment>
 	<projects>
+		<project>DLQWatcherSupport</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

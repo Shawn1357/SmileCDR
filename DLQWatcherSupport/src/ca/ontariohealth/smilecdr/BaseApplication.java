@@ -29,7 +29,7 @@ protected static final	String 				CLI_HLP_NM_SHRT = "h";
 protected static final	String 				CLI_HLP_NM_LONG = "help";
 
 protected 				Options				cliOpts			= new Options();
-private 				CommandLineParser	parser			= new DefaultParser();
+protected				CommandLineParser	parser			= new DefaultParser();
 protected 				CommandLine			cmdLine			= null;
 
 protected				Configuration		appConfig 		= new Configuration();
@@ -93,6 +93,9 @@ if (startProcessing)
 	if (cmdLine.hasOption(CLI_ENV_NM_LONG))
 		cliEnvName = cmdLine.getOptionValue( CLI_ENV_NM_LONG );
 	
+	if (cmdLine.hasOption(CLI_CFG_NM_LONG))
+		cliCfgFile = cmdLine.getOptionValue( CLI_CFG_NM_LONG );
+	
 	if ((cliAppName != null) && (cliAppName.length() > 0)) appName = ApplicationName.getApplicationName( cliAppName );
 	if ((cliEnvName != null) && (cliEnvName.length() > 0)) envName = EnvironmentName.getEnvironment( cliEnvName );
 	
@@ -114,7 +117,7 @@ protected abstract void launch();
 
 
 
-private void	createCLIOptions()
+protected void	createCLIOptions()
 {
 cliOpts.addOption( CLI_CFG_NM_SHRT, CLI_CFG_NM_LONG, true,  "Configuration Properties file name");
 cliOpts.addOption( CLI_APP_NM_SHRT, CLI_APP_NM_LONG, true,  "Set the name of the application");

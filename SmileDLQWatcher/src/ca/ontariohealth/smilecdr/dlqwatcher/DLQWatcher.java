@@ -40,15 +40,15 @@ static final Logger 			logr      = LoggerFactory.getLogger(DLQWatcher.class);
  * 
  */
 public static void main(String[] args) 
-	{
-	logr.debug( "Entering: main" );
-	
-	DLQWatcher	watcher = new DLQWatcher();
-	watcher.launch(args);
-	
-	logr.debug( "Exiting: main");
-	return;
-	}
+{
+logr.debug( "Entering: main" );
+
+DLQWatcher	watcher = new DLQWatcher();
+watcher.launch(args);
+
+logr.debug( "Exiting: main");
+return;
+}
 
 
 	

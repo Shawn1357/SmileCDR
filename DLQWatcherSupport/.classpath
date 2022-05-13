@@ -9,6 +9,10 @@
 	<classpathentry kind="lib" path="/SmileCDRLib/logback-classic-1.2.10.jar"/>
 	<classpathentry kind="lib" path="/SmileCDRLib/logback-core-1.2.10.jar"/>
 	<classpathentry kind="lib" path="/SmileCDRLib/slf4j-api-1.7.33.jar"/>
-	<classpathentry kind="lib" path="/SmileCDRLib/commons-cli-1.5.0.jar"/>
+	<classpathentry kind="lib" path="/SmileCDRLib/commons-cli-1.5.0.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="https://commons.apache.org/proper/commons-cli/javadocs/api-release"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
