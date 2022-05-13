@@ -4,8 +4,10 @@
 package ca.ontariohealth.smilecdr.dlqwatcher;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Properties;
 
@@ -61,6 +63,16 @@ public static void main(String[] args)
 	logr.debug( "Entering: main" );
 	DLQWatcher	watcher = new DLQWatcher();
 
+	/**/
+	String	 clsPath    = System.getProperty("java.class.path");
+	String[] pathElems	= clsPath.split(File.pathSeparator);
+	
+	logr.debug( "Class Path Elements:" );
+	for (String pathElem : pathElems)
+		logr.debug( "    {}", pathElem );
+		
+	/**/
+	
 	watcher.launch( args );
 	
 	logr.debug( "Exiting: main");
@@ -215,7 +227,7 @@ private String	loadFileIntoString( String fileNm )
 logr.debug("Entering: loadFileIntoString");
 String	    rtrn  = "";
 
-try (FileInputStream iStrm = new FileInputStream(fileNm) )
+try (InputStream iStrm = ClassLoader.getSystemResourceAsStream( fileNm ) )
 	{
 	StringBuilder	content = new StringBuilder();
 	BufferedReader	rdr     = new BufferedReader( new InputStreamReader(iStrm) );

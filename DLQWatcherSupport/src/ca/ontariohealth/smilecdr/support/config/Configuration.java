@@ -89,7 +89,8 @@ try
 	{
 	
     // Loading properties file from the path
-	iStrm = new FileInputStream( fileNm );   
+	//iStrm = new FileInputStream( fileNm );   
+	iStrm = ClassLoader.getSystemResourceAsStream( fileNm );  
 	cfgProps.load(iStrm);
 	} 
 
