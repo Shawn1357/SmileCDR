@@ -3,6 +3,7 @@
 	<name>SmileDLQWatcher</name>
 	<comment></comment>
 	<projects>
+		<project>DLQWatcherSupport</project>
 		<project>SmileCDRLib</project>
 		<project>Thirdparty</project>
 	</projects>

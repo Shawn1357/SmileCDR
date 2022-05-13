@@ -1,12 +1,12 @@
 /**
  * 
  */
-package ca.ontariohealth.smilecdr.config;
+package ca.ontariohealth.smilecdr.support.config;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import ca.ontariohealth.cwm.support.NormalizedStringKey;
+import ca.ontariohealth.smilecdr.support.NormalizedStringKey;
 
 /**
  * Records the application name that is running.  Typically this would

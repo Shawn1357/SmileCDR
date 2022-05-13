@@ -12,5 +12,6 @@
 	<classpathentry kind="lib" path="/Thirdparty/JavaBeansActivationFramework/jaf-1_1_1/activation.jar"/>
 	<classpathentry kind="lib" path="/Thirdparty/JavaMail/javax.mail-1.6.2.jar"/>
 	<classpathentry kind="lib" path="/SmileCDRLib/commons-cli-1.5.0.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/DLQWatcherSupport"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

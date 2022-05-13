@@ -1,7 +1,7 @@
 /**
  * 
  */
-package ca.ontariohealth.cwm.support;
+package ca.ontariohealth.smilecdr.support;
 
 import java.util.function.Function;
 

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package ca.ontariohealth.smilecdr.config;
+package ca.ontariohealth.smilecdr.support.config;
 
 /**
  * @author shawn.brant
