@@ -4,6 +4,7 @@
 package ca.ontariohealth.smilecdr.dlqwatchercontrol;
 
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -12,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 
 import ca.ontariohealth.smilecdr.BaseApplication;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
@@ -31,9 +34,6 @@ protected static final	String 				CLI_TOPIC_LONG  = "topicNm";
 protected static final  String				CLI_OPERTN_SHRT = "o";
 protected static final  String              CLI_OPERTN_LONG = "operation";
 
-private 				String				kafkaTopicName  = null;
-private					String				commandToSend   = null;
-
 public static void main( String[] args )
 {
 logr.debug( "Entering: main" );
@@ -50,21 +50,83 @@ return;
 @Override
 protected void launch() 
 {
+logr.debug("Entering: DLQWatcherControl.launch" );
+
 /*
  * Grab the command line options specific to this application.
  * 
  */
 	
-commandToSend = cmdLine.getOptionValue( CLI_OPERTN_LONG );
+String commandToSend = cmdLine.getOptionValue( CLI_OPERTN_LONG );
 
+
+String kafkaTopicName = null;
 if (cmdLine.hasOption(CLI_TOPIC_LONG))
 	kafkaTopicName = cmdLine.getOptionValue( CLI_TOPIC_LONG );
 
 else
 	kafkaTopicName = appConfig.configValue( ConfigProperty.DEFAULT_CONTROL_TOPIC_NAME );
 
+
+sendCommand( kafkaTopicName, commandToSend );
+
+logr.debug("Exiting: DLQWatcherControl.launch" );
 return;	
 }
+
+
+
+private void sendCommand( final String kafkaTopicName, final String commandToSend )
+{
+logr.debug( "Entering: sendCommand" );
+logr.debug(  "   Topic Name: {}", kafkaTopicName );
+logr.debug(  "   Command:    {}", commandToSend );
+final Producer<Long, String> prdcr    = createProducer();
+long                         crntTime = System.currentTimeMillis();
+
+final ProducerRecord<Long, String> record = new ProducerRecord<>( kafkaTopicName,
+		                                       					  crntTime,
+		                                       					  commandToSend );
+try 
+	{
+	logr.debug( "Sending Command to Kafka Topic" );
+	RecordMetadata	metadata = prdcr.send( record ).get();
+	
+	if (metadata != null)
+		{
+		logr.debug( "Metadata Returned:" );
+		logr.debug( "   Has Offset:            {}", metadata.hasOffset()    ? "Yes" : "No" );
+		logr.debug( "   Has Timestamp:         {}", metadata.hasTimestamp() ? "Yes" : "No" );
+		
+		if (metadata.hasOffset())
+			logr.debug( "   Offset Value:          {}", metadata.offset() );
+		
+		if (metadata.hasTimestamp())
+			logr.debug( "   Timestamp:             {}", metadata.timestamp() );
+		
+		logr.debug( "   Partition:             {}", metadata.partition() );
+		logr.debug( "   Serialized Key Size:   {}", metadata.serializedKeySize() );
+		logr.debug( "   Serialized Value Size: {}", metadata.serializedValueSize() );
+		}
+	
+	else
+		logr.error( "Kafka Send Request resulted in null Metadata" );
+	}
+
+catch (InterruptedException e)
+	{
+	logr.error("Interupted Exception while sending to Kafka:", e );
+	} 
+
+catch (ExecutionException e)
+	{
+	logr.error( "Execution Exception while sending to Kafka:", e );
+	}
+
+logr.debug( "Exiting: sendCommand" );
+return;
+}
+
 
 
 
@@ -76,10 +138,20 @@ logr.debug( "Entering: createProducer" );
 
 Properties	props = new Properties();
 
-props.put( ProducerConfig.CLIENT_ID_CONFIG,             	appConfig.getApplicationName().toString() );
-props.put( ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,     	appConfig.configValue( ConfigProperty.BOOTSTRAP_SERVERS ) );
-props.put( ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,  	appConfig.configValue( ConfigProperty.KEY_SERIALIZER ) );
-props.put( ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,	appConfig.configValue( ConfigProperty.VALUE_SERIALIZER ) );
+String		clientID 		 = appConfig.getApplicationName().appName();
+String		bootstrapServers = appConfig.configValue( ConfigProperty.BOOTSTRAP_SERVERS );
+String      keySerializer    = appConfig.configValue( ConfigProperty.KEY_SERIALIZER );
+String      valueSerializer  = appConfig.configValue( ConfigProperty.VALUE_SERIALIZER );
+
+logr.debug( "   Client ID:         {}", clientID );
+logr.debug( "   Bootstrap Servers: {}", bootstrapServers );
+logr.debug( "   Key Serializer:    {}", keySerializer );
+logr.debug( "   Value Serializer:  {}", valueSerializer );
+
+props.put( ProducerConfig.CLIENT_ID_CONFIG,             	clientID );
+props.put( ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,     	bootstrapServers );
+props.put( ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,  	keySerializer );
+props.put( ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,	valueSerializer );
 
 rtrn = new KafkaProducer<>( props );
 
