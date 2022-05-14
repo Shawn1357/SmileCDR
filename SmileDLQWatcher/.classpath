@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/DLQWatcherSupport"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-17">
 		<attributes>
 			<attribute name="module" value="true"/>
@@ -16,6 +17,7 @@
 			<attribute name="javadoc_location" value="https://commons.apache.org/proper/commons-cli/javadocs/api-release"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry combineaccessrules="false" kind="src" path="/DLQWatcherSupport"/>
+	<classpathentry kind="lib" path="/SmileCDRLib/kafka-clients-2.5.1.jar"/>
+	<classpathentry kind="lib" path="/SmileCDRLib/kafka-streams-2.5.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

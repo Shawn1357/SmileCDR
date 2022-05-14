@@ -18,6 +18,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 
 import ca.ontariohealth.smilecdr.BaseApplication;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
+import ca.ontariohealth.smilecdr.support.config.Configuration;
 
 
 /**
@@ -140,8 +141,8 @@ Properties	props = new Properties();
 
 String		clientID 		 = appConfig.getApplicationName().appName();
 String		bootstrapServers = appConfig.configValue( ConfigProperty.BOOTSTRAP_SERVERS );
-String      keySerializer    = appConfig.configValue( ConfigProperty.KEY_SERIALIZER );
-String      valueSerializer  = appConfig.configValue( ConfigProperty.VALUE_SERIALIZER );
+String      keySerializer    = Configuration.KAFKA_KEY_SERIALIZER_CLASS_NAME;
+String      valueSerializer  = Configuration.KAFKA_VALUE_SERIALIZER_CLASS_NAME;
 
 logr.debug( "   Client ID:         {}", clientID );
 logr.debug( "   Bootstrap Servers: {}", bootstrapServers );

@@ -1,3 +1,4 @@
+# Lines beginning with a '#' are not emailed.
 Sample Body for EMail Template 01
 Line 2
 

@@ -4,8 +4,6 @@
 package ca.ontariohealth.smilecdr.dlqwatcher;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -18,15 +16,16 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import javax.sound.sampled.Line;
 
-import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.ontariohealth.smilecdr.BaseApplication;
-import ca.ontariohealth.smilecdr.support.config.ApplicationName;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
-import ca.ontariohealth.smilecdr.support.config.EnvironmentName;
+
+import org.apache.kafka.clients.consumer.Consumer;
+
 
 /**
  * @author shawn.brant
@@ -35,6 +34,7 @@ import ca.ontariohealth.smilecdr.support.config.EnvironmentName;
 public class DLQWatcher extends BaseApplication 
 {
 static final Logger 			logr      = LoggerFactory.getLogger(DLQWatcher.class);
+
 
 /**
  * @param args
@@ -58,7 +58,7 @@ protected	void launch()
 {
 logr.debug( "Entering: DLQWatcher.launch" );
 
-sendEMail();
+//sendEMail();
 
 logr.debug( "Exiting: DLQWatcher.launch" );
 return;
@@ -66,8 +66,9 @@ return;
 
 
 
+private Consumer<Long, String>
 
-private void sendEMail()
+private void sendEMail( String requestedTemplate )
 {
 logr.debug( "Entering: sendEMail" );
 
@@ -75,7 +76,11 @@ String		emailSrvr   = appConfig.configValue( ConfigProperty.EMAIL_SERVER );
 String      emailUser   = appConfig.configValue( ConfigProperty.EMAIL_USER_ID );
 String      emailPass   = appConfig.configValue( ConfigProperty.EMAIL_PASSWORD );
 
-String      templateNm  = appConfig.configValue( ConfigProperty.EMAIL_TEMPLATE );
+String      templateNm  = requestedTemplate;
+
+if ((templateNm == null) || (templateNm.length() == 0))
+	templateNm = appConfig.configValue( ConfigProperty.EMAIL_TEMPLATE );
+
 
 String      emailFrom   = appConfig.configValue( ConfigProperty.EMAIL_FROM_ADDR.propertyName() + "." + templateNm, "" );
 String		addrTo  	= appConfig.configValue( ConfigProperty.EMAIL_TO_ADDRS.propertyName()  + "." + templateNm, "" );
@@ -143,7 +148,8 @@ try (InputStream iStrm = ClassLoader.getSystemResourceAsStream( fileNm ) )
 	String	line = null;
 	while ((line = rdr.readLine()) != null)
 		{
-		content.append( line + System.lineSeparator() );
+		if ((line != null) && (!line.strip().startsWith( "#")))
+			content.append( line + System.lineSeparator() );
 		}
 	
 	rtrn = content.toString();

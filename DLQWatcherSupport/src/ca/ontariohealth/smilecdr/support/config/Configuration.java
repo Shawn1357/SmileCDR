@@ -13,7 +13,27 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.apache.commons.lang3.BooleanUtils;
+
 /**
+ * Holds the configuration values for an application and provides a mechanism
+ * to retrieve those configuration values.
+ * There are two possible levels of configuration values:
+ * <li>The application specific configuration value set.</li>
+ * <li>A default set of configuration values.</li>
+ * <p>
+ * Each of these configuration sources must be of a Properties file format.
+ * <p>
+ * Each of these configuration sources must be locate-able on the class path.
+ * <p>
+ * If a requested configuration item can not be found in the application
+ * configuration set, the same configuration item will be searched in the
+ * default configuration set (if it is set).
+ * <p>
+ * There are two additional parameters which affect how a configuration
+ * property is looked up:
+ * <li>The Application Name</li>
+ * <li>The Environment Name</li>
  * @author shawn.brant
  *
  */
@@ -36,6 +56,57 @@ private ApplicationName             appName                 = null;
 private EnvironmentName				envName                 = null;
 private Map<String,String>			cfgMap					= null;
 
+
+/**
+ * Name of the class which will serialize Keys from a Kafka Producer.
+ * This class Name MUST match the Producer and Consumer instance types for the
+ * Key in the generic types:
+ * <pre>
+ *     org.apache.kafka.clients.producer.Producer
+ *     org.apache.kafka.clients.consumer.Consumer
+ * </pre>
+ */
+
+public static final String			KAFKA_KEY_SERIALIZER_CLASS_NAME 	= "org.apache.kafka.common.serialization.LongSerializer";
+
+
+/**
+ * Name of the class which will serialize Values from a Kafka Producer.
+ * This class Name MUST match the Producer and Consumer instance types for the
+ * Value in the generic types:
+ * <pre>
+ *     org.apache.kafka.clients.producer.Producer
+ *     org.apache.kafka.clients.consumer.Consumer
+ * </pre>
+ */
+
+public static final String			KAFKA_VALUE_SERIALIZER_CLASS_NAME	= "org.apache.kafka.common.serialization.StringSerializer";
+
+
+/**
+ * Name of the class which will de-serialize Keys in a Kafka Consumer.
+ * This class Name MUST match the Producer and Consumer instance types for the
+ * Key in the generic types:
+ * <pre>
+ *     org.apache.kafka.clients.producer.Producer
+ *     org.apache.kafka.clients.consumer.Consumer
+ * </pre>
+ */
+
+public static final String			KAFKA_KEY_DESERIALIZER_CLASS_NAME	= "org.apache.kafka.common.serialization.LongDeserializer";
+
+
+/**
+ * Name of the class which will de-serialize Values in a Kafka Consumer.
+ * This class Name MUST match the Producer and Consumer instance types for the
+ * Value in the generic types:
+ * <pre>
+ *     org.apache.kafka.clients.producer.Producer
+ *     org.apache.kafka.clients.consumer.Consumer
+ * </pre>
+ */
+
+public static final String			KAFKA_VALUE_DESERIALIZER_CLASS_NAME	= "org.apache.kafka.common.serialization.StringDeserializer";
 
 public static void					loadDefaultConfiguration()
 {
@@ -344,6 +415,80 @@ if (cfgProp != null)
 return rtrn;
 }
 
+
+@Override
+public Boolean configBool(ConfigProperty cfgProp) throws IllegalArgumentException 
+{
+Boolean		rtrn	= null;
+String		propNm	= (cfgProp != null) ? cfgProp.propertyName() : null;
+
+if (cfgProp != null)
+	{
+	String propName = cfgProp.propertyName();
+	
+	rtrn = configBool( propName );
+	}
+
+else
+	throw new IllegalArgumentException( "Requested Configuration Property must not be null" );
+
+return rtrn;
+}
+
+
+
+
+@Override
+public Boolean configBool(ConfigProperty cfgProp, Boolean defaultValue) 
+{
+String      propNm = (cfgProp != null) ? cfgProp.propertyName() : null;
+Boolean		rtrn   = configBool( propNm, defaultValue );
+
+return rtrn;
+}
+
+
+@Override
+public Boolean configBool(String cfgKey) throws IllegalArgumentException 
+{
+Boolean		rtrn = null;
+
+if ((cfgKey != null) && (cfgKey.length() > 0))
+	{
+	rtrn = configBool( cfgKey, null );
+
+	if (rtrn == null)
+		throw new IllegalArgumentException( "Unable to find or unable to convert value for property '" +
+											cfgKey +
+											"' to a Boolean." );
+	}
+
+else
+	throw new IllegalArgumentException( "Requested Configuration Property Name must not be null or zero-length." );
+
+
+return rtrn;
+}
+
+
+
+
+@Override
+public Boolean configBool(String cfgKey, Boolean defaultValue) 
+{
+Boolean		rtrn   = null;
+String		cfgVal = configValue( cfgKey );
+
+if (cfgVal != null)
+	{
+	rtrn = BooleanUtils.toBooleanObject( cfgVal );
+	
+	if (rtrn == null)
+		rtrn = defaultValue;
+	}
+
+return rtrn;
+}
 
 
 }

@@ -16,10 +16,6 @@ public enum ConfigProperty
 {
 BOOTSTRAP_SERVERS( "bootstrap.servers" ),
 KAFKA_GROUP_ID( "group.id" ),
-KEY_SERIALIZER( "key.serializer" ),
-KEY_DESERIALIZER( "key.deserialier" ),
-VALUE_SERIALIZER( "value.serializer" ),
-VALUE_DESERIALIZER( "value.deserializer" ),
 DEFAULT_CONTROL_TOPIC_NAME( "topic.name.default" ),
 	
 EMAIL_SERVER( "email.server" ),
@@ -32,6 +28,7 @@ EMAIL_TO_ADDRS( "email.to" ),
 EMAIL_CC_ADDRS( "email.cc" ),
 EMAIL_BCC_ADDRS( "email.bcc" ),
 EMAIL_SUBJECT( "email.subject" ),
+EMAIL_INCL_HASHTAG_LINES( "email.body.include.hashtag.lines" ),
 EMAIL_BODY_FILE_NM( "email.body" );
 
 
