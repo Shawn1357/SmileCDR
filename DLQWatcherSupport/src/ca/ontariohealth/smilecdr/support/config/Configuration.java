@@ -420,7 +420,6 @@ return rtrn;
 public Boolean configBool(ConfigProperty cfgProp) throws IllegalArgumentException 
 {
 Boolean		rtrn	= null;
-String		propNm	= (cfgProp != null) ? cfgProp.propertyName() : null;
 
 if (cfgProp != null)
 	{
@@ -482,6 +481,76 @@ String		cfgVal = configValue( cfgKey );
 if (cfgVal != null)
 	{
 	rtrn = BooleanUtils.toBooleanObject( cfgVal );
+	
+	if (rtrn == null)
+		rtrn = defaultValue;
+	}
+
+return rtrn;
+}
+
+
+@Override
+public Integer configInt(ConfigProperty cfgProp) throws IllegalArgumentException 
+{
+Integer		rtrn	= null;
+
+if (cfgProp != null)
+	{
+	String propName = cfgProp.propertyName();
+	
+	rtrn = configInt( propName );
+	}
+
+else
+	throw new IllegalArgumentException( "Requested Configuration Property must not be null" );
+
+return rtrn;
+}
+
+
+@Override
+public Integer configInt(ConfigProperty cfgProp, Integer defaultValue) 
+{
+String      propNm = (cfgProp != null) ? cfgProp.propertyName() : null;
+Integer		rtrn   = configInt( propNm, defaultValue );
+
+return rtrn;
+}
+
+
+@Override
+public Integer configInt(String cfgKey) throws IllegalArgumentException 
+{
+Integer		rtrn = null;
+
+if ((cfgKey != null) && (cfgKey.length() > 0))
+	{
+	rtrn = configInt( cfgKey, null );
+
+	if (rtrn == null)
+		throw new IllegalArgumentException( "Unable to find or unable to convert value for property '" +
+											cfgKey +
+											"' to an Integer." );
+	}
+
+else
+	throw new IllegalArgumentException( "Requested Configuration Property Name must not be null or zero-length." );
+
+
+return rtrn;
+}
+
+
+@Override
+public Integer configInt(String cfgKey, Integer defaultValue) 
+{
+Integer		rtrn   = null;
+String		cfgVal = configValue( cfgKey );
+
+if (cfgVal != null)
+	{
+	rtrn = Integer.valueOf( cfgVal );
 	
 	if (rtrn == null)
 		rtrn = defaultValue;

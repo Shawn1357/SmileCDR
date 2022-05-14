@@ -208,4 +208,95 @@ public  Boolean					configBool( final String   cfgKey )
 public  Boolean                 configBool( final String   cfgKey,
 		                                    Boolean        defaultValue );
 
+
+/**
+ * Look up the supplied predefined configuration property and convert it
+ * to an integer value according to the rules described in the
+ * {@link Integer} class.
+ * 
+ * @param cfgProp The predefined property whose value is to be converted into
+ *                an Integer value.
+ * @return        The converted integer value.
+ *
+ * @throws IllegalArgumentException The value either could not be found or
+ *                                  could not be interpreted as an integer.
+ *
+ * @see java.lang.Integer
+ * 
+ */
+public	Integer					configInt( ConfigProperty cfgProp ) 
+		                        throws IllegalArgumentException;
+
+
+
+/**
+ * Look up the supplied predefined configuration property and convert it
+ * to a integer value according to the rules described in the
+ * {@link Integer} class.
+ * <p>
+ * If the value could not be found or the value could not be interpreted as
+ * an integer value, the default value is returned (which may be <code>null</code>.
+ * 
+ * @param cfgProp      The predefined property whose value is to be converted
+ *                     into an integer value.
+ * @param defaultValue The value to be returned if the requested property could
+ *                     not be returned or could not be interpreted as an integer
+ *                     value (this parameter may be <code>null</code>).
+ * @return             The converted integer value. The default value is
+ *                     returned if the property value is not found or
+ *                     can not be interpreted as an integer.
+ *                     
+ * @see java.lang.Integer
+ * 
+ */
+
+public  Integer					configInt( ConfigProperty cfgProp,
+										   Integer        defaultValue );
+
+
+
+/**
+ * Look up the named configuration property and convert it
+ * to an integer value according to the rules described in the
+ * {@link Integer} class.
+ * 
+ * @param cfgKey  The configuration key whose value is to be converted into
+ *                an integer value.
+ * @return        The converted integer value.
+ *
+ * @throws IllegalArgumentException The value either could not be found or
+ *                                  could not be interpreted as an integer.
+ * 
+ * @see java.lang.Integer
+ * 
+ */
+public  Integer					configInt( final String   cfgKey ) 
+								throws IllegalArgumentException;
+
+
+
+/**
+ * Look up the supplied configuration property name and convert it
+ * to an integer value according to the rules described in the
+ * {@link Integer} class.
+ * <p>
+ * If the value could not be found or the value could not be interpreted as
+ * an integer value, the default value is returned (which may be <code>null</code>.
+ * 
+ * @param cfgProp      The name of the property whose value is to be converted
+ *                     into an integer value.
+ * @param defaultValue The value to be returned if the requested property could
+ *                     not be returned or could not be interpreted as an integer
+ *                     value (this parameter may be <code>null</code>).
+ * @return             The converted integer value. The default value is
+ *                     returned if the property value is not found or
+ *                     can not be interpreted as a Boolean.
+ *                     
+ * @see java.lang.Integer
+ * 
+ */
+public  Integer                 configInt( final String   cfgKey,
+		                                   Integer        defaultValue );
+
+
 }
