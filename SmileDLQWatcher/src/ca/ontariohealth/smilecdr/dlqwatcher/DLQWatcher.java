@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import ca.ontariohealth.smilecdr.BaseApplication;
 import ca.ontariohealth.smilecdr.support.config.ApplicationName;
+import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.EnvironmentName;
 
 /**
@@ -70,19 +71,19 @@ private void sendEMail()
 {
 logr.debug( "Entering: sendEMail" );
 
-String		emailSrvr   = appConfig.configValue( "email.server" );
-String      emailUser   = appConfig.configValue( "email.userID" );
-String      emailPass   = appConfig.configValue( "email.password" );
+String		emailSrvr   = appConfig.configValue( ConfigProperty.EMAIL_SERVER );
+String      emailUser   = appConfig.configValue( ConfigProperty.EMAIL_USER_ID );
+String      emailPass   = appConfig.configValue( ConfigProperty.EMAIL_PASSWORD );
 
-String      templateNm  = appConfig.configValue( "email.template" );
+String      templateNm  = appConfig.configValue( ConfigProperty.EMAIL_TEMPLATE );
 
-String      emailFrom   = appConfig.configValue( "email.from." + templateNm, "" );
-String		addrTo  	= appConfig.configValue( "email.to." + templateNm,   "" );
-String  	addrCC  	= appConfig.configValue( "email.cc." + templateNm,   "" );
-String  	addrBCC 	= appConfig.configValue( "email.bcc." + templateNm,  "" );
-String      subject     = appConfig.configValue( "email.subj." + templateNm, "" );
+String      emailFrom   = appConfig.configValue( ConfigProperty.EMAIL_FROM_ADDR.propertyName() + "." + templateNm, "" );
+String		addrTo  	= appConfig.configValue( ConfigProperty.EMAIL_TO_ADDRS.propertyName()  + "." + templateNm, "" );
+String  	addrCC  	= appConfig.configValue( ConfigProperty.EMAIL_CC_ADDRS.propertyName()  + "." + templateNm, "" );
+String  	addrBCC 	= appConfig.configValue( ConfigProperty.EMAIL_BCC_ADDRS.propertyName() + "." + templateNm, "" );
+String      subject     = appConfig.configValue( ConfigProperty.EMAIL_SUBJECT.propertyName()   + "." + templateNm, "" );
  
-String  	bodyFileNm	= appConfig.configValue( "email.body." + templateNm, "" );
+String  	bodyFileNm	= appConfig.configValue( ConfigProperty.EMAIL_BODY_FILE_NM.propertyName() + "." + templateNm, "" );
 
 String  	body    	= loadFileIntoString( bodyFileNm );
 

@@ -307,4 +307,43 @@ return rtrn;
 
 
 
+@Override
+public boolean hasConfigItem( ConfigProperty cfgProp ) 
+{
+boolean rtrn = false;
+
+if (cfgProp != null)
+	rtrn = hasConfigItem( cfgProp.propertyName() );
+	
+return rtrn;
+}
+
+
+
+@Override
+public String configValue( ConfigProperty cfgProp ) 
+{
+String rtrn = null;
+
+if (cfgProp != null)
+	rtrn = configValue( cfgProp.propertyName() );
+
+return rtrn;
+}
+
+
+
+@Override
+public String configValue( ConfigProperty cfgProp, String defaultValue ) 
+{
+String rtrn = null;
+
+if (cfgProp != null)
+	rtrn = configValue( cfgProp.propertyName(), defaultValue );
+
+return rtrn;
+}
+
+
+
 }

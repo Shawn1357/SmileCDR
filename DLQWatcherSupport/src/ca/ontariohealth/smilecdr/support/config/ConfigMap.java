@@ -38,12 +38,28 @@ public	Map<String, String>		configMap();
 /**
  * Determines if the configuration has a config mapping entry.
  * 
+ * @param cfgProp	The configuration property to test exists in the configuration.
+ * @return <code>true</code> A configuration mapping entry exists. 
+ *         <code>false</code> No configuration item matching the key could be found.
+ * 
+ */
+public	boolean					hasConfigItem( ConfigProperty cfgProp );
+
+
+/**
+ * Determines if the configuration has a config mapping entry.
+ * 
  * @param configKey  The configuration item to test exists in the configuration.
  * @return <code>true</code> A configuration mapping entry exists. 
  *         <code>false</code> No configuration item matching the key could be found.
  * 
  */
 public	boolean					hasConfigItem( final String configKey );
+
+
+public	String					configValue( ConfigProperty cfgProp );
+public  String					configValue( ConfigProperty cfgProp, String defaultValue );
+
 
 
 /**

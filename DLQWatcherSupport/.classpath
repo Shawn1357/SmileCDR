@@ -14,5 +14,7 @@
 			<attribute name="javadoc_location" value="https://commons.apache.org/proper/commons-cli/javadocs/api-release"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="/SmileCDRLib/kafka-clients-2.5.1.jar"/>
+	<classpathentry kind="lib" path="/SmileCDRLib/kafka-streams-2.5.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
