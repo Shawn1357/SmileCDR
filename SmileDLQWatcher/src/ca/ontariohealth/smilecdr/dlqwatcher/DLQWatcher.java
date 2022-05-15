@@ -29,6 +29,8 @@ import ca.ontariohealth.smilecdr.BaseApplication;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
 
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -43,8 +45,10 @@ import org.apache.kafka.common.PartitionInfo;
  */
 public class DLQWatcher extends BaseApplication 
 {
-static final Logger 			logr      = LoggerFactory.getLogger(DLQWatcher.class);
+static private final Logger 			logr      = LoggerFactory.getLogger(DLQWatcher.class);
 
+static private final String				CLI_INITIAL_CMD_SHRT = "i";
+static private final String             CLI_INITIAL_CMD_LONG = "initCmd";
 
 Consumer<Long, String>			controlConsumer = null;
 boolean							exitWatcher     = false;
@@ -132,6 +136,26 @@ for (String crntTopic : topicList.keySet())
 
 
 /*
+ * Check for and process the inital command.
+ * 
+ */
+
+if (cmdLine.hasOption( CLI_INITIAL_CMD_LONG ))
+	{
+	String[] rawInitCmds = cmdLine.getOptionValues( CLI_INITIAL_CMD_LONG );
+	
+	if ((rawInitCmds != null) && (rawInitCmds.length > 0))
+		{
+		for (String initCmd : rawInitCmds)
+			{
+			logr.debug( "Processing Initial Command: {}", initCmd != null ? initCmd : "<NULL>" );
+			processReceivedCommand( initCmd );
+			}
+		}
+	}
+
+
+/*
  * Start the main control listener loop.
  * 
  */
@@ -156,17 +180,7 @@ while (!exitWatcher)
 		for (ConsumerRecord<Long, String> crnt : rcrds)
 			{
 			if (crnt != null)
-				{
-				String	 controlCommand = crnt.value().strip();
-				
-				if ((controlCommand != null) &&  (controlCommand.length() > 0))
-					{
-					logr.debug( "Received Control Command: {}", controlCommand );
-
-					String[] args = controlCommand.split( "\s+", 0 );
-					processReceivedCommand( args );
-					}				
-				}
+				processReceivedCommand( crnt.value() );
 			}
 		}
 	
@@ -181,6 +195,27 @@ if (controlConsumer != null)
 
 logr.debug( "Exiting: listenForControlCommands" );
 return;
+}
+
+
+
+protected	void	processReceivedCommand( String cmd )
+{
+if (cmd != null)
+	{
+	String	 controlCommand = cmd.strip();
+	
+	if ((controlCommand != null) &&  (controlCommand.length() > 0))
+		{
+		logr.debug( "Received Control Command: {}", controlCommand );
+
+		String[] args = controlCommand.split( "\s+", 0 );
+		processReceivedCommand( args );
+		}				
+	}
+	
+	
+return;	
 }
 
 
@@ -358,6 +393,43 @@ catch (IOException ioe)
 logr.debug("Exiting: loadFileIntoString");
 return rtrn;
 }
+
+
+
+@Override
+protected void createCLIOptions( Options cmdLineOpts ) 
+{
+super.createCLIOptions( cmdLineOpts );
+
+Option	initCmd = new Option( CLI_INITIAL_CMD_SHRT,  CLI_INITIAL_CMD_LONG,  true, "DLQWatcher Command to run on startup. This option is repeatable." );
+
+cmdLineOpts.addOption( initCmd );
+
+return;
+}
+
+
+
+
+
+
+@Override
+protected void displayUsage() 
+{
+super.displayUsage();
+System.out.println( "" );
+System.out.println( "Available DLQ Watcher Commands:" );
+for (DLQWatcherCommand crnt : DLQWatcherCommand.values())
+	if (crnt != DLQWatcherCommand.UNKNOWN)
+		{
+		String	cmdHelp = "   " + crnt.commandStr() + " - " + crnt.usageStr();
+		System.out.println( cmdHelp );
+		}
+System.out.println( "" );
+return;
+}
+
+
 
 
 
