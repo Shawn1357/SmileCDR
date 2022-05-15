@@ -17,7 +17,10 @@ public enum ConfigProperty
 BOOTSTRAP_SERVERS( "bootstrap.servers" ),
 KAFKA_GROUP_ID( "group.id" ),
 DEFAULT_CONTROL_TOPIC_NAME( "topic.name.default" ),
-	
+KAFKA_CONSUMER_POLL_INTERVAL( "consumer.poll.interval" ),
+
+STOP_AFTER_MILLIS( "stop.after.millis" ),
+
 EMAIL_SERVER( "email.server" ),
 EMAIL_USER_ID( "email.userid" ),
 EMAIL_PASSWORD( "email.password" ),

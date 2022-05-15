@@ -93,6 +93,8 @@ try
 	logr.debug( "Sending Command to Kafka Topic" );
 	RecordMetadata	metadata = prdcr.send( record ).get();
 	
+	prdcr.close();
+	
 	if (metadata != null)
 		{
 		logr.debug( "Metadata Returned:" );
