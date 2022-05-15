@@ -205,12 +205,13 @@ if ((args != null) && (args.length > 0))
 		case	LIST:
 			logr.info("All known {} Commands:", appConfig.getApplicationName().appName() );
 			for (DLQWatcherCommand crnt : DLQWatcherCommand.values())
-				logr.info( "   {} - {}", crnt.commandStr(), crnt.usageStr() );
+				if (crnt != DLQWatcherCommand.UNKNOWN)
+					logr.info( "   {} - {}", crnt.commandStr(), crnt.usageStr() );
 				
 			break;
 			
 		case	QUIT:
-			logr.info( "Triggering Exit of: {}", appConfig.getEnvironmentName().envName() );
+			logr.info( "Triggering Exit of: {}", appConfig.getApplicationName().appName() );
 			exitWatcher = true;
 			break;
 			

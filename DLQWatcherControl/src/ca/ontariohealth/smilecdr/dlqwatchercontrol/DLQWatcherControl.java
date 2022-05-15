@@ -58,7 +58,8 @@ logr.debug("Entering: DLQWatcherControl.launch" );
  * 
  */
 	
-String commandToSend = cmdLine.getOptionValue( CLI_OPERTN_LONG );
+//String commandToSend = cmdLine.getOptionValue( CLI_OPERTN_LONG );
+String[] cmdsToSend = cmdLine.getOptionValues( CLI_OPERTN_LONG );
 
 
 String kafkaTopicName = null;
@@ -68,8 +69,10 @@ if (cmdLine.hasOption(CLI_TOPIC_LONG))
 else
 	kafkaTopicName = appConfig.configValue( ConfigProperty.DEFAULT_CONTROL_TOPIC_NAME );
 
-
-sendCommand( kafkaTopicName, commandToSend );
+if (cmdsToSend != null)
+	for (String crntCmd : cmdsToSend)
+		if ((crntCmd != null) && (crntCmd.length() > 0))
+			sendCommand( kafkaTopicName, crntCmd );
 
 logr.debug("Exiting: DLQWatcherControl.launch" );
 return;	
@@ -77,7 +80,8 @@ return;
 
 
 
-private void sendCommand( final String kafkaTopicName, final String commandToSend )
+private void sendCommand( final String kafkaTopicName, 
+		                  final String commandToSend )
 {
 logr.debug( "Entering: sendCommand" );
 logr.debug(  "   Topic Name: {}", kafkaTopicName );
