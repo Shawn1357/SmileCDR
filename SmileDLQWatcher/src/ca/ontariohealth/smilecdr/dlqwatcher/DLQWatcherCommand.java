@@ -11,6 +11,8 @@ public enum DLQWatcherCommand
 {
 LIST(    "LIST",    "Dump all known DLQWatcher commands to the logging system." ),
 QUIT(    "QUIT",    "Causes the DLQWatcher to shutdown and exit." ),
+START(   "START",   "Starts the DLQ Polling Thread if not already started." ),
+STOP(    "STOP",    "Stops the DLQ Polling Thread if it is running." ),
 HELLO(   "HELLO",   "A no-operation command that can be used to test connectivity." ),
 UNKNOWN( "UNKNOWN", "Used when the supplied command is notr recognized." );
 

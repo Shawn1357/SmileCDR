@@ -67,7 +67,7 @@ private Map<String,String>			cfgMap					= null;
  * </pre>
  */
 
-public static final String			KAFKA_KEY_SERIALIZER_CLASS_NAME 	= "org.apache.kafka.common.serialization.LongSerializer";
+public static final String			KAFKA_KEY_SERIALIZER_CLASS_NAME 	= "org.apache.kafka.common.serialization.StringSerializer";
 
 
 /**
@@ -93,7 +93,7 @@ public static final String			KAFKA_VALUE_SERIALIZER_CLASS_NAME	= "org.apache.kaf
  * </pre>
  */
 
-public static final String			KAFKA_KEY_DESERIALIZER_CLASS_NAME	= "org.apache.kafka.common.serialization.LongDeserializer";
+public static final String			KAFKA_KEY_DESERIALIZER_CLASS_NAME	= "org.apache.kafka.common.serialization.StringDeserializer";
 
 
 /**

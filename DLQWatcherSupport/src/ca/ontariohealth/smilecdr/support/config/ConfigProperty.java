@@ -15,9 +15,11 @@ package ca.ontariohealth.smilecdr.support.config;
 public enum ConfigProperty 
 {
 BOOTSTRAP_SERVERS( "bootstrap.servers" ),
-KAFKA_GROUP_ID( "group.id" ),
+KAFKA_CONTROL_GROUP_ID( "control.group.id" ),
+KAFKA_DLQ_GROUP_ID( "dlq.group.id" ),
 DEFAULT_CONTROL_TOPIC_NAME( "topic.name.default" ),
 KAFKA_CONSUMER_POLL_INTERVAL( "consumer.poll.interval" ),
+KAFKA_DLQ_TOPIC_NAME( "kafka.dlq.topic.name" ),
 
 STOP_AFTER_MILLIS( "stop.after.millis" ),
 

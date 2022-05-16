@@ -86,12 +86,12 @@ private void sendCommand( final String kafkaTopicName,
 logr.debug( "Entering: sendCommand" );
 logr.debug(  "   Topic Name: {}", kafkaTopicName );
 logr.debug(  "   Command:    {}", commandToSend );
-final Producer<Long, String> prdcr    = createProducer();
-long                         crntTime = System.currentTimeMillis();
+final Producer<String, String> prdcr    = createProducer();
+long                           crntTime = System.currentTimeMillis();
 
-final ProducerRecord<Long, String> record = new ProducerRecord<>( kafkaTopicName,
-		                                       					  crntTime,
-		                                       					  commandToSend );
+final ProducerRecord<String, String> record = new ProducerRecord<>( kafkaTopicName,
+		                                       					    String.valueOf( crntTime ),
+		                                       					    commandToSend );
 try 
 	{
 	logr.debug( "Sending Command to Kafka Topic" );
@@ -137,9 +137,9 @@ return;
 
 
 
-private Producer<Long, String> createProducer()
+private Producer<String, String> createProducer()
 {
-Producer<Long, String>	rtrn = null;
+Producer<String, String>	rtrn = null;
 
 logr.debug( "Entering: createProducer" );
 
