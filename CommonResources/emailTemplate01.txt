@@ -1,5 +1,14 @@
 # Lines beginning with a '#' are not emailed.
+# Available Expansion Variables:
+#   {{DLQRecordCount}} - Number of new Dead Letter Queue entries being reported.
+#   {{DLQRecordsAsCSV}} - Each of the DLQ Entries as individual rows of CSV Data
+#                         showing Subscription ID, Resource Type, Resource ID
+#
 Sample Body for EMail Template 01
-Line 2
+Detected DLQ Record Count: {{DLQRecordCount}}
 
-Line 4
+    SubscrID,RsrceType,ResrceID
+{{DLQRecordsAsCSV}}
+
+Yours truly,
+Your Favorite DLQ Watcher Team

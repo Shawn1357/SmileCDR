@@ -24,6 +24,7 @@ KAFKA_DLQ_TOPIC_NAME( "kafka.dlq.topic.name" ),
 STOP_AFTER_MILLIS( "stop.after.millis" ),
 
 EMAIL_SERVER( "email.server" ),
+EMAIL_SMPT_PORT( "email.server.smtp.port" ),
 EMAIL_USER_ID( "email.userid" ),
 EMAIL_PASSWORD( "email.password" ),
 
