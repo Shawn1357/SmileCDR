@@ -7,7 +7,7 @@
 Sample Body for EMail Template 01
 Detected DLQ Record Count: {{DLQRecordCount}}
 
-    SubscrID,RsrceType,ResrceID
+    SubscrID, RsrceType, ResrceID
 {{DLQRecordsAsCSV}}
 
 Yours truly,

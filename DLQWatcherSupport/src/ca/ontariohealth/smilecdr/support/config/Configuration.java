@@ -384,7 +384,17 @@ public boolean hasConfigItem( ConfigProperty cfgProp )
 boolean rtrn = false;
 
 if (cfgProp != null)
-	rtrn = hasConfigItem( cfgProp.propertyName() );
+	{
+	// If the config property has a hard coded efault, then we know,
+	// at the very least, this p[roperty has a value.
+	
+	rtrn = cfgProp.hasHardCodedDefault();
+	
+	// If it doesn't then look to see if we can find the property in the
+	// application configuration or default configuration.
+	if (!rtrn)
+		rtrn = hasConfigItem( cfgProp.propertyName() );
+	}
 	
 return rtrn;
 }
@@ -398,6 +408,9 @@ String rtrn = null;
 
 if (cfgProp != null)
 	rtrn = configValue( cfgProp.propertyName() );
+
+if ((rtrn == null) && (cfgProp.hasHardCodedDefault()))
+	rtrn = cfgProp.hardCodedDefaultValue();
 
 return rtrn;
 }

@@ -93,7 +93,7 @@ controlConsumer.subscribe( Collections.singletonList( controlTopic ) );
 
 logr.debug( "Subscribed to Control Topic: {}", controlTopic );
 
-Integer	maxRunTime = appConfig.configInt( ConfigProperty.STOP_AFTER_MILLIS, null );
+Integer	maxRunTime = appConfig.configInt( ConfigProperty.QUIT_AFTER_MILLIS, null );
 
 listenForControlCommands( maxRunTime );
 

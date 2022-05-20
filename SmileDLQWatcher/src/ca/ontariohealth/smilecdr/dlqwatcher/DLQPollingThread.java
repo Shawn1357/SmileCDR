@@ -103,7 +103,7 @@ while (continueRunning)
 			logr.debug( "Received {} DLQ Record(s).", dlqRecords.count() );
 			
 			dlqInterp = new DLQRecordsInterpreter( dlqRecords, appConfig );
-			sendEMail( appConfig.configValue( ConfigProperty.EMAIL_TEMPLATE ));
+			sendEMail( appConfig.configValue( ConfigProperty.EMAIL_TEMPLATE_NAME ));
 			
 			/*
 			for (ConsumerRecord<String, String> crnt : rcrds)
@@ -211,7 +211,7 @@ String      emailPass   = appConfig.configValue( ConfigProperty.EMAIL_PASSWORD )
 String      templateNm  = requestedTemplate;
 
 if ((templateNm == null) || (templateNm.length() == 0))
-	templateNm = appConfig.configValue( ConfigProperty.EMAIL_TEMPLATE );
+	templateNm = appConfig.configValue( ConfigProperty.EMAIL_TEMPLATE_NAME );
 
 
 String      emailFrom   = appConfig.configValue( ConfigProperty.EMAIL_FROM_ADDR.propertyName() + "." + templateNm, "" );

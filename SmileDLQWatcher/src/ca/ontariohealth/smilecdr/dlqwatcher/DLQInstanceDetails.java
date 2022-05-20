@@ -64,6 +64,6 @@ return details;
 
 public String asCSV()
 {
-return subID + "," + resType + "," + resID;
+return subID + ", " + resType + ", " + resID;
 }
 }
