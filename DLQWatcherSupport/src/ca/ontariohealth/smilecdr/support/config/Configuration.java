@@ -385,8 +385,8 @@ boolean rtrn = false;
 
 if (cfgProp != null)
 	{
-	// If the config property has a hard coded efault, then we know,
-	// at the very least, this p[roperty has a value.
+	// If the config property has a hard coded default, then we know,
+	// at the very least, this property has a value.
 	
 	rtrn = cfgProp.hasHardCodedDefault();
 	
@@ -438,7 +438,19 @@ if (cfgProp != null)
 	{
 	String propName = cfgProp.propertyName();
 	
-	rtrn = configBool( propName );
+	try
+		{
+		rtrn = configBool( propName );
+		}
+	
+	catch (IllegalArgumentException iae)
+		{
+		if (cfgProp.hasHardCodedDefault())
+			rtrn = BooleanUtils.toBoolean( cfgProp.hardCodedDefaultValue() );
+		
+		else
+			throw iae;
+		}
 	}
 
 else
@@ -512,7 +524,19 @@ if (cfgProp != null)
 	{
 	String propName = cfgProp.propertyName();
 	
-	rtrn = configInt( propName );
+	try
+		{
+		rtrn = configInt( propName );
+		}
+	
+	catch (IllegalArgumentException iae)
+		{
+		if (cfgProp.hasHardCodedDefault())
+			rtrn = Integer.valueOf( cfgProp.hardCodedDefaultValue() );
+		
+		else
+			throw iae;
+		}
 	}
 
 else
