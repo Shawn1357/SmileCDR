@@ -181,16 +181,6 @@ return parsedCmdLine;
 
 
 
-private void	createCLIHelpOnly( Options helpOnlyCLI )
-{
-helpOnlyCLI.addOption( CLI_HLP_NM_SHRT, CLI_HLP_NM_LONG, false, "Display Command Line Usage information.");
-return;
-}
-
-
-
-
-
 protected void	createCLIOptions( Options cmdLineOpts )
 {
 cmdLineOpts.addOption( CLI_CFG_NM_SHRT, CLI_CFG_NM_LONG, true,  "Configuration Properties file name");

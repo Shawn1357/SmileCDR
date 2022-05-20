@@ -3,23 +3,11 @@
  */
 package ca.ontariohealth.smilecdr.dlqwatcher;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-
-import javax.mail.Authenticator;
-import javax.mail.Message;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -319,6 +307,7 @@ return;
 
 
 
+@SuppressWarnings("deprecation")
 private void	stopPollingThread()
 {
 logr.debug( "Entering: stopPollingThread" );

@@ -40,7 +40,7 @@ DLQWatcherCommand	rtrn = null;
 
 String	str = (cmd != null) ? cmd.strip().toUpperCase() : "";
 
-if ((str != null) || (str.length() > 0))
+if ((str != null) && (str.length() > 0))
 	{
 	try
 		{
