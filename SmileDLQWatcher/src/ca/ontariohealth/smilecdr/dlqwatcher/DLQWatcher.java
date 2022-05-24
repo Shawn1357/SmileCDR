@@ -64,7 +64,7 @@ return;
 @Override
 protected	void launch()
 {
-logr.debug( "Entering: DLQWatcher.launch" );
+logr.debug( "Entering: {}.launch", DLQWatcher.class.getSimpleName() );
 
 //sendEMail( appConfig.configValue( ConfigProperty.EMAIL_TEMPLATE ) );
 
@@ -89,7 +89,7 @@ listenForControlCommands( maxRunTime );
 stopPollingThread();
 
 
-logr.debug( "Exiting: DLQWatcher.launch" );
+logr.debug( "Exiting: {}.launch", DLQWatcher.class.getSimpleName() );
 return;
 }
 

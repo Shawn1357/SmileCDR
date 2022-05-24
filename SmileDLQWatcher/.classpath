@@ -17,7 +17,11 @@
 			<attribute name="javadoc_location" value="https://commons.apache.org/proper/commons-cli/javadocs/api-release"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/SmileCDRLib/kafka-clients-2.5.1.jar"/>
+	<classpathentry kind="lib" path="/SmileCDRLib/kafka-clients-2.5.1.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="https://kafka.apache.org/25/javadoc/overview-summary.html"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="/SmileCDRLib/kafka-streams-2.5.1.jar"/>
 	<classpathentry kind="lib" path="/SmileCDRLib/gson-2.8.9.jar"/>
 	<classpathentry kind="output" path="bin"/>

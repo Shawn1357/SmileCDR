@@ -3,6 +3,9 @@
 	<name>SmileDLQRetrigger</name>
 	<comment></comment>
 	<projects>
+		<project>CommonResources</project>
+		<project>DLQWatcherSupport</project>
+		<project>SmileCDRLib</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

@@ -202,4 +202,10 @@ frmtr.printHelp( "Commandline syntax", cliOpts );
 return;
 }
 
+
+
+public	boolean	cmdLineUsageRequested()
+{
+return cmdLine.hasOption( CLI_HLP_NM_LONG );
+}
 }
