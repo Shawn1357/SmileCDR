@@ -3,29 +3,19 @@
  */
 package ca.ontariohealth.smilecdr.support.config;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 import org.apache.commons.lang3.BooleanUtils;
+
+import ca.ontariohealth.smilecdr.support.config.source.ConfigSource;
 
 /**
  * @author shawn.brant
  *
  */
-public interface ConfigMap 
+public interface ConfigMap< Src extends ConfigSource<Map<String, ArrayList<String> > > >
 {
-/**
- * Trigger a load (or reload) of configuration 
- * @param appName           The name of the application to be used as a prefix for looking up properties.
- * @param environmentName   The name of the environment (e.g. dev, prod, etc.) to be used as a prefix for looking up properties.
- * @param fileName          The name of the file to be searched for using the classloader rules for searching.
- * 
- */
-public	void		loadConfiguration( ApplicationName	appName,
-									   EnvironmentName	environmentName,
-									   final String		fileName );
-
-
-
 /**
  * Retrieve all the current mappings of Configuration Keys to Configuration Values.
  * 
@@ -33,34 +23,158 @@ public	void		loadConfiguration( ApplicationName	appName,
  *         return <code>null</code>, but will instead return an empty <code>Map</code>.
  *
  */
-public	Map<String, String>		configMap();
+public	Map<String, ArrayList<String>>		configMap();
+
+
+
+/**
+ * Returns the number of configuration items matching the supplied
+ * configuration property.
+ * <p>
+ * Configuration items may be repeated to create an array of related
+ * configuration items.  These configuration items are considered a set and
+ * may be referenced as an array using a numeric one-based index.
+ * 
+ * @param cfgProp	The predefined configuration property to count the entries
+ *                  in the configuration source.
+ * @return			The count of entries matching the configuration property.
+ *                  0 if the configuration property could not be located.
+ *
+ */
+public	Integer					configValueCount( ConfigProperty cfgProp );
+
+
+
+/**
+ * Returns the number of configuration items matching the supplied named
+ * configuration property.
+ * <p>
+ * Configuration items may be repeated to create an array of related
+ * configuration items.  These configuration items are considered a set and
+ * may be referenced as an array using a numeric base-0 index.
+ * 
+ * @param cfgProp	The predefined configuration property to count the entries
+ *                  in the configuration source.
+ * @return			The count of entries matching the configuration property.
+ *                  0 if the configuration property could not be located.
+ *
+ */
+public	Integer					configValueCount( final String configKey );
+
 
 
 
 /**
  * Determines if the configuration has a config mapping entry.
+ * <p>
+ * Equivalent to: <code>hasConfigItem( cfgProp, 1 );</code>
  * 
  * @param cfgProp	The configuration property to test exists in the configuration.
- * @return <code>true</code> A configuration mapping entry exists. 
+ * @return <code>true</code>  A configuration mapping entry exists. 
  *         <code>false</code> No configuration item matching the key could be found.
+ * 
  * 
  */
 public	boolean					hasConfigItem( ConfigProperty cfgProp );
 
 
+
+/**
+ * Determines if the configuration has a configuration item entry at the
+ * supplied one-based index.
+ * 
+ * @param cfgProp	The configuration property to test exists in the configuration.
+ * @param ndx		The one-based index to the configuration item within the
+ *                  range of similar configuration items.  If <code>null</code>,
+ *                  0 or negative, will be treated as 1.
+ * @return			<code>true</code>  A configuration mapping entry exists.
+ * 					<code>false</code> A configuration item could not be found.
+ * 
+ */
+public	boolean					hasConfigItem( ConfigProperty cfgProp, 
+		                                       Integer        ndx );
+
+
+
+
 /**
  * Determines if the configuration has a config mapping entry.
+ * <p>
+ * Equivalent to: <code>hasConfigItem( configKey, 1 );</code>
  * 
  * @param configKey  The configuration item to test exists in the configuration.
- * @return <code>true</code> A configuration mapping entry exists. 
+ * @return <code>true</code>  A configuration mapping entry exists. 
  *         <code>false</code> No configuration item matching the key could be found.
  * 
  */
 public	boolean					hasConfigItem( final String configKey );
 
 
+
+
+/**
+ * Determines if the configuration has a config mapping entry at the supplied
+ * one-based index.
+ * 
+ * @param configKey  The configuration item to test exists in the configuration.
+ * @param ndx        The one-based index to the configuration item within the
+ *                   range of similar configuration items.  If <code>null</code>,
+ *                   0 or negative, will be treated as 1.
+ * @return           <code>true</code>  A configuration mapping entry exists.
+ *                   <code>false</code> A configuration item could not bve found.
+ *
+ */
+public  boolean					hasConfigItem( final String configKey,
+		                                       Integer      ndx );
+
+
+
+/**
+ * Retrieve the set of entries corresponding to the supplied configuration
+ * property as a list that can be accessed and iterated over.
+ * <p>
+ * If the requested configuration property is just a single value (and not
+ * a list of properties), this routine will return a list of a single element.
+ * 
+ * @param cfgProp 	The configuration property that its values is being
+ *                 	requested for.
+ * @return 			The list of values founds in the configuration source.
+ *                  If the configuration source does not include values
+ *                  corresponding to that config property, the list will be
+ *                  empty.
+ *                  Guaranteed to be not <code>null</code> but the list may
+ *                  be emtpy.
+ */
+public	ArrayList<String>			configValues( ConfigProperty cfgProp );
+
+
+
+
+/**
+ * Retrieve the set of entries corresponding to the named configuration
+ * key as a list that can be accessed and iterated over.
+ * <p>
+ * If the requested configuration key is just a single value (and not
+ * a list of properties), this routine will return a list of a single element.
+ * 
+ * @param configKey	The configuration property name that its values is being
+ *                 	requested for.
+ * @return 			The list of values founds in the configuration source.
+ *                  If the configuration source does not include values
+ *                  corresponding to that config property, the list will be
+ *                  empty.
+ *                  Guaranteed to be not <code>null</code> but the list may
+ *                  be empty.
+ */
+public	ArrayList<String>			configValues( final String	configKey );
+
+
+
+
 /**
  * Retrieve the value for the specified pre-defined configuration property.
+ * <p>
+ * Equivalent to: <code>configValue( cfgProp, 1 );</code>
  * 
  * @param cfgProp  The configuration property to look up in the underlying
  *                 configuration.
@@ -71,10 +185,32 @@ public	boolean					hasConfigItem( final String configKey );
 public	String					configValue( ConfigProperty cfgProp );
 
 
+
+/**
+ * Retrieve the specific element from the array of similar configuration items
+ * related to the supplied Configuration Property.
+ * <p>
+ * A check is made to locate the zero-based indexed element of the configuration
+ * group and return that.  If that index lies outside the range of available
+ * configuration elements, an exception is thrown.
+ * 
+ * @param cfgProp  The configuration property to retrieve the 
+ * @param ndx      The one-based index of the element to be retrieved.
+ *                 If <code>null</code>, 0 or negative, 1 is assumed.
+ * @return         The value associated with the configuration property.
+ *
+ */
+public	String					configValue( ConfigProperty cfgProp, 
+		                                     Integer        ndx );
+
+
+
 /**
  * Retrieve the value for the specified pre-defined configuration property
  * and use the supplied default value if the config property could not be
  * found.
+ * <p>
+ * Equivalent to: <code>configValue( cfgProp, 1, defaultValue );</code>
  * 
  * @param cfgProp      The configuration property to look up in the underlying
  *                     configuration.
@@ -90,7 +226,28 @@ public  String					configValue( ConfigProperty cfgProp,
 
 
 /**
+ * Retrieve the value for the specified pre-defined configuration property at
+ * the requested index.  Returns the supplied default value if the requested
+ * property could not be found.
+ * 
+ * @param cfgProp       The configuration property to look up in the underlying
+ *                      configuration.
+ * @param ndx           The one-based index of the element to be retrieved.
+ *                      If <code>null</code>, 0 or negative, 1 is assumed.
+ * @param defaultValue  The value to be returned if the configuration property
+ *                      could not be located.
+ * @return              The value associated with the configuration property.
+ *                      The supplied default value if the property was not found.
+ */
+public	String					configValue( ConfigProperty cfgProp,
+		                                     Integer        ndx,
+		                                     String         defaultValue );
+
+
+/**
  * Retrieves the value for a particular configuration item.
+ * <p>
+ * Equivalent to: <code>configValue( configKey, 1 );</code>
  * 
  * @param configKey The configuration item to be looked up.
  * @return          The value associated with the configuration item.
@@ -103,6 +260,8 @@ public  String					configValue( final String configKey );
 /**
  * Retrieves the value for a particular configuration item and return the
  * default value if the property could not be located.
+ * <p>
+ * Equivalent to: <code>configValue( configKey, 1, default );</code>
  * 
  * @param configKey	   The configuration item to be looked up.
  * @param defaultValue The value to be returned if the configuration property
@@ -113,6 +272,27 @@ public  String					configValue( final String configKey );
  */
 public	String					configValue( final String 	configKey, 
 											 String 		defaultValue );
+
+
+
+
+/**
+ * Retrieve the value for the specified configuration property name at
+ * the requested index.  Returns the supplied default value if the requested
+ * property could not be found.
+ * 
+ * @param configKey The configuration item to be looked up.
+ * @param ndx           The one-based index of the element to be retrieved.
+ *                      If <code>null</code>, 0 or negative, 1 is assumed.
+ * @param defaultValue  The value to be returned if the configuration property
+ *                      could not be located.
+ * @return              The value associated with the configuration property.
+ *                      The supplied default value if the property was not found.
+ */
+public	String                  configValue( final String    configKey,
+                                             Integer         ndx,
+                                             String          defaultValue );
+
 
 
 /**

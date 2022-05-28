@@ -3,14 +3,16 @@
  */
 package ca.ontariohealth.smilecdr.support.config;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import ca.ontariohealth.smilecdr.support.config.source.ConfigSource;
+import ca.ontariohealth.smilecdr.support.config.source.PropertiesConfigSource;
 
 import org.apache.commons.lang3.BooleanUtils;
 
@@ -36,24 +38,21 @@ import org.apache.commons.lang3.BooleanUtils;
  * @author shawn.brant
  *
  */
-public class Configuration implements ConfigMap,
+public class Configuration implements ConfigMap< PropertiesConfigSource >,
                                       ConfigAppNameAware,
                                       ConfigEnvironmentAware
 {
 private static final Logger	logr = LoggerFactory.getLogger(Configuration.class);
 
-/**
- * Identifies the name of the default file to load if no file is given
- * and/or there is a generic file from which to load from.
- */
-private static final String			DEFAULT_FILE_NAME 		= "configuration.properties";
+private ApplicationName                                 appName     = null;
+private EnvironmentName				                    envName     = null;
+private ConfigSource<Map<String, ArrayList<String>>>    cfgSrc      = null;
 
-private static		 Configuration	defaultConfiguration 	= null;
+private String                                          lastFileNm  = null;
+private Properties                                      lastProps   = null;
 
+private HashMap<String, PropertyPermutationInfo>        propLookup  = new HashMap<>();
 
-private ApplicationName             appName                 = null;
-private EnvironmentName				envName                 = null;
-private Map<String,String>			cfgMap					= null;
 
 
 /**
@@ -107,37 +106,46 @@ public static final String			KAFKA_KEY_DESERIALIZER_CLASS_NAME	= "org.apache.kaf
 
 public static final String			KAFKA_VALUE_DESERIALIZER_CLASS_NAME	= "org.apache.kafka.common.serialization.StringDeserializer";
 
-public static void					loadDefaultConfiguration()
-{
-loadDefaultConfiguration( DEFAULT_FILE_NAME );
 
+
+
+public  Configuration()
+{
+logr.debug("Entering: Default {} Constructor", Configuration.class.getSimpleName() );
+logr.debug("Exiting: Default {} Constructor", Configuration.class.getSimpleName() );
 return;
 }
 
 
-public static void					loadDefaultConfiguration( String defaultFileNm )
+
+public  Configuration( String   propsFileNm )
 {
-loadDefaultConfiguration( null, null, defaultFileNm );
+logr.debug( "Entering: {} File Name Constructor.", Configuration.class.getSimpleName() );
+
+loadConfiguration( propsFileNm );
+
+logr.debug( "Exiting: {} File Name Constructor", Configuration.class.getSimpleName() );
 return;
 }
 
 
 
-public static void					loadDefaultConfiguration( ApplicationName	appNm,
-		                                                      EnvironmentName   envNm,
-		                                                      String            defaultFileNm )
+public  Configuration( Properties   props )
 {
-defaultConfiguration = new Configuration();
-defaultConfiguration.loadConfiguration(null, null, ((defaultFileNm != null) && (defaultFileNm.length() > 0)) ? defaultFileNm : DEFAULT_FILE_NAME );
+logr.debug( "Entering: {} Properties Constructor.", Configuration.class.getSimpleName() );
 
-return;	
+loadConfiguration( props );
+
+logr.debug( "Exiting: {} Properties Constructor", Configuration.class.getSimpleName() );
+return;
 }
+
 
 
 
 public void		loadConfiguration( String fileNm )
 {
-loadConfiguration( null, null, fileNm );
+loadConfiguration( appName, envName, fileNm );
 return;
 }
 
@@ -152,70 +160,58 @@ public void		loadConfiguration( ApplicationName	appName,
 		                           EnvironmentName  envName,
 		                           String fileNm )
 {
-cfgMap  = new HashMap<String,String>();
+this.appName    = appName;
+this.envName    = envName;
 
-InputStream	iStrm   = null;
-Properties cfgProps = new Properties();
+this.lastFileNm = fileNm;
+this.lastProps  = null;
 
-this.appName = appName;
-this.envName = envName;
-
-try 
-	{
-	
-    // Loading properties file from the path
-	//iStrm = new FileInputStream( fileNm );   
-	iStrm = ClassLoader.getSystemResourceAsStream( fileNm ); 
-	
-	if (iStrm != null)
-		cfgProps.load(iStrm);
-	
-	else
-		logr.error("Unable to open configuration file: {}", fileNm );
-	} 
-
-catch (IOException e) 
-	{
-	logr.error( "Unable to load configuration from: {}", fileNm );
-	e.printStackTrace();
-	}
-
-finally 
-	{
-    try 
-    	{
-    	if (iStrm != null)
-    		{
-    		iStrm.close();
-    		}
-    	} 
-    
-    catch (IOException e) 
-    	{
-    	e.printStackTrace();
-    	}
-	}
-
-// Push all of the properties into the Configuration Map.
-for (String crntKey : cfgProps.stringPropertyNames())
-	{
-	if (crntKey != null)
-		{
-		String	val = cfgProps.getProperty( crntKey );
-		
-		cfgMap.put( crntKey, val );
-		}
-	}
+this.cfgSrc     = new PropertiesConfigSource( fileNm );
+this.propLookup.clear();
 
 return;
 }
 
 
 
+
+public  void    loadConfiguration( Properties props )
+{
+loadConfiguration( appName, envName, props );
+return;
+}
+
+
+
+public  void    loadConfiguration( ApplicationName  appName,
+                                   EnvironmentName  envName,
+                                   Properties       props )
+{
+this.appName    = appName;
+this.envName    = envName;
+
+this.lastFileNm = null;
+this.lastProps  = props;
+
+this.cfgSrc     = new PropertiesConfigSource( props );
+this.propLookup.clear();
+
+return;
+}
+
+
 @Override
 public void setEnvironmentName(EnvironmentName envNm) 
 {
 envName = envNm;
+
+if (lastFileNm != null)
+    loadConfiguration( lastFileNm );
+
+else if (lastProps != null)
+    loadConfiguration( lastProps );
+
+return;
 }
 
 
@@ -231,7 +227,15 @@ return envName;
 @Override
 public void setApplicationName(ApplicationName appNm) 
 {
-appName = appNm;	
+appName = appNm;
+
+if (lastFileNm != null)
+    loadConfiguration( lastFileNm );
+
+else if (lastProps != null)
+    loadConfiguration( lastProps );
+
+return;
 }
 
 
@@ -245,132 +249,158 @@ return appName;
 
 
 @Override
-public Map<String, String> configMap() 
+public Map<String, ArrayList<String>> configMap() 
 {
-return cfgMap;
+return cfgSrc.getAllConfigValues();
 }
 
 
 
 @Override
-public boolean hasConfigItem(String configKey) 
+public boolean hasConfigItem( String configKey ) 
 {
-boolean		rtrn = false;
+boolean		rtrn = hasConfigItem( configKey, 1 );
+
+return rtrn;
+}
+
+
+
+@Override
+public boolean hasConfigItem( String configKey, Integer ndx )
+{
+boolean     rtrn = false;
 
 if ((configKey != null) && (configKey.length() > 0))
-	{
-	String	appNm 			= appName != null ? appName.nrmlzdAppName() : null;
-	String	envNm			= envName != null ? envName.nrmlzdEnvName() : null;
-	int		keyPermutation 	= keyPermutationThatExists( appNm, envNm, configKey );
-	
-	rtrn = (keyPermutation >= 0);
-	}
-	
-// If not found, try the default configuration map
-if ((!rtrn) && (defaultConfiguration != null) && (this != defaultConfiguration))
-	rtrn = defaultConfiguration.hasConfigItem( configKey );
-
-return rtrn;
-}
-
-
-
-private int		keyPermutationThatExists( String appNm, String envNm, String cfgKey )
-{
-int		rtrn = -1;
-
-for (int ndx = 0; (rtrn == -1) && (ndx < 11); ndx++)
-	{
-	String	cfgKy = genCrntConfigKey( appNm, envNm, cfgKey, ndx );
-	
-	if ((cfgKy != null) && (cfgMap.containsKey( cfgKy )))
-		rtrn = ndx;
-	}
-
-return rtrn;
-}
-
-
-
-private	String	genCrntConfigKey( String appNm, String envNm, String cfgKy, int ndx )
-{
-String	rtrn = null;
-
-// Generate Keys according to the supplied ndx parameter.
-// If a key requires and element and that element is null, then
-// the routine will return null.
-
-//   App Env Key
-//   App Key Env
-//   Env App Key
-//   Env Key App
-//   Key App Env
-//   Key Env App
-
-//   App Key
-//   Env Key
-//   Key App
-//   Key Env
-
-//   Key
-
-switch (ndx)
-	{
-	case  0:	if ((appNm != null) && (envNm != null)) rtrn = appNm.concat( "." ).concat( envNm ).concat( "." ).concat( cfgKy );	break;
-	case  1:    if ((appNm != null) && (envNm != null)) rtrn = appNm.concat( "." ).concat( cfgKy ).concat( "." ).concat( envNm );	break;
-	case  2:    if ((appNm != null) && (envNm != null)) rtrn = envNm.concat( "." ).concat( appNm ).concat( "." ).concat( cfgKy );	break;
-	case  3:    if ((appNm != null) && (envNm != null)) rtrn = envNm.concat( "." ).concat( cfgKy ).concat( "." ).concat( appNm );	break;
-	case  4:    if ((appNm != null) && (envNm != null)) rtrn = cfgKy.concat( "." ).concat( appNm ).concat( "." ).concat( envNm );	break;
-	case  5:    if ((appNm != null) && (envNm != null)) rtrn = cfgKy.concat( "." ).concat( envNm ).concat( "." ).concat( appNm );	break;
-
-	case  6:    if (appNm != null)						rtrn = appNm.concat( "." ).concat( cfgKy );									break;
-	case  7:    if (envNm != null)						rtrn = envNm.concat( "." ).concat( cfgKy );									break;
-	case  8:    if (appNm != null)						rtrn = cfgKy.concat( "." ).concat( appNm );									break;
-	case  9:    if (envNm != null)						rtrn = cfgKy.concat( "." ).concat( envNm );									break;
-	
-	case 10:	rtrn = cfgKy;	break;
-	
-	default:	rtrn = null;	break;
-	}
-
+    {
+    String  val = configValue( configKey, ndx, null );
+    
+    rtrn = (val != null);
+    }
+    
 return rtrn;
 }
 
 
 
 
-@Override
-public String configValue(String configKey)
+
+private PropertyPermutationInfo		keyPermutationThatExists( String  cfgKey )
 {
-String	rtrn 	= null;
+PropertyPermutationInfo		rtrn = propLookup.get( cfgKey );
 
-if ((configKey != null) && (configKey.length() > 0))
-	{
-	String	envNm 	= envName != null ? envName.nrmlzdEnvName() : null;
-	String  appNm	= appName != null ? appName.nrmlzdAppName() : null;
-	
-	int		keyPerm = keyPermutationThatExists( appNm, envNm, configKey );
-	String  cfgKey  = genCrntConfigKey(appNm, envNm, configKey, keyPerm );
-	
-	if (cfgKey != null)
-		rtrn = cfgMap.get( cfgKey );
-	}
-
-// If not found, try the default configuration map
-if ((rtrn == null) && (defaultConfiguration != null) && (this != defaultConfiguration))
-	rtrn = defaultConfiguration.configValue( configKey );
-
-return rtrn;
-}
-
-
-@Override
-public String configValue(String configKey, String defaultValue) 
-{
-String	rtrn = configValue( configKey );
+/*
+ * If we have not already located the property in the configuration source,
+ * search for it and cache that lookup so we don't need to search again.
+ * 
+ */
 
 if (rtrn == null)
-	rtrn = defaultValue;
+    {
+    for (PropertyNamePermutation perm : PropertyNamePermutation.values())
+    	{
+    	String	cfgKy = perm.propertyName( appName, envName, cfgKey );
+    	
+    	if (cfgKy != null)
+    	    {
+    	    ArrayList<String>  vals = cfgSrc.getConfigValues( cfgKy );
+    	    
+    	    if ((vals != null) && (vals.size() > 0))
+    	        {
+    	        rtrn = new PropertyPermutationInfo( cfgKey, perm, cfgKy );
+    	        propLookup.put( cfgKey,  rtrn );
+    	        
+    	        break;
+    	        }
+    	    }
+    	}
+    }
+
+return rtrn;
+}
+
+
+
+
+
+@Override
+public Integer configValueCount( String configKey )
+{
+ArrayList<String>   vals = configValues( configKey );
+Integer             rtrn = vals.size();
+
+return rtrn;
+}
+
+
+
+@Override
+public ArrayList<String>    configValues( String configKey )
+{
+ArrayList<String>       rtrn     = null;
+PropertyPermutationInfo permInfo = keyPermutationThatExists( configKey );
+
+if (permInfo != null)
+    rtrn = cfgSrc.getConfigValues( permInfo.fullPropNm );
+
+if (rtrn == null)
+    rtrn = new ArrayList<>();
+    
+return rtrn;
+}
+
+
+
+
+@Override
+public String configValue( String configKey )
+{
+String  rtrn = configValue( configKey, 1, null );
+
+return rtrn;
+}
+
+
+
+@Override
+public String configValue( String configKey, String defaultValue ) 
+{
+String	rtrn = configValue( configKey, 1, defaultValue );
+
+return rtrn;
+}
+
+
+
+@Override
+public String configValue( String configKey, Integer ndx, String defaultValue )
+{
+String  rtrn    = null;
+
+if ((configKey != null) && (configKey.length() > 0))
+    {
+    ArrayList<String>   vals = configValues( configKey );
+    
+    
+    if ((ndx == null) || (ndx <= 0)) 
+        ndx = 1;
+    
+    if (vals != null)
+        {
+        try
+            {
+            rtrn = vals.get( ndx - 1 );
+            }
+        
+        catch (IndexOutOfBoundsException iob)
+            {
+            rtrn = null;
+            }
+        }
+    }
+
+if (rtrn == null)
+    rtrn = defaultValue;
 
 return rtrn;
 }
@@ -380,21 +410,67 @@ return rtrn;
 @Override
 public boolean hasConfigItem( ConfigProperty cfgProp ) 
 {
+boolean rtrn = hasConfigItem( cfgProp, 1 );
+return  rtrn;
+}
+
+
+
+
+
+
+
+@Override
+public boolean hasConfigItem( ConfigProperty cfgProp, Integer ndx )
+{
 boolean rtrn = false;
 
 if (cfgProp != null)
-	{
-	// If the config property has a hard coded default, then we know,
-	// at the very least, this property has a value.
-	
-	rtrn = cfgProp.hasHardCodedDefault();
-	
-	// If it doesn't then look to see if we can find the property in the
-	// application configuration or default configuration.
-	if (!rtrn)
-		rtrn = hasConfigItem( cfgProp.propertyName() );
-	}
-	
+    {
+    // If the config property has a hard coded default, then we know,
+    // at the very least, this property has a value.
+    
+    rtrn = cfgProp.hasHardCodedDefault();
+    
+    // If it doesn't then look to see if we can find the property in the
+    // application configuration or default configuration.
+    if (!rtrn)
+        rtrn = hasConfigItem( cfgProp.propertyName(), ndx );
+    }
+ 
+return rtrn;
+}
+
+
+
+
+@Override
+public Integer configValueCount( ConfigProperty cfgProp )
+{
+ArrayList<String> vals = configValues( cfgProp );
+Integer           rtrn = vals.size();
+
+return rtrn;
+}
+
+
+
+@Override
+public ArrayList<String> configValues( ConfigProperty cfgProp )
+{
+ArrayList<String>   rtrn = null;
+
+if (cfgProp != null)
+    rtrn = configValues( cfgProp.propertyName() );
+
+if (rtrn == null)
+    {
+    rtrn = new ArrayList<>();
+    
+    if (cfgProp.hasHardCodedDefault())
+        rtrn.add( cfgProp.hardCodedDefaultValue() );
+    }
+
 return rtrn;
 }
 
@@ -403,13 +479,19 @@ return rtrn;
 @Override
 public String configValue( ConfigProperty cfgProp ) 
 {
-String rtrn = null;
+String rtrn = configValue( cfgProp, 1, null );
 
-if (cfgProp != null)
-	rtrn = configValue( cfgProp.propertyName() );
+return rtrn;
+}
 
-if ((rtrn == null) && (cfgProp.hasHardCodedDefault()))
-	rtrn = cfgProp.hardCodedDefaultValue();
+
+
+
+
+@Override
+public String configValue( ConfigProperty cfgProp, Integer ndx )
+{
+String  rtrn = configValue( cfgProp, ndx, null );
 
 return rtrn;
 }
@@ -417,15 +499,33 @@ return rtrn;
 
 
 @Override
-public String configValue( ConfigProperty cfgProp, String defaultValue ) 
+public String configValue( ConfigProperty cfgProp, String defaultValue )
+{
+String      rtrn = configValue( cfgProp, 1, defaultValue );
+
+return rtrn;
+}
+
+
+
+@Override
+public String configValue( ConfigProperty cfgProp, Integer ndx, String defaultValue ) 
 {
 String rtrn = null;
 
 if (cfgProp != null)
-	rtrn = configValue( cfgProp.propertyName(), defaultValue );
+	rtrn = configValue( cfgProp.propertyName(), ndx, defaultValue );
+
+else
+    rtrn = defaultValue;
+
+if ((rtrn == null) && (cfgProp.hasHardCodedDefault()))
+    rtrn = cfgProp.hardCodedDefaultValue();
 
 return rtrn;
 }
+
+
 
 
 @Override
@@ -596,4 +696,183 @@ return rtrn;
 }
 
 
+
+private enum    PropertyNamePart
+{
+APP,
+ENV,
+KEY
+};
+
+
+private enum    PropertyNamePermutation
+{
+APP_ENV_KEY( PropertyNamePart.APP, PropertyNamePart.ENV, PropertyNamePart.KEY ),
+APP_KEY_ENV( PropertyNamePart.APP, PropertyNamePart.KEY, PropertyNamePart.ENV ),
+ENV_APP_KEY( PropertyNamePart.ENV, PropertyNamePart.APP, PropertyNamePart.KEY ),
+ENV_KEY_APP( PropertyNamePart.ENV, PropertyNamePart.KEY, PropertyNamePart.APP ),
+KEY_APP_ENV( PropertyNamePart.KEY, PropertyNamePart.APP, PropertyNamePart.ENV ),
+KEY_ENV_APP( PropertyNamePart.KEY, PropertyNamePart.ENV, PropertyNamePart.APP ),
+
+APP_KEY( PropertyNamePart.APP, PropertyNamePart.KEY ),
+ENV_KEY( PropertyNamePart.ENV, PropertyNamePart.KEY ),
+KEY_APP( PropertyNamePart.KEY, PropertyNamePart.APP ),
+KEY_ENV( PropertyNamePart.KEY, PropertyNamePart.ENV ),
+
+KEY( PropertyNamePart.KEY );
+
+
+private PropertyNamePart    parts[];
+
+
+PropertyNamePermutation( PropertyNamePart part1 )
+{
+parts[0]  = part1;
+parts[1]  = null;
+parts[2]  = null;
+
+return;
+}
+
+
+
+
+PropertyNamePermutation( PropertyNamePart part1,
+                         PropertyNamePart part2 )
+{
+parts[0]  = part1;
+parts[1]  = part2;
+parts[2]  = null;
+
+return;
+}
+
+
+
+
+PropertyNamePermutation( PropertyNamePart part1,
+                         PropertyNamePart part2,
+                         PropertyNamePart part3 )
+{
+parts[0]  = part1;
+parts[1]  = part2;
+parts[2]  = part3;
+
+return;
+}
+
+
+
+public String   propertyName( ApplicationName    appNm,
+                              EnvironmentName    envNm,
+                              String             propKey )
+{
+String  rtrn = "";
+
+for (int ndx = 0; (ndx < parts.length) && (rtrn != null); ndx++)
+    {
+    if (parts[ndx] != null)
+        {
+        switch (parts[ndx])
+            {
+            case    APP:
+                if ((appNm != null) && (appNm.nrmlzdAppName().length() > 0))
+                    rtrn = rtrn.concat( rtrn.length() > 0 ? "." : "" )
+                               .concat( appNm.nrmlzdAppName() );
+                
+                else
+                    rtrn = null;
+                
+                break;
+                
+                
+            case    ENV:
+                if ((envNm != null) && (envNm.nrmlzdEnvName().length() > 0))
+                    rtrn = rtrn.concat( rtrn.length() > 0 ? "." : "" )
+                               .concat( envNm.nrmlzdEnvName() );
+                
+                else
+                    rtrn = null;
+                
+                break;
+                
+                
+            case    KEY:
+                if ((propKey != null) && (propKey.length() > 0))
+                    rtrn = rtrn.concat( rtrn.length() > 0 ? "." : "" )
+                               .concat( propKey.toLowerCase().strip() );
+                
+                else
+                    rtrn = null;
+                
+                break;
+                
+                
+            default:
+                rtrn = null;
+                break;
+            }
+        }
+    }
+
+return rtrn;
+}
+}
+
+
+
+private class   PropertyPermutationInfo
+{
+public  String                      propKey     = null;
+public  PropertyNamePermutation     perm        = null;
+public  String                      fullPropNm  = null;
+
+
+public PropertyPermutationInfo( String                      propertyKey,
+                                PropertyNamePermutation     permutation,
+                                String                      fullPropName )
+{
+propKey     = propertyKey;
+perm        = permutation;
+fullPropNm  = fullPropName;
+
+return;
+}
+
+@Override
+public int hashCode()
+{
+if (propKey != null)
+    return propKey.hashCode();
+
+else
+    return super.hashCode();
+}
+
+
+
+
+@Override
+public boolean equals( Object obj )
+{
+if (propKey != null)
+    return propKey.equals( obj );
+
+else
+    return super.equals( obj );
+}
+
+
+
+
+@Override
+public String toString()
+{
+if (propKey != null)
+    return propKey;
+
+else
+    return super.toString();
+}
+}
 }

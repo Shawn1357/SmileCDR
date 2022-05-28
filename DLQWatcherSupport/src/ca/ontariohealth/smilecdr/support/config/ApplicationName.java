@@ -30,7 +30,7 @@ private NormalizedStringKey		appName;
  * can be exist at one time for a specific process.
  * 
  */
-private static Map<NormalizedStringKey, ApplicationName>	allEnvs = new HashMap<>();
+private static Map<NormalizedStringKey, ApplicationName>	allApps = new HashMap<>();
 
 
 /**
@@ -42,26 +42,26 @@ private static Map<NormalizedStringKey, ApplicationName>	allEnvs = new HashMap<>
  * To determine if an Application Name already exists, the supplied name is
  * normalized into a consistent format and that is what is compared.
  * 
- * @param envNm  The name of the application to be returned and/or created.
+ * @param appNm  The name of the application to be returned and/or created.
  *               If <code>null</code>, this parameter is interpreted as "".
  * @return       The Application Name instance corresponding to the name.
  * 
  */
-public static ApplicationName getApplicationName( final String envNm )
+public static ApplicationName getApplicationName( final String appNm )
 {
 ApplicationName rtrn = null;
 
-NormalizedStringKey newEnvNm = new NormalizedStringKey( envNm );
+NormalizedStringKey newAppNm = new NormalizedStringKey( appNm );
 
-if (allEnvs.containsKey( newEnvNm ))
+if (allApps.containsKey( newAppNm ))
 	{
-	rtrn = allEnvs.get( newEnvNm );
+	rtrn = allApps.get( newAppNm );
 	}
 
 else
 	{
-	rtrn = new ApplicationName( newEnvNm );
-	allEnvs.put( newEnvNm, rtrn );
+	rtrn = new ApplicationName( newAppNm );
+	allApps.put( newAppNm, rtrn );
 	}
 
 
