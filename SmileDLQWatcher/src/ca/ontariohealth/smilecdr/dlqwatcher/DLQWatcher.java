@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.ontariohealth.smilecdr.BaseApplication;
+import ca.ontariohealth.smilecdr.support.commands.DLQCommand;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
 
@@ -217,7 +218,7 @@ protected	void	processReceivedCommand( String[] args )
 {
 if ((args != null) && (args.length > 0))
 	{
-	DLQWatcherCommand cmd = DLQWatcherCommand.getCommand( args[0] );
+	DLQCommand cmd = DLQCommand.getCommand( args[0] );
 	
 	logr.debug( "Processing received command: '{}' translated to DLQWatcherCommand: '{}'",
 			    args[0],
@@ -232,8 +233,8 @@ if ((args != null) && (args.length > 0))
 			
 		case	LIST:
 			logr.info("All known {} Commands:", appConfig.getApplicationName().appName() );
-			for (DLQWatcherCommand crnt : DLQWatcherCommand.values())
-				if (crnt != DLQWatcherCommand.UNKNOWN)
+			for (DLQCommand crnt : DLQCommand.values())
+				if (crnt != DLQCommand.UNKNOWN)
 					logr.info( "   {} - {}", crnt.commandStr(), crnt.usageStr() );
 				
 			break;
@@ -411,8 +412,8 @@ protected void displayUsage()
 super.displayUsage();
 System.out.println( "" );
 System.out.println( "Available DLQ Watcher Commands:" );
-for (DLQWatcherCommand crnt : DLQWatcherCommand.values())
-	if (crnt != DLQWatcherCommand.UNKNOWN)
+for (DLQCommand crnt : DLQCommand.values())
+	if (crnt != DLQCommand.UNKNOWN)
 		{
 		String	cmdHelp = "   " + crnt.commandStr() + " - " + crnt.usageStr();
 		System.out.println( cmdHelp );

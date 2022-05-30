@@ -25,5 +25,6 @@
 			<attribute name="javadoc_location" value="https://commons.apache.org/proper/commons-lang/apidocs"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="/SmileCDRLib/gson-2.8.9.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
