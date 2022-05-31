@@ -67,7 +67,7 @@ if (cmdLine.hasOption(CLI_TOPIC_LONG))
 	kafkaTopicName = cmdLine.getOptionValue( CLI_TOPIC_LONG );
 
 else
-	kafkaTopicName = appConfig.configValue( ConfigProperty.DEFAULT_CONTROL_TOPIC_NAME );
+	kafkaTopicName = appConfig.configValue( ConfigProperty.CONTROL_TOPIC_NAME_COMMAND );
 
 if (cmdsToSend != null)
 	for (String crntCmd : cmdsToSend)

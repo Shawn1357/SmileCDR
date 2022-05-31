@@ -19,7 +19,8 @@ public enum ConfigProperty
 BOOTSTRAP_SERVERS(            "bootstrap.servers" ),
 KAFKA_CONTROL_GROUP_ID(       "control.group.id" ),
 KAFKA_DLQ_GROUP_ID(           "dlq.group.id" ),
-DEFAULT_CONTROL_TOPIC_NAME(   "topic.name.default" ),
+CONTROL_TOPIC_NAME_COMMAND(   "topic.name.command" ),
+CONTROL_TOPIC_NAME_RESPONSE(  "topic.name.response" ),
 KAFKA_CONSUMER_POLL_INTERVAL( "consumer.poll.interval",        "500" ),
 KAFKA_DLQ_TOPIC_NAME(         "kafka.dlq.topic.name",          "KAFKA.DLQ" ),
 

@@ -722,7 +722,7 @@ KEY_ENV( PropertyNamePart.KEY, PropertyNamePart.ENV ),
 KEY( PropertyNamePart.KEY );
 
 
-private PropertyNamePart    parts[];
+private PropertyNamePart[]    parts = new PropertyNamePart[3];
 
 
 PropertyNamePermutation( PropertyNamePart part1 )

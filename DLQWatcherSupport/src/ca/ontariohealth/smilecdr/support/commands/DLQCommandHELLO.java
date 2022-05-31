@@ -9,5 +9,10 @@ package ca.ontariohealth.smilecdr.support.commands;
  */
 public class DLQCommandHELLO extends DLQCommandContainer
 {
-
+public DLQCommandHELLO()
+{
+super();
+setCommandToIssue( DLQCommand.HELLO );
+return;
+}
 }

@@ -4,7 +4,6 @@
 package ca.ontariohealth.smilecdr.support.config.source;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**

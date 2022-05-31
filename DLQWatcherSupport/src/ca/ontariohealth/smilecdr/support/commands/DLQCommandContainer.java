@@ -3,15 +3,8 @@
  */
 package ca.ontariohealth.smilecdr.support.commands;
 
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -19,13 +12,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
-import com.google.gson.stream.JsonWriter;
 
 import ca.ontariohealth.smilecdr.support.commands.json.CommandParamAdapter;
 
@@ -38,7 +24,8 @@ public class DLQCommandContainer
 private static Logger                       logr                = LoggerFactory.getLogger( DLQCommandContainer.class );
 
 private UUID                                cmdID               = UUID.randomUUID();
-private long                                createTS            = System.currentTimeMillis();
+private Long                                createTS            = System.currentTimeMillis();
+private Long                                processingStartedTs = null;
 private String                              issueChannelName    = null;
 private String                              responseChannelName = null;
 private DLQCommand                          commandToIssue      = null;
@@ -76,14 +63,6 @@ return;
 public UUID getCommandUUID()
 {
 return cmdID;
-}
-
-
-
-
-public long getCreateTimestamp()
-{
-return createTS;
 }
 
 
@@ -166,6 +145,36 @@ return params;
 
 
 
+public Long getCreateTimestamp()
+{
+return createTS;
+}
+
+
+
+
+public void recordProcessingStartTimestamp()
+{
+recordProcessingStartTimestamp( null );
+return;
+}
+
+
+
+public void recordProcessingStartTimestamp( Long timestamp )
+{
+processingStartedTs = (timestamp != null) ? timestamp : System.currentTimeMillis();
+return;
+}
+
+
+
+public Long getProcessingStartTimestamp()
+{
+return processingStartedTs;
+}
+
+
 
 public static void main( String[] args )
 {
@@ -181,21 +190,15 @@ cmd.setIssueChannelName( "Issue.Channel.Name" );
 cmd.setResponseChannelName( "Response.ChannelName" );
 cmd.setCommandToIssue( DLQCommand.HELLO );
 
-/*
-List<DLQCommandParam>   parms  = new ArrayList<>();
-*/
-
 DLQCommandParam    param1 = new DLQCommandParam( "Param 1", "Value 1" );
 DLQCommandParam    param2 = new DLQCommandParam( "Param 2", "Value 2" );
 
 cmd.getCommandParams().add( param1 );
 cmd.getCommandParams().add( param2 );
 
-//cmd.setCommandParams( parms );
-
 
 Gson    xltrToJSON = builder.create();
-String  cmdAsJSON = xltrToJSON.toJson( cmd );
+String  cmdAsJSON  = xltrToJSON.toJson( cmd );
 
 System.out.println( "Command Container in JSON form:" );
 System.out.println( cmdAsJSON );

@@ -5,6 +5,7 @@ package ca.ontariohealth.smilecdr.dlqwatcher;
 
 import java.time.Duration;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -12,8 +13,16 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import ca.ontariohealth.smilecdr.BaseApplication;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommand;
+import ca.ontariohealth.smilecdr.support.commands.DLQCommandContainer;
+import ca.ontariohealth.smilecdr.support.commands.DLQCommandOutcome;
+import ca.ontariohealth.smilecdr.support.commands.DLQCommandParam;
+import ca.ontariohealth.smilecdr.support.commands.DLQResponseContainer;
+import ca.ontariohealth.smilecdr.support.commands.json.CommandParamAdapter;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
 
@@ -24,6 +33,9 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.PartitionInfo;
 
 
@@ -33,16 +45,21 @@ import org.apache.kafka.common.PartitionInfo;
  */
 public class DLQWatcher extends BaseApplication 
 {
-static private final Logger 			logr      = LoggerFactory.getLogger(DLQWatcher.class);
+static private final Logger 			        logr      = LoggerFactory.getLogger(DLQWatcher.class);
 
-static private final String				CLI_INITIAL_CMD_SHRT = "i";
-static private final String             CLI_INITIAL_CMD_LONG = "initCmd";
+static private final String				        CLI_INITIAL_CMD_SHRT = "i";
+static private final String                     CLI_INITIAL_CMD_LONG = "initCmd";
 
-static private final Long				KILL_POLLER_MAX_WAIT = 10000L; // milliseconds
+static private final Long				        KILL_POLLER_MAX_WAIT = 10000L; // milliseconds
 
-private	Consumer<String, String>		controlConsumer 	 = null;
-private	boolean							exitWatcher     	 = false;
-private	DLQPollingThread				dlqPoller       	 = null;
+private Map<String, Consumer<String,String>>    allConsumers         = new HashMap<>();
+private Map<String, Producer<String,String>>    allProducers         = new HashMap<>();
+
+private	Consumer<String, String>		        controlConsumer 	 = null;
+private	boolean							        exitWatcher     	 = false;
+private	DLQPollingThread				        dlqPoller       	 = null;
+
+private GsonBuilder                             jsonBuilder          = new GsonBuilder();
 
 
 /**
@@ -69,16 +86,19 @@ logr.debug( "Entering: {}.launch", DLQWatcher.class.getSimpleName() );
 
 //sendEMail( appConfig.configValue( ConfigProperty.EMAIL_TEMPLATE ) );
 
+jsonBuilder.registerTypeAdapter( DLQCommandParam.class, new CommandParamAdapter() );
+jsonBuilder.setPrettyPrinting();
+
+
 /*
  * Create the consume that will be waiting for commands to appear on the
  * Control Kafka topic.
  * 
  */
 
-String	controlTopic = appConfig.configValue( ConfigProperty.DEFAULT_CONTROL_TOPIC_NAME );
+String	controlTopic = appConfig.configValue( ConfigProperty.CONTROL_TOPIC_NAME_COMMAND );
 
-controlConsumer = createConsumer();
-controlConsumer.subscribe( Collections.singletonList( controlTopic ) );
+controlConsumer = createConsumer( controlTopic );
 
 logr.debug( "Subscribed to Control Topic: {}", controlTopic );
 
@@ -131,7 +151,7 @@ for (String crntTopic : topicList.keySet())
 
 
 /*
- * Check for and process the inital command.
+ * Check for and process the initial command(s).
  * 
  */
 
@@ -144,7 +164,11 @@ if (cmdLine.hasOption( CLI_INITIAL_CMD_LONG ))
 		for (String initCmd : rawInitCmds)
 			{
 			logr.debug( "Processing Initial Command: {}", initCmd != null ? initCmd : "<NULL>" );
-			processReceivedCommand( initCmd );
+			
+			DLQCommandContainer  cmdLineCmd  = constructCommandFromCmdLine( initCmd.strip() );
+			DLQResponseContainer cmdLineResp = processReceivedCommand( initCmd );
+			
+			returnResponse( cmdLineResp );
 			}
 		}
 	}
@@ -193,8 +217,67 @@ return;
 
 
 
-protected	void	processReceivedCommand( String cmd )
+
+private void    returnResponse( DLQResponseContainer resp )
 {
+if (resp != null)
+    {
+    Gson    xltrToJSON = jsonBuilder.create();
+    String  respAsJSON = xltrToJSON.toJson( resp );
+    
+    logr.info( "Processed Command resulting in:" );
+    logr.info( "\n{}", respAsJSON );
+    }
+
+return;
+}
+
+
+
+
+
+private DLQCommandContainer constructCommandFromCmdLine( String initCmd )
+{
+DLQCommandContainer cmdLineCmd = null;
+
+if ((initCmd != null) && (initCmd.length() > 0))
+    {
+    DLQCommand  newCmdType = DLQCommand.valueOf( initCmd );
+    
+    if (newCmdType != null)
+        {
+        cmdLineCmd = new DLQCommandContainer();
+        
+        switch (newCmdType)
+            {
+            case    HELLO:
+            case    LIST:
+            case    START:
+            case    STOP:
+            case    QUIT:
+                cmdLineCmd.setCommandToIssue( newCmdType );
+                break;
+                
+            case    UNKNOWN:
+                logr.error( "Unrecognized Command Line Initial Command: '{}' - Ignoring...", initCmd );
+                break;
+                
+            default:
+                logr.error( "Unexpected Command Line Initial Command: '{}' - Ignoring...", initCmd );
+                newCmdType = null;
+                break;
+            }
+        }
+    }
+return cmdLineCmd;
+}
+
+
+
+
+protected	DLQResponseContainer	processReceivedCommand( String cmd )
+{
+DLQResponseContainer    resp = null;
 if (cmd != null)
 	{
 	String	 controlCommand = cmd.strip();
@@ -204,64 +287,106 @@ if (cmd != null)
 		logr.debug( "Received Control Command: {}", controlCommand );
 
 		String[] args = controlCommand.split( "\s+", 0 );
-		processReceivedCommand( args );
+		resp = processReceivedCommand( args );
 		}				
 	}
 	
 	
-return;	
+return resp;	
 }
 
 
 
-protected	void	processReceivedCommand( String[] args )
+protected	DLQResponseContainer	processReceivedCommand( String[] args )
 {
+DLQResponseContainer    resp = null;
+
 if ((args != null) && (args.length > 0))
 	{
-	DLQCommand cmd = DLQCommand.getCommand( args[0] );
-	
+	DLQCommandContainer    cmdToProcess = new DLQCommandContainer();
+	DLQCommand             cmdName      = DLQCommand.valueOf( args[0] );
+
 	logr.debug( "Processing received command: '{}' translated to DLQWatcherCommand: '{}'",
 			    args[0],
-			    cmd.toString() );
+			    cmdName.toString() );
 	
+	int    ndx = 0;
+	for (String crntArg : args)
+	    {
+	    if (ndx == 0)
+	        cmdToProcess.setCommandToIssue( DLQCommand.valueOf( crntArg ) );
+	    
+	    else
+	        {
+	        DLQCommandParam    parm = new DLQCommandParam( crntArg, '=' );
+	       
+	        cmdToProcess.getCommandParams().add( parm );
+	        }
+	    
+	    ndx++;
+	    }
 	
-	switch (cmd)
-		{
-		case	HELLO:
-			// Nothing to do.  Already acknowledged in the logs.
-			break;
-			
-		case	LIST:
-			logr.info("All known {} Commands:", appConfig.getApplicationName().appName() );
-			for (DLQCommand crnt : DLQCommand.values())
-				if (crnt != DLQCommand.UNKNOWN)
-					logr.info( "   {} - {}", crnt.commandStr(), crnt.usageStr() );
-				
-			break;
-			
-		case	START:
-			logr.info( "Starting the DLQ Poller Thread if it is not already running." );
-			startPollingThread();
-			break;
-				
-		case	STOP:
-			logr.info( "Stopping the DLQ Poller Thread if it is running." );
-			stopPollingThread();
-			break;
-				
-		case	QUIT:
-			logr.info( "Triggering Exit of: {}", appConfig.getApplicationName().appName() );
-			exitWatcher = true;
-			break;
-			
-		case	UNKNOWN:
-		default:
-			logr.error( "Received unknown command: {}", args[0] );
-		}
+	resp = processReceivedCommand( cmdToProcess );
 	}
 
-return;	
+return resp;	
 }
+
+
+
+protected   DLQResponseContainer    processReceivedCommand( DLQCommandContainer cmd )
+{
+DLQResponseContainer    resp = null;
+
+if ((cmd != null) && (cmd.getCommandToIssue() != null))
+    {
+    cmd.recordProcessingStartTimestamp();
+    
+    resp = new DLQResponseContainer( cmd );
+    
+    
+    switch (cmd.getCommandToIssue())
+        {
+        case    HELLO:
+            resp.setOutcome( DLQCommandOutcome.SUCCESS );
+            resp.addReportLine( DLQCommand.HELLO.commandStr() );
+            break;
+            
+        case    LIST:
+            logr.info("All known {} Commands:", appConfig.getApplicationName().appName() );
+            for (DLQCommand crnt : DLQCommand.values())
+                if (crnt != DLQCommand.UNKNOWN)
+                    logr.info( "   {} - {}", crnt.commandStr(), crnt.usageStr() );
+                
+            break;
+            
+        case    START:
+            logr.info( "Starting the DLQ Poller Thread if it is not already running." );
+            startPollingThread();
+            break;
+                
+        case    STOP:
+            logr.info( "Stopping the DLQ Poller Thread if it is running." );
+            stopPollingThread();
+            break;
+                
+        case    QUIT:
+            logr.info( "Triggering Exit of: {}", appConfig.getApplicationName().appName() );
+            exitWatcher = true;
+            break;
+            
+        case    UNKNOWN:
+        default:
+            logr.error( "Received unknown command: {}", cmd.getCommandToIssue().commandStr() );
+        }
+    
+    resp.recordCompleteTimestamp();
+    }
+
+
+return resp;
+}
+
 
 
 
@@ -359,34 +484,72 @@ return;
 
 
 
-private Consumer<String, String>	createConsumer()
+private Consumer<String, String>	createConsumer( String topicName )
 {
-Consumer<String, String>  rtrn  = null;
-Properties				props = new Properties();
+Consumer<String, String>  rtrn  = allConsumers.get( topicName );
 
-String		groupID 		 	= appConfig.configValue( ConfigProperty.KAFKA_CONTROL_GROUP_ID,
-		                                              	 appConfig.getApplicationName().appName() + ".control.group.id" );
-
-String		bootstrapServers 	= appConfig.configValue( ConfigProperty.BOOTSTRAP_SERVERS );
-String      keyDeserializer  	= Configuration.KAFKA_KEY_DESERIALIZER_CLASS_NAME;
-String      valueDeserializer	= Configuration.KAFKA_VALUE_DESERIALIZER_CLASS_NAME;
-
-logr.debug( "   Group ID:           {}", groupID );
-logr.debug( "   Bootstrap Servers:  {}", bootstrapServers );
-logr.debug( "   Key Deserializer:   {}", keyDeserializer );
-logr.debug( "   Value Deserializer: {}", valueDeserializer );
-
-props.put( ConsumerConfig.GROUP_ID_CONFIG,                 groupID );
-props.put( ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,        bootstrapServers );
-props.put( ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,   keyDeserializer );
-props.put( ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, valueDeserializer );
-
-rtrn = new KafkaConsumer<>( props );
+if ((rtrn == null) && (topicName != null) && (topicName.length() > 0))
+    {
+    Properties	props               = new Properties();
+    
+    String		groupID 		 	= appConfig.configValue( ConfigProperty.KAFKA_CONTROL_GROUP_ID,
+    		                                              	 appConfig.getApplicationName().appName() + ".control.group.id" );
+    
+    String		bootstrapServers 	= appConfig.configValue( ConfigProperty.BOOTSTRAP_SERVERS );
+    String      keyDeserializer  	= Configuration.KAFKA_KEY_DESERIALIZER_CLASS_NAME;
+    String      valueDeserializer	= Configuration.KAFKA_VALUE_DESERIALIZER_CLASS_NAME;
+    
+    logr.debug( "   Group ID:           {}", groupID );
+    logr.debug( "   Bootstrap Servers:  {}", bootstrapServers );
+    logr.debug( "   Key Deserializer:   {}", keyDeserializer );
+    logr.debug( "   Value Deserializer: {}", valueDeserializer );
+    
+    props.put( ConsumerConfig.GROUP_ID_CONFIG,                 groupID );
+    props.put( ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,        bootstrapServers );
+    props.put( ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,   keyDeserializer );
+    props.put( ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, valueDeserializer );
+    
+    rtrn = new KafkaConsumer<>( props );
+    rtrn.subscribe( Collections.singletonList( topicName ) );
+    
+    allConsumers.put( topicName,  rtrn );
+    }
 
 return rtrn;	
 }
 
 
+
+private Producer<String, String>    createProducer( String topicName )
+{
+Producer<String, String>    rtrn = allProducers.get( topicName );
+
+if ((rtrn == null) && (topicName != null) && (topicName.length() > 0))
+    {
+    Properties  props = new Properties();
+
+    String      clientID         = appConfig.getApplicationName().appName();
+    String      bootstrapServers = appConfig.configValue( ConfigProperty.BOOTSTRAP_SERVERS );
+    String      keySerializer    = Configuration.KAFKA_KEY_SERIALIZER_CLASS_NAME;
+    String      valueSerializer  = Configuration.KAFKA_VALUE_SERIALIZER_CLASS_NAME;
+
+    logr.debug( "   Client ID:         {}", clientID );
+    logr.debug( "   Bootstrap Servers: {}", bootstrapServers );
+    logr.debug( "   Key Serializer:    {}", keySerializer );
+    logr.debug( "   Value Serializer:  {}", valueSerializer );
+
+    props.put( ProducerConfig.CLIENT_ID_CONFIG,                 clientID );
+    props.put( ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,         bootstrapServers );
+    props.put( ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,      keySerializer );
+    props.put( ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,    valueSerializer );
+
+    rtrn = new KafkaProducer<>( props );
+    allProducers.put( topicName, rtrn );
+    }
+
+
+return rtrn;
+}
 
 
 @Override
