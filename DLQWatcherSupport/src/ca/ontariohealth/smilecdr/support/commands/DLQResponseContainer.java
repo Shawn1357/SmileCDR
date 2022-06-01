@@ -3,6 +3,7 @@
  */
 package ca.ontariohealth.smilecdr.support.commands;
 
+import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -13,12 +14,13 @@ import java.util.UUID;
  */
 public class DLQResponseContainer
 {
-private UUID                    respID                  = UUID.randomUUID();
-private Long                    createTS                = System.currentTimeMillis();
-private Long                    processingCompleteTS    = null;
-private DLQCommandContainer     srcCommand              = null;
-private DLQCommandOutcome       processingOutcome       = null;
-private List<String>            reportLines             = new LinkedList<>();
+private UUID                    respID                      = UUID.randomUUID();
+private Instant                 createTS                    = Instant.now();
+private Instant                 processingCompleteTS        = null;
+private Instant                 receivedResponseTS          = null;
+private DLQCommandContainer     srcCommand                  = null;
+private DLQCommandOutcome       processingOutcome           = null;
+private List<ReportRecord>      reportLines                 = new LinkedList<>();
 
 public DLQResponseContainer()
 {
@@ -82,10 +84,20 @@ return processingOutcome;
 
 
 
-public void addReportLine( String rprtLine )
+public void addReportEntry( String rprtLine )
 {
 if (rprtLine != null)
-    reportLines.add( rprtLine );
+    reportLines.add( new ReportRecord( rprtLine ) );
+
+return;
+}
+
+
+
+public void addReportEntry( DLQRecordEntry dlqEntry )
+{
+if (dlqEntry != null)
+    reportLines.add( new ReportRecord( dlqEntry ) );
 
 return;
 }
@@ -101,16 +113,16 @@ return;
 
 
 
-public void     recordCompleteTimestamp( Long timestamp )
+public void     recordCompleteTimestamp( Instant timestamp )
 {
-processingCompleteTS = timestamp != null ? timestamp : System.currentTimeMillis();
+processingCompleteTS = timestamp != null ? timestamp : Instant.now();
 return;
 }
 
 
 
 
-public Long     getCreatedTimestamp()
+public Instant     getCreatedTimestamp()
 {
 return createTS;
 }
@@ -118,8 +130,29 @@ return createTS;
 
 
 
-public Long     getCompletedTimestamp()
+public Instant     getCompletedTimestamp()
 {
 return processingCompleteTS;
+}
+
+
+
+
+public  void       setReceivedResponseTimestamp( Instant timestamp )
+{
+if (timestamp != null)
+    receivedResponseTS = timestamp;
+
+else
+    receivedResponseTS = Instant.now();
+
+return;
+}
+
+
+
+public Instant      getReceivedResponseTimestamp()
+{
+return receivedResponseTS;
 }
 }

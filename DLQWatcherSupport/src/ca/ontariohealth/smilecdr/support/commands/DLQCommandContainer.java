@@ -3,6 +3,7 @@
  */
 package ca.ontariohealth.smilecdr.support.commands;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -24,8 +25,8 @@ public class DLQCommandContainer
 private static Logger                       logr                = LoggerFactory.getLogger( DLQCommandContainer.class );
 
 private UUID                                cmdID               = UUID.randomUUID();
-private Long                                createTS            = System.currentTimeMillis();
-private Long                                processingStartedTs = null;
+private Instant                             createTS            = Instant.now();
+private Instant                             processingStartedTs = null;
 private String                              issueChannelName    = null;
 private String                              responseChannelName = null;
 private DLQCommand                          commandToIssue      = null;
@@ -145,7 +146,7 @@ return params;
 
 
 
-public Long getCreateTimestamp()
+public Instant getCreateTimestamp()
 {
 return createTS;
 }
@@ -161,15 +162,15 @@ return;
 
 
 
-public void recordProcessingStartTimestamp( Long timestamp )
+public void recordProcessingStartTimestamp( Instant timestamp )
 {
-processingStartedTs = (timestamp != null) ? timestamp : System.currentTimeMillis();
+processingStartedTs = (timestamp != null) ? timestamp : Instant.now();
 return;
 }
 
 
 
-public Long getProcessingStartTimestamp()
+public Instant getProcessingStartTimestamp()
 {
 return processingStartedTs;
 }

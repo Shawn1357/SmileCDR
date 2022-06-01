@@ -4,6 +4,7 @@
 package ca.ontariohealth.smilecdr.dlqwatcher;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -21,8 +22,12 @@ import ca.ontariohealth.smilecdr.support.commands.DLQCommand;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandContainer;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandOutcome;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandParam;
+import ca.ontariohealth.smilecdr.support.commands.DLQRecordEntry;
 import ca.ontariohealth.smilecdr.support.commands.DLQResponseContainer;
+import ca.ontariohealth.smilecdr.support.commands.ReportRecord;
 import ca.ontariohealth.smilecdr.support.commands.json.CommandParamAdapter;
+import ca.ontariohealth.smilecdr.support.commands.json.InstantAdapter;
+import ca.ontariohealth.smilecdr.support.commands.json.ReportRecordAdapter;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
 
@@ -87,6 +92,8 @@ logr.debug( "Entering: {}.launch", DLQWatcher.class.getSimpleName() );
 //sendEMail( appConfig.configValue( ConfigProperty.EMAIL_TEMPLATE ) );
 
 jsonBuilder.registerTypeAdapter( DLQCommandParam.class, new CommandParamAdapter() );
+jsonBuilder.registerTypeAdapter( ReportRecord.class,    new ReportRecordAdapter() );
+jsonBuilder.registerTypeAdapter( Instant.class,         new InstantAdapter() );
 jsonBuilder.setPrettyPrinting();
 
 
@@ -227,6 +234,7 @@ if (resp != null)
     
     logr.info( "Processed Command resulting in:" );
     logr.info( "\n{}", respAsJSON );
+    
     }
 
 return;
@@ -349,14 +357,20 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
         {
         case    HELLO:
             resp.setOutcome( DLQCommandOutcome.SUCCESS );
-            resp.addReportLine( DLQCommand.HELLO.commandStr() );
+            resp.addReportEntry( DLQCommand.HELLO.commandStr() );
             break;
             
         case    LIST:
             logr.info("All known {} Commands:", appConfig.getApplicationName().appName() );
+            resp.setOutcome( DLQCommandOutcome.SUCCESS );
+            
             for (DLQCommand crnt : DLQCommand.values())
                 if (crnt != DLQCommand.UNKNOWN)
-                    logr.info( "   {} - {}", crnt.commandStr(), crnt.usageStr() );
+                    {
+                    String  rprtLine = String.format( "%s - %s", crnt.commandStr(), crnt.usageStr() );
+                    logr.info( "   {}", rprtLine);
+                    resp.addReportEntry( rprtLine );
+                    }
                 
             break;
             
@@ -373,6 +387,8 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
         case    QUIT:
             logr.info( "Triggering Exit of: {}", appConfig.getApplicationName().appName() );
             exitWatcher = true;
+            
+            resp.setOutcome( DLQCommandOutcome.SUCCESS );
             break;
             
         case    UNKNOWN:
