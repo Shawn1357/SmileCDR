@@ -4,13 +4,12 @@
 package ca.ontariohealth.smilecdr.dlqwatcher;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +18,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import ca.ontariohealth.smilecdr.BaseApplication;
+import ca.ontariohealth.smilecdr.support.MyInstant;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommand;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandContainer;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandOutcome;
@@ -27,9 +27,8 @@ import ca.ontariohealth.smilecdr.support.commands.DLQResponseContainer;
 import ca.ontariohealth.smilecdr.support.commands.ProcessingMessage;
 import ca.ontariohealth.smilecdr.support.commands.ProcessingMessageSeverity;
 import ca.ontariohealth.smilecdr.support.commands.json.CommandParamAdapter;
-import ca.ontariohealth.smilecdr.support.commands.json.InstantAdapter;
+import ca.ontariohealth.smilecdr.support.commands.json.MyInstantAdapter;
 import ca.ontariohealth.smilecdr.support.commands.json.ReportRecordAdapter;
-import ca.ontariohealth.smilecdr.support.commands.response.DLQRecordEntry;
 import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
 import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
@@ -45,6 +44,8 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
 
 
@@ -54,7 +55,7 @@ import org.apache.kafka.common.PartitionInfo;
  */
 public class DLQWatcher extends BaseApplication 
 {
-static private final Logger 			        logr      = LoggerFactory.getLogger(DLQWatcher.class);
+static private final Logger 			        logr                 = LoggerFactory.getLogger(DLQWatcher.class);
 
 static private final String				        CLI_INITIAL_CMD_SHRT = "i";
 static private final String                     CLI_INITIAL_CMD_LONG = "initCmd";
@@ -69,6 +70,8 @@ private	boolean							        exitWatcher     	 = false;
 private	DLQPollingThread				        dlqPoller       	 = null;
 
 private GsonBuilder                             jsonBuilder          = new GsonBuilder();
+
+private int                                     rollingRcrdIndex     = 0;
 
 
 /**
@@ -97,7 +100,7 @@ logr.debug( "Entering: {}.launch", DLQWatcher.class.getSimpleName() );
 
 jsonBuilder.registerTypeAdapter( DLQCommandParam.class, new CommandParamAdapter() );
 jsonBuilder.registerTypeAdapter( ReportRecord.class,    new ReportRecordAdapter() );
-jsonBuilder.registerTypeAdapter( Instant.class,         new InstantAdapter() );
+jsonBuilder.registerTypeAdapter( MyInstant.class,       new MyInstantAdapter() );
 jsonBuilder.setPrettyPrinting();
 
 
@@ -177,7 +180,7 @@ if (cmdLine.hasOption( CLI_INITIAL_CMD_LONG ))
 			logr.debug( "Processing Initial Command: {}", initCmd != null ? initCmd : "<NULL>" );
 			
 			DLQCommandContainer  cmdLineCmd  = constructCommandFromCmdLine( initCmd.strip() );
-			DLQResponseContainer cmdLineResp = processReceivedCommand( initCmd );
+			DLQResponseContainer cmdLineResp = processReceivedCommand( cmdLineCmd );
 			
 			returnResponse( cmdLineResp );
 			}
@@ -209,7 +212,11 @@ while (!exitWatcher)
 		for (ConsumerRecord<String, String> crnt : rcrds)
 			{
 			if (crnt != null)
-				processReceivedCommand( crnt.value() );
+			    {
+				DLQResponseContainer resp = processReceivedCommand( crnt.value() );
+				
+				returnResponse( resp );
+			    }
 			}
 		}
 	
@@ -231,7 +238,12 @@ return;
 
 private void    returnResponse( DLQResponseContainer resp )
 {
-if (resp != null)
+logr.debug( "Entering: returnResponse" );
+
+DLQCommandContainer cmd     = (resp != null) ? resp.getSourceCommand()      : null;
+String              channel = (cmd != null)  ? cmd.getResponseChannelName() : null;
+
+if ((resp != null) && (cmd != null) && (channel != null) && (channel.length() > 0))
     {
     Gson    xltrToJSON = jsonBuilder.create();
     String  respAsJSON = xltrToJSON.toJson( resp );
@@ -239,8 +251,62 @@ if (resp != null)
     logr.info( "Processed Command resulting in:" );
     logr.info( "\n{}", respAsJSON );
     
+    Producer<String, String>    producer = createProducer( channel );
+    if (producer != null)
+        {
+        long            crntTime = System.currentTimeMillis();
+        String          msgID    = String.valueOf( crntTime ) + String.format( "-%04d", rollingRcrdIndex++ );
+        RecordMetadata  metadata = null;
+        
+        if (rollingRcrdIndex >= 10000)
+            rollingRcrdIndex = 0;
+        
+        ProducerRecord<String, String> record = new ProducerRecord<>( channel,
+                                                                      msgID,
+                                                                      respAsJSON );
+        try
+            {
+            metadata = producer.send( record ).get();
+            } 
+        
+        catch (InterruptedException e)
+            {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            } 
+        
+        catch (ExecutionException e)
+            {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            }
+        
+        
+        
+        if (metadata != null)
+            {
+            logr.debug( "Metadata Returned:" );
+            logr.debug( "   Has Offset:            {}", metadata.hasOffset()    ? "Yes" : "No" );
+            logr.debug( "   Has Timestamp:         {}", metadata.hasTimestamp() ? "Yes" : "No" );
+            
+            if (metadata.hasOffset())
+                logr.debug( "   Offset Value:          {}", metadata.offset() );
+            
+            if (metadata.hasTimestamp())
+                logr.debug( "   Timestamp:             {}", metadata.timestamp() );
+            
+            logr.debug( "   Partition:             {}", metadata.partition() );
+            logr.debug( "   Serialized Key Size:   {}", metadata.serializedKeySize() );
+            logr.debug( "   Serialized Value Size: {}", metadata.serializedValueSize() );
+            }
+        
+        else
+            logr.error( "Kafka Send Request resulted in null Metadata" );
+        
+        }
     }
 
+logr.debug( "Exiting: resturnResponse()" );
 return;
 }
 
@@ -286,63 +352,40 @@ return cmdLineCmd;
 
 
 
-
-protected	DLQResponseContainer	processReceivedCommand( String cmd )
+protected   DLQResponseContainer    processReceivedCommand( String jsonCmd )
 {
-DLQResponseContainer    resp = null;
-if (cmd != null)
-	{
-	String	 controlCommand = cmd.strip();
-	
-	if ((controlCommand != null) &&  (controlCommand.length() > 0))
-		{
-		logr.debug( "Received Control Command: {}", controlCommand );
+DLQResponseContainer    resp    = null;
 
-		String[] args = controlCommand.split( "\s+", 0 );
-		resp = processReceivedCommand( args );
-		}				
-	}
-	
-	
-return resp;	
+logr.debug( "Entering: processReceivedCommand(String)" );
+
+if ((jsonCmd != null) && (jsonCmd.length() > 0))
+    {
+    logr.debug( "JSON string to be parsed:" );
+    logr.debug( "\n{}", jsonCmd );
+    
+    DLQCommandContainer     cmdObj  = DLQCommandContainer.fromJSON( jsonCmd );
+    
+    if (cmdObj != null)
+        {
+        logr.debug( "Received Control Command: {}", cmdObj.getCommandToIssue().commandStr() );
+
+        resp = processReceivedCommand( cmdObj );
+        }
+    
+    else
+        {
+        logr.error( "Unable to translate source string into Command Container object." );
+        }
+    }
+
+else
+    logr.debug( "Input JSON string is null or zero length." );
+
+logr.debug( "Exiting: processingReceivedCommand(String)" );
+return resp;    
 }
 
 
-
-protected	DLQResponseContainer	processReceivedCommand( String[] args )
-{
-DLQResponseContainer    resp = null;
-
-if ((args != null) && (args.length > 0))
-	{
-	DLQCommandContainer    cmdToProcess = new DLQCommandContainer();
-	DLQCommand             cmdName      = DLQCommand.valueOf( args[0] );
-
-	logr.debug( "Processing received command: '{}' translated to DLQWatcherCommand: '{}'",
-			    args[0],
-			    cmdName.toString() );
-	
-	int    ndx = 0;
-	for (String crntArg : args)
-	    {
-	    if (ndx == 0)
-	        cmdToProcess.setCommandToIssue( DLQCommand.valueOf( crntArg ) );
-	    
-	    else
-	        {
-	        DLQCommandParam    parm = new DLQCommandParam( crntArg, '=' );
-	       
-	        cmdToProcess.getCommandParams().add( parm );
-	        }
-	    
-	    ndx++;
-	    }
-	
-	resp = processReceivedCommand( cmdToProcess );
-	}
-
-return resp;	
-}
 
 
 

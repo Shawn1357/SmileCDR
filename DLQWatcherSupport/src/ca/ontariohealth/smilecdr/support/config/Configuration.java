@@ -824,7 +824,7 @@ return rtrn;
 private class   PropertyPermutationInfo
 {
 public  String                      propKey     = null;
-public  PropertyNamePermutation     perm        = null;
+//public  PropertyNamePermutation     perm        = null;
 public  String                      fullPropNm  = null;
 
 
@@ -833,7 +833,7 @@ public PropertyPermutationInfo( String                      propertyKey,
                                 String                      fullPropName )
 {
 propKey     = propertyKey;
-perm        = permutation;
+//perm        = permutation;
 fullPropNm  = fullPropName;
 
 return;

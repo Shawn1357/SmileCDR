@@ -3,11 +3,11 @@
  */
 package ca.ontariohealth.smilecdr.support.commands;
 
-import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
+import ca.ontariohealth.smilecdr.support.MyInstant;
 import ca.ontariohealth.smilecdr.support.commands.response.DLQRecordEntry;
 import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
 import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
@@ -19,9 +19,9 @@ import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
 public class DLQResponseContainer
 {
 private UUID                    respID                      = UUID.randomUUID();
-private Instant                 createTS                    = Instant.now();
-private Instant                 processingCompleteTS        = null;
-private Instant                 receivedResponseTS          = null;
+private MyInstant               createTS                    = MyInstant.now();
+private MyInstant               processingCompleteTS        = null;
+private MyInstant               receivedResponseTS          = null;
 private DLQCommandContainer     srcCommand                  = null;
 private DLQCommandOutcome       processingOutcome           = null;
 private List<ProcessingMessage> processingMessages          = new LinkedList<>();
@@ -136,16 +136,16 @@ return;
 
 
 
-public void     recordCompleteTimestamp( Instant timestamp )
+public void     recordCompleteTimestamp( MyInstant timestamp )
 {
-processingCompleteTS = timestamp != null ? timestamp : Instant.now();
+processingCompleteTS = timestamp != null ? timestamp : MyInstant.now();
 return;
 }
 
 
 
 
-public Instant     getCreatedTimestamp()
+public MyInstant     getCreatedTimestamp()
 {
 return createTS;
 }
@@ -153,7 +153,7 @@ return createTS;
 
 
 
-public Instant     getCompletedTimestamp()
+public MyInstant     getCompletedTimestamp()
 {
 return processingCompleteTS;
 }
@@ -161,20 +161,20 @@ return processingCompleteTS;
 
 
 
-public  void       setReceivedResponseTimestamp( Instant timestamp )
+public  void       setReceivedResponseTimestamp( MyInstant timestamp )
 {
 if (timestamp != null)
     receivedResponseTS = timestamp;
 
 else
-    receivedResponseTS = Instant.now();
+    receivedResponseTS = MyInstant.now();
 
 return;
 }
 
 
 
-public Instant      getReceivedResponseTimestamp()
+public MyInstant      getReceivedResponseTimestamp()
 {
 return receivedResponseTS;
 }

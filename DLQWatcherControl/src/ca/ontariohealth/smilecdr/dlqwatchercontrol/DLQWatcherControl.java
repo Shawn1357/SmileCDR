@@ -3,6 +3,8 @@
  */
 package ca.ontariohealth.smilecdr.dlqwatchercontrol;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
@@ -10,6 +12,9 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.gson.GsonBuilder;
+
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -17,6 +22,14 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
 import ca.ontariohealth.smilecdr.BaseApplication;
+import ca.ontariohealth.smilecdr.support.MyInstant;
+import ca.ontariohealth.smilecdr.support.commands.DLQCommand;
+import ca.ontariohealth.smilecdr.support.commands.DLQCommandContainer;
+import ca.ontariohealth.smilecdr.support.commands.DLQCommandParam;
+import ca.ontariohealth.smilecdr.support.commands.json.CommandParamAdapter;
+import ca.ontariohealth.smilecdr.support.commands.json.MyInstantAdapter;
+import ca.ontariohealth.smilecdr.support.commands.json.ReportRecordAdapter;
+import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
 
@@ -35,6 +48,10 @@ protected static final	String 				CLI_TOPIC_LONG  = "topicNm";
 protected static final  String				CLI_OPERTN_SHRT = "o";
 protected static final  String              CLI_OPERTN_LONG = "operation";
 
+private GsonBuilder                         jsonBuilder     = new GsonBuilder();
+
+private int                                 rollingNdx      = 0;
+
 public static void main( String[] args )
 {
 logr.debug( "Entering: main" );
@@ -52,6 +69,11 @@ return;
 protected void launch() 
 {
 logr.debug("Entering: DLQWatcherControl.launch" );
+
+jsonBuilder.registerTypeAdapter( DLQCommandParam.class, new CommandParamAdapter() );
+jsonBuilder.registerTypeAdapter( ReportRecord.class,    new ReportRecordAdapter() );
+jsonBuilder.registerTypeAdapter( MyInstant.class,       new MyInstantAdapter() );
+jsonBuilder.setPrettyPrinting();
 
 /*
  * Grab the command line options specific to this application.
@@ -86,12 +108,19 @@ private void sendCommand( final String kafkaTopicName,
 logr.debug( "Entering: sendCommand" );
 logr.debug(  "   Topic Name: {}", kafkaTopicName );
 logr.debug(  "   Command:    {}", commandToSend );
-final Producer<String, String> prdcr    = createProducer();
-long                           crntTime = System.currentTimeMillis();
 
-final ProducerRecord<String, String> record = new ProducerRecord<>( kafkaTopicName,
-		                                       					    String.valueOf( crntTime ),
-		                                       					    commandToSend );
+final Producer<String, String> prdcr        = createProducer();
+long                           crntTime     = System.currentTimeMillis();
+String                         msgID        = String.valueOf( crntTime ) + String.format( "-%04d", rollingNdx ++ );   
+DLQCommandContainer            cmd          = createWatcherCommand( commandToSend );
+String                         jsonCmd      = cmd.toJSON(jsonBuilder );
+
+if (rollingNdx >= 10000)
+    rollingNdx = 0;
+
+ProducerRecord<String, String> record = new ProducerRecord<>( kafkaTopicName,
+		                                       				  msgID,
+		                                       				  jsonCmd );
 try 
 	{
 	logr.debug( "Sending Command to Kafka Topic" );
@@ -134,6 +163,45 @@ logr.debug( "Exiting: sendCommand" );
 return;
 }
 
+
+
+
+private DLQCommandContainer createWatcherCommand( String cmdLine )
+{
+DLQCommandContainer rtrn = null;
+
+if ((cmdLine != null) && (cmdLine.length() > 0))
+    {
+    String                  issueChannel = appConfig.configValue( ConfigProperty.CONTROL_TOPIC_NAME_COMMAND );
+    String                  respChannel  = appConfig.configValue( ConfigProperty.CONTROL_TOPIC_NAME_RESPONSE );
+    String[]                args         = cmdLine.split( " " );
+    DLQCommand              cmd          = null;
+    List<DLQCommandParam>   parms        = new LinkedList<>();
+    int                     ndx          = 0;
+    
+    for (String crnt : args)
+        {
+        if (ndx++ == 0)
+            cmd = DLQCommand.valueOf( crnt );
+        
+        else
+            {
+            DLQCommandParam newParm = new DLQCommandParam( crnt );
+            parms.add( newParm );
+            }
+        }
+    
+    if ((cmd != null) && (cmd != DLQCommand.UNKNOWN))
+        {
+        rtrn = new DLQCommandContainer( issueChannel,
+                                        respChannel,
+                                        cmd,
+                                        parms );
+        }
+    }
+
+return rtrn;
+}
 
 
 

@@ -3,7 +3,7 @@
  */
 package ca.ontariohealth.smilecdr.support.commands.response;
 
-import java.time.Instant;
+import ca.ontariohealth.smilecdr.support.MyInstant;
 
 /**
  * @author adminuser
@@ -11,7 +11,7 @@ import java.time.Instant;
  */
 public class DLQRecordEntry
 {
-private Instant     entryTimestamp  = null;
+private MyInstant   entryTimestamp  = null;
 private String      subscriptionID  = null;
 private String      resourceType    = null;
 private String      resourceID      = null;
@@ -24,10 +24,10 @@ return;
 
 
 
-public DLQRecordEntry( Instant entryTime, 
-                       String  subscrID, 
-                       String  rsrcType, 
-                       String  rsrcID )
+public DLQRecordEntry( MyInstant    entryTime, 
+                       String       subscrID, 
+                       String       rsrcType, 
+                       String       rsrcID )
 {
 setEntryTimestamp( entryTime );
 setSubscriptionID( subscrID );
@@ -39,16 +39,16 @@ return;
 
 
 
-public Instant getEntryTimestamp()
+public MyInstant getEntryTimestamp()
 {
 return entryTimestamp;
 }
 
 
 
-public void setEntryTimestamp( Instant entryTimestamp )
+public void setEntryTimestamp( MyInstant entryTimestamp )
 {
-this.entryTimestamp = entryTimestamp != null ? entryTimestamp : Instant.now();
+this.entryTimestamp = entryTimestamp != null ? entryTimestamp : MyInstant.now();
 return;
 }
 

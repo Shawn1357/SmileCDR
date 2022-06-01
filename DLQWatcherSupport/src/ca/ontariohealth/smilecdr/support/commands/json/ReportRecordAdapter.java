@@ -4,7 +4,6 @@
 package ca.ontariohealth.smilecdr.support.commands.json;
 
 import java.io.IOException;
-import java.time.Instant;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +13,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
+import ca.ontariohealth.smilecdr.support.MyInstant;
 import ca.ontariohealth.smilecdr.support.commands.response.DLQRecordEntry;
 import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
 import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
@@ -35,7 +35,7 @@ private static  String          FIELD_SUBSCRIPTION_ID   = "subscriptionID";
 private static  String          FIELD_RESOURCE_TYPE     = "resourceType";
 private static  String          FIELD_RESOURCE_ID       = "resourceID";
 
-private static  InstantAdapter  instantAdapter          = new InstantAdapter();
+private static  MyInstantAdapter  instantAdapter          = new MyInstantAdapter();
 
 
 @Override
@@ -70,7 +70,7 @@ if (value != null)
             
         case    DLQ_ENTRY_SPEC:
             DLQRecordEntry  dlqEntry    = value.getRcrdDLQEntry();
-            Instant         dlqTS       = dlqEntry.getEntryTimestamp();
+            MyInstant       dlqTS       = dlqEntry.getEntryTimestamp();
             
             writer.name( FIELD_ENTRY_TS );
             instantAdapter.write( writer, dlqTS );
@@ -111,7 +111,7 @@ ReportRecord    rtrn = null;
 
 ReportRecordType    rprtRcrdType        = null;
 String              rprtTextLine        = null;
-Instant             rprtDLQEntryTS      = null;
+MyInstant           rprtDLQEntryTS      = null;
 String              rprtDLQSubID        = null;
 String              rprtDLQRsrcType     = null;
 String              rprtDLQRsrcID       = null;

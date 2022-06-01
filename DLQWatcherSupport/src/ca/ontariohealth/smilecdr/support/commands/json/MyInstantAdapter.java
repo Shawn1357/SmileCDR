@@ -4,7 +4,6 @@
 package ca.ontariohealth.smilecdr.support.commands.json;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -14,11 +13,13 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
+import ca.ontariohealth.smilecdr.support.MyInstant;
+
 /**
  * @author adminuser
  *
  */
-public class InstantAdapter extends TypeAdapter<Instant>
+public class MyInstantAdapter extends TypeAdapter<MyInstant>
 {
 private static  String  FIELD_EPOCH_MILLIS  = "epochMillis";
 private static  String  FIELD_ISO8601_STR   = "iso8601Format";
@@ -28,13 +29,13 @@ private static  ZoneId  systemZone          = ZoneId.systemDefault();
 private static  DateTimeFormatter   lclFmt  = DateTimeFormatter.ofPattern( "yyyy-MM-dd HH:mm:ss" );
 
 @Override
-public void write (JsonWriter writer, Instant value) throws IOException
+public void write (JsonWriter writer, MyInstant value) throws IOException
 {
 if (value != null)
     {
-    Long            epochMillis   = Long.valueOf( value.toEpochMilli() );
+    Long            epochMillis   = Long.valueOf( value.getEpochMillis() );
     String          iso8601Fmt    = value.toString();
-    LocalDateTime   localDateTime = LocalDateTime.ofInstant( value, systemZone );
+    LocalDateTime   localDateTime = LocalDateTime.ofInstant( value.asInstant(), systemZone );
     
     writer.beginObject();
     
@@ -57,9 +58,9 @@ return;
 
 
 @Override
-public Instant read( JsonReader reader ) throws IOException
+public MyInstant read( JsonReader reader ) throws IOException
 {
-Instant    rtrn = null;
+MyInstant    rtrn = null;
 
 reader.beginObject();
 while (reader.hasNext())
@@ -81,7 +82,7 @@ while (reader.hasNext())
         token   = reader.peek();
         Long millis = reader.nextLong();
         
-        rtrn = Instant.ofEpochMilli( millis );
+        rtrn = new MyInstant( millis );
         }
     }
 

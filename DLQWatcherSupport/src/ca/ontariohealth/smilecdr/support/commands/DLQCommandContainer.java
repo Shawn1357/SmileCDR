@@ -3,7 +3,6 @@
  */
 package ca.ontariohealth.smilecdr.support.commands;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -14,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import ca.ontariohealth.smilecdr.support.MyInstant;
 import ca.ontariohealth.smilecdr.support.commands.json.CommandParamAdapter;
 
 /**
@@ -25,12 +25,31 @@ public class DLQCommandContainer
 private static Logger                       logr                = LoggerFactory.getLogger( DLQCommandContainer.class );
 
 private UUID                                cmdID               = UUID.randomUUID();
-private Instant                             createTS            = Instant.now();
-private Instant                             processingStartedTs = null;
+private MyInstant                           createTS            = MyInstant.now();
+private MyInstant                           processingStartedTs = null;
 private String                              issueChannelName    = null;
 private String                              responseChannelName = null;
 private DLQCommand                          commandToIssue      = null;
 private List<DLQCommandParam>               params              = new ArrayList<>();
+
+
+
+public static DLQCommandContainer   fromJSON( String jsonStr )
+{
+DLQCommandContainer rtrn = null;
+
+if ((jsonStr != null) && (jsonStr.length() > 0))
+    {
+    Gson    gson = new Gson();
+    
+    rtrn = gson.fromJson( jsonStr, DLQCommandContainer.class );
+    }
+
+return rtrn;
+}
+
+
+
 
 
 public  DLQCommandContainer()
@@ -45,7 +64,7 @@ return;
 public  DLQCommandContainer( String                             issueChannelNm,
                              String                             responseChannelNm,
                              DLQCommand                         command,
-                             List<DLQCommandParam>                 cmdParams )
+                             List<DLQCommandParam>              cmdParams )
 {
 logr.debug( "Entering {} Constructor", DLQCommandContainer.class.getSimpleName() );
 
@@ -146,7 +165,7 @@ return params;
 
 
 
-public Instant getCreateTimestamp()
+public MyInstant getCreateTimestamp()
 {
 return createTS;
 }
@@ -162,19 +181,28 @@ return;
 
 
 
-public void recordProcessingStartTimestamp( Instant timestamp )
+public void recordProcessingStartTimestamp( MyInstant timestamp )
 {
-processingStartedTs = (timestamp != null) ? timestamp : Instant.now();
+processingStartedTs = (timestamp != null) ? timestamp : MyInstant.now();
 return;
 }
 
 
 
-public Instant getProcessingStartTimestamp()
+public MyInstant getProcessingStartTimestamp()
 {
 return processingStartedTs;
 }
 
+
+
+public String   toJSON( GsonBuilder  bldr )
+{
+Gson    xltrToJSON   = bldr.create();
+String  jsonCmd      = xltrToJSON.toJson( this );
+
+return jsonCmd;
+}
 
 
 public static void main( String[] args )
