@@ -33,6 +33,8 @@ import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
 import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
+import ca.ontariohealth.smilecdr.support.kafka.KafkaConsumerHelper;
+import ca.ontariohealth.smilecdr.support.kafka.KafkaProducerHelper;
 
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -112,7 +114,7 @@ jsonBuilder.setPrettyPrinting();
 
 String	controlTopic = appConfig.configValue( ConfigProperty.CONTROL_TOPIC_NAME_COMMAND );
 
-controlConsumer = createConsumer( controlTopic );
+controlConsumer = KafkaConsumerHelper.createConsumer( appConfig, controlTopic );
 
 logr.debug( "Subscribed to Control Topic: {}", controlTopic );
 
@@ -251,7 +253,7 @@ if ((resp != null) && (cmd != null) && (channel != null) && (channel.length() > 
     logr.info( "Processed Command resulting in:" );
     logr.info( "\n{}", respAsJSON );
     
-    Producer<String, String>    producer = createProducer( channel );
+    Producer<String, String>    producer = KafkaProducerHelper.createProducer( appConfig, channel );
     if (producer != null)
         {
         long            crntTime = System.currentTimeMillis();
@@ -599,74 +601,6 @@ return;
 }
 
 
-
-
-private Consumer<String, String>	createConsumer( String topicName )
-{
-Consumer<String, String>  rtrn  = allConsumers.get( topicName );
-
-if ((rtrn == null) && (topicName != null) && (topicName.length() > 0))
-    {
-    Properties	props               = new Properties();
-    
-    String		groupID 		 	= appConfig.configValue( ConfigProperty.KAFKA_CONTROL_GROUP_ID,
-    		                                              	 appConfig.getApplicationName().appName() + ".control.group.id" );
-    
-    String		bootstrapServers 	= appConfig.configValue( ConfigProperty.BOOTSTRAP_SERVERS );
-    String      keyDeserializer  	= Configuration.KAFKA_KEY_DESERIALIZER_CLASS_NAME;
-    String      valueDeserializer	= Configuration.KAFKA_VALUE_DESERIALIZER_CLASS_NAME;
-    
-    logr.debug( "   Group ID:           {}", groupID );
-    logr.debug( "   Bootstrap Servers:  {}", bootstrapServers );
-    logr.debug( "   Key Deserializer:   {}", keyDeserializer );
-    logr.debug( "   Value Deserializer: {}", valueDeserializer );
-    
-    props.put( ConsumerConfig.GROUP_ID_CONFIG,                 groupID );
-    props.put( ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,        bootstrapServers );
-    props.put( ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,   keyDeserializer );
-    props.put( ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, valueDeserializer );
-    
-    rtrn = new KafkaConsumer<>( props );
-    rtrn.subscribe( Collections.singletonList( topicName ) );
-    
-    allConsumers.put( topicName,  rtrn );
-    }
-
-return rtrn;	
-}
-
-
-
-private Producer<String, String>    createProducer( String topicName )
-{
-Producer<String, String>    rtrn = allProducers.get( topicName );
-
-if ((rtrn == null) && (topicName != null) && (topicName.length() > 0))
-    {
-    Properties  props = new Properties();
-
-    String      clientID         = appConfig.getApplicationName().appName();
-    String      bootstrapServers = appConfig.configValue( ConfigProperty.BOOTSTRAP_SERVERS );
-    String      keySerializer    = Configuration.KAFKA_KEY_SERIALIZER_CLASS_NAME;
-    String      valueSerializer  = Configuration.KAFKA_VALUE_SERIALIZER_CLASS_NAME;
-
-    logr.debug( "   Client ID:         {}", clientID );
-    logr.debug( "   Bootstrap Servers: {}", bootstrapServers );
-    logr.debug( "   Key Serializer:    {}", keySerializer );
-    logr.debug( "   Value Serializer:  {}", valueSerializer );
-
-    props.put( ProducerConfig.CLIENT_ID_CONFIG,                 clientID );
-    props.put( ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,         bootstrapServers );
-    props.put( ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,      keySerializer );
-    props.put( ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,    valueSerializer );
-
-    rtrn = new KafkaProducer<>( props );
-    allProducers.put( topicName, rtrn );
-    }
-
-
-return rtrn;
-}
 
 
 @Override

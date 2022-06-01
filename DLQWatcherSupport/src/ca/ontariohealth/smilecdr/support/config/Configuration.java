@@ -697,6 +697,95 @@ return rtrn;
 
 
 
+
+
+@Override
+public Long configLong(ConfigProperty cfgProp) throws IllegalArgumentException 
+{
+Long     rtrn    = null;
+
+if (cfgProp != null)
+    {
+    String propName = cfgProp.propertyName();
+    
+    try
+        {
+        rtrn = configLong( propName );
+        }
+    
+    catch (IllegalArgumentException iae)
+        {
+        if (cfgProp.hasHardCodedDefault())
+            rtrn = Long.valueOf( cfgProp.hardCodedDefaultValue() );
+        
+        else
+            throw iae;
+        }
+    }
+
+else
+    throw new IllegalArgumentException( "Requested Configuration Property must not be null" );
+
+return rtrn;
+}
+
+
+@Override
+public Long configLong( ConfigProperty cfgProp, Long defaultValue ) 
+{
+String      propNm = (cfgProp != null) ? cfgProp.propertyName() : null;
+Long        rtrn   = configLong( propNm, defaultValue );
+
+return rtrn;
+}
+
+
+@Override
+public Long configLong(String cfgKey) throws IllegalArgumentException 
+{
+Long     rtrn = null;
+
+if ((cfgKey != null) && (cfgKey.length() > 0))
+    {
+    rtrn = configLong( cfgKey, null );
+
+    if (rtrn == null)
+        throw new IllegalArgumentException( "Unable to find or unable to convert value for property '" +
+                                            cfgKey +
+                                            "' to a Long." );
+    }
+
+else
+    throw new IllegalArgumentException( "Requested Configuration Property Name must not be null or zero-length." );
+
+
+return rtrn;
+}
+
+
+@Override
+public Long configLong( String cfgKey, Long defaultValue ) 
+{
+Long        rtrn   = null;
+String      cfgVal = configValue( cfgKey );
+
+if (cfgVal != null)
+    {
+    rtrn = Long.valueOf( cfgVal );
+    
+    if (rtrn == null)
+        rtrn = defaultValue;
+    }
+
+return rtrn;
+}
+
+
+
+
+
+
+
 private enum    PropertyNamePart
 {
 APP,

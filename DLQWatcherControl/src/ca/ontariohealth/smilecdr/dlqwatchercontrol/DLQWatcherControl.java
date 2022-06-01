@@ -3,9 +3,14 @@
  */
 package ca.ontariohealth.smilecdr.dlqwatchercontrol;
 
+import java.time.Duration;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.cli.Option;
@@ -15,6 +20,11 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.GsonBuilder;
 
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -26,12 +36,16 @@ import ca.ontariohealth.smilecdr.support.MyInstant;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommand;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandContainer;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandParam;
+import ca.ontariohealth.smilecdr.support.commands.DLQResponseContainer;
 import ca.ontariohealth.smilecdr.support.commands.json.CommandParamAdapter;
 import ca.ontariohealth.smilecdr.support.commands.json.MyInstantAdapter;
 import ca.ontariohealth.smilecdr.support.commands.json.ReportRecordAdapter;
 import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
+import ca.ontariohealth.smilecdr.support.kafka.KafkaConsumerHelper;
+import ca.ontariohealth.smilecdr.support.kafka.KafkaProducerHelper;
+
 
 
 /**
@@ -40,17 +54,20 @@ import ca.ontariohealth.smilecdr.support.config.Configuration;
  */
 public class DLQWatcherControl extends BaseApplication
 {
-static final Logger 						logr      		= LoggerFactory.getLogger(DLQWatcherControl.class);
+static final Logger 						    logr      		= LoggerFactory.getLogger(DLQWatcherControl.class);
 
-protected static final	String 				CLI_TOPIC_SHRT  = "t";
-protected static final	String 				CLI_TOPIC_LONG  = "topicNm";
+protected static final	String 				    CLI_TOPIC_SHRT  = "t";
+protected static final	String 				    CLI_TOPIC_LONG  = "topicNm";
 
-protected static final  String				CLI_OPERTN_SHRT = "o";
-protected static final  String              CLI_OPERTN_LONG = "operation";
+protected static final  String				    CLI_OPERTN_SHRT = "o";
+protected static final  String                  CLI_OPERTN_LONG = "operation";
 
-private GsonBuilder                         jsonBuilder     = new GsonBuilder();
+private GsonBuilder                             jsonBuilder     = new GsonBuilder();
 
-private int                                 rollingNdx      = 0;
+private int                                     rollingNdx      = 0;
+
+private Map<String, Consumer<String,String>>    allConsumers    = new HashMap<>();
+
 
 public static void main( String[] args )
 {
@@ -92,9 +109,22 @@ else
 	kafkaTopicName = appConfig.configValue( ConfigProperty.CONTROL_TOPIC_NAME_COMMAND );
 
 if (cmdsToSend != null)
+    {
+    Long   maxRespWait = appConfig.configLong( ConfigProperty.RESPONSE_WAIT_MILLIS );
+    
 	for (String crntCmd : cmdsToSend)
 		if ((crntCmd != null) && (crntCmd.length() > 0))
-			sendCommand( kafkaTopicName, crntCmd );
+		    {
+		    DLQCommandContainer   cmdToSend   = null;
+		    DLQResponseContainer  cmdResp     = null;
+		    
+		    cmdToSend = createWatcherCommand( crntCmd );
+		    
+			sendCommand( kafkaTopicName, cmdToSend );
+			
+			cmdResp = waitForResponse( cmdToSend, maxRespWait );
+		    }
+    }
 
 logr.debug("Exiting: DLQWatcherControl.launch" );
 return;	
@@ -102,21 +132,88 @@ return;
 
 
 
-private void sendCommand( final String kafkaTopicName, 
-		                  final String commandToSend )
+
+private DLQResponseContainer    waitForResponse( DLQCommandContainer cmdSent, Long maxWaitMillis )
+{
+logr.debug( "Entering: waitForResoinse" );
+
+DLQResponseContainer    resp        = null;
+String                  respChannel = (cmdSent != null) ? cmdSent.getResponseChannelName() : null;
+
+if ((cmdSent != null) && (respChannel != null) && (respChannel.length() > 0))
+    {
+    MyInstant               startOfWait  = MyInstant.now();
+    MyInstant               now          = null;
+    Duration                pollInterval = Duration.ofMillis( appConfig.configLong( ConfigProperty.KAFKA_CONSUMER_POLL_INTERVAL ).longValue() );
+    Consumer<String,String> consumer     = KafkaConsumerHelper.createConsumer( appConfig, respChannel );
+    UUID                    cmdID        = cmdSent.getCommandUUID();
+   
+    
+    do
+        {
+        ConsumerRecords<String,String>  rcrds = consumer.poll( pollInterval );
+        
+        if ((rcrds != null) && (rcrds.count() > 0))
+            {
+            // Look for the specific repsonse pertaining to the command that
+            // was sent.
+            
+            for (ConsumerRecord<String,String> crnt : rcrds)
+                {
+                DLQResponseContainer crntResp = DLQResponseContainer.fromJSON( crnt.value() );
+                DLQCommandContainer  respCmd  = crntResp.getSourceCommand();
+                UUID                 cmdUUID  = (respCmd != null) ? respCmd.getCommandUUID() : null;
+                
+                if ((cmdUUID != null) && (cmdID.compareTo( cmdUUID ) == 0))
+                    {
+                    resp = crntResp;
+                    break;
+                    }
+                
+                else
+                    {
+                    logr.debug( "Unexpected response was retrieved not matching Cmd ID: {}", cmdID.toString() );
+                    logr.debug( "\n{}", crnt.value() );
+                    }
+                }
+            }
+        
+        else
+            logr.debug( "No Response Records were returned in the last: {} milliseconds.", pollInterval.toMillis() );
+            
+        
+        now = MyInstant.now();
+        }
+    while ((resp == null) && (now.getEpochMillis() < (startOfWait.getEpochMillis() + maxWaitMillis)));
+    }
+
+
+return resp;
+}
+
+
+
+
+
+
+
+private void sendCommand( final String            kafkaTopicName, 
+		                  DLQCommandContainer     commandToSend )
 {
 logr.debug( "Entering: sendCommand" );
 logr.debug(  "   Topic Name: {}", kafkaTopicName );
 logr.debug(  "   Command:    {}", commandToSend );
 
-final Producer<String, String> prdcr        = createProducer();
+final Producer<String, String> prdcr        = KafkaProducerHelper.createProducer( appConfig, kafkaTopicName );
 long                           crntTime     = System.currentTimeMillis();
 String                         msgID        = String.valueOf( crntTime ) + String.format( "-%04d", rollingNdx ++ );   
-DLQCommandContainer            cmd          = createWatcherCommand( commandToSend );
-String                         jsonCmd      = cmd.toJSON(jsonBuilder );
+String                         jsonCmd      = commandToSend.toJSON( jsonBuilder );
 
 if (rollingNdx >= 10000)
     rollingNdx = 0;
+
+logr.debug( "About to send the following command to the DLQ Wastcher:" );
+logr.debug( "\n{}", jsonCmd );
 
 ProducerRecord<String, String> record = new ProducerRecord<>( kafkaTopicName,
 		                                       				  msgID,
@@ -202,39 +299,6 @@ if ((cmdLine != null) && (cmdLine.length() > 0))
 
 return rtrn;
 }
-
-
-
-private Producer<String, String> createProducer()
-{
-Producer<String, String>	rtrn = null;
-
-logr.debug( "Entering: createProducer" );
-
-Properties	props = new Properties();
-
-String		clientID 		 = appConfig.getApplicationName().appName();
-String		bootstrapServers = appConfig.configValue( ConfigProperty.BOOTSTRAP_SERVERS );
-String      keySerializer    = Configuration.KAFKA_KEY_SERIALIZER_CLASS_NAME;
-String      valueSerializer  = Configuration.KAFKA_VALUE_SERIALIZER_CLASS_NAME;
-
-logr.debug( "   Client ID:         {}", clientID );
-logr.debug( "   Bootstrap Servers: {}", bootstrapServers );
-logr.debug( "   Key Serializer:    {}", keySerializer );
-logr.debug( "   Value Serializer:  {}", valueSerializer );
-
-props.put( ProducerConfig.CLIENT_ID_CONFIG,             	clientID );
-props.put( ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,     	bootstrapServers );
-props.put( ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,  	keySerializer );
-props.put( ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,	valueSerializer );
-
-rtrn = new KafkaProducer<>( props );
-
-logr.debug( "Exiting: createProducer" );;
-return rtrn;
-}
-
-
 
 
 

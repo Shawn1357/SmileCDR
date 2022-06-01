@@ -7,6 +7,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
+import com.google.gson.Gson;
+
 import ca.ontariohealth.smilecdr.support.MyInstant;
 import ca.ontariohealth.smilecdr.support.commands.response.DLQRecordEntry;
 import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
@@ -26,6 +28,28 @@ private DLQCommandContainer     srcCommand                  = null;
 private DLQCommandOutcome       processingOutcome           = null;
 private List<ProcessingMessage> processingMessages          = new LinkedList<>();
 private List<ReportRecord>      reportLines                 = new LinkedList<>();
+
+
+
+
+public static DLQResponseContainer   fromJSON( String jsonStr )
+{
+DLQResponseContainer rtrn = null;
+
+if ((jsonStr != null) && (jsonStr.length() > 0))
+    {
+    Gson    gson = new Gson();
+    
+    rtrn = gson.fromJson( jsonStr, DLQResponseContainer.class );
+    }
+
+return rtrn;
+}
+
+
+
+
+
 
 public DLQResponseContainer()
 {

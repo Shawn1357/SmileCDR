@@ -470,13 +470,103 @@ public  Integer					configInt( final String   cfgKey )
  *                     value (this parameter may be <code>null</code>).
  * @return             The converted integer value. The default value is
  *                     returned if the property value is not found or
- *                     can not be interpreted as a Boolean.
+ *                     can not be interpreted as a long.
  *                     
  * @see java.lang.Integer
  * 
  */
 public  Integer                 configInt( final String   cfgKey,
 		                                   Integer        defaultValue );
+
+
+/**
+ * Look up the supplied predefined configuration property and convert it
+ * to a long value according to the rules described in the
+ * {@link Long} class.
+ * 
+ * @param cfgProp The predefined property whose value is to be converted into
+ *                an Long value.
+ * @return        The converted long value.
+ *
+ * @throws IllegalArgumentException The value either could not be found or
+ *                                  could not be interpreted as an long.
+ *
+ * @see java.lang.Long
+ * 
+ */
+public  Long                 configLong( ConfigProperty cfgProp ) 
+                                throws IllegalArgumentException;
+
+
+
+/**
+ * Look up the supplied predefined configuration property and convert it
+ * to a long value according to the rules described in the
+ * {@link Long} class.
+ * <p>
+ * If the value could not be found or the value could not be interpreted as
+ * an long value, the default value is returned (which may be <code>null</code>.
+ * 
+ * @param cfgProp      The predefined property whose value is to be converted
+ *                     into an long value.
+ * @param defaultValue The value to be returned if the requested property could
+ *                     not be returned or could not be interpreted as a long
+ *                     value (this parameter may be <code>null</code>).
+ * @return             The converted long value. The default value is
+ *                     returned if the property value is not found or
+ *                     can not be interpreted as an long.
+ *                     
+ * @see java.lang.Long
+ * 
+ */
+
+public  Long                    configLong( ConfigProperty cfgProp,
+                                            Long           defaultValue );
+
+
+
+/**
+ * Look up the named configuration property and convert it
+ * to a long value according to the rules described in the
+ * {@link Long} class.
+ * 
+ * @param cfgKey  The configuration key whose value is to be converted into
+ *                an long value.
+ * @return        The converted long value.
+ *
+ * @throws IllegalArgumentException The value either could not be found or
+ *                                  could not be interpreted as a long.
+ * 
+ * @see java.lang.Long
+ * 
+ */
+public  Long                    configLong( final String   cfgKey ) 
+                                throws IllegalArgumentException;
+
+
+
+/**
+ * Look up the supplied configuration property name and convert it
+ * to a long value according to the rules described in the
+ * {@link Long} class.
+ * <p>
+ * If the value could not be found or the value could not be interpreted as
+ * a long value, the default value is returned (which may be <code>null</code>.
+ * 
+ * @param cfgProp      The name of the property whose value is to be converted
+ *                     into a long value.
+ * @param defaultValue The value to be returned if the requested property could
+ *                     not be returned or could not be interpreted as a long
+ *                     value (this parameter may be <code>null</code>).
+ * @return             The converted long value. The default value is
+ *                     returned if the property value is not found or
+ *                     can not be interpreted as a long.
+ *                     
+ * @see java.lang.Long
+ * 
+ */
+public  Long                    configLong( final String   cfgKey,
+                                            Long           defaultValue );
 
 
 }

@@ -25,6 +25,7 @@ KAFKA_CONSUMER_POLL_INTERVAL( "consumer.poll.interval",        "500" ),
 KAFKA_DLQ_TOPIC_NAME(         "kafka.dlq.topic.name",          "KAFKA.DLQ" ),
 
 QUIT_AFTER_MILLIS(            "quit.after.millis" ),
+RESPONSE_WAIT_MILLIS(         "response.wait.millis",          "30000" ),
 
 EMAIL_SERVER(                 "email.server.smtp" ),
 EMAIL_SMPT_PORT(              "email.server.smtp.port",        "25" ),
