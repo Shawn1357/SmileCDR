@@ -1,7 +1,7 @@
 /**
  * 
  */
-package ca.ontariohealth.smilecdr.support.commands;
+package ca.ontariohealth.smilecdr.support.commands.response;
 
 import java.time.Instant;
 

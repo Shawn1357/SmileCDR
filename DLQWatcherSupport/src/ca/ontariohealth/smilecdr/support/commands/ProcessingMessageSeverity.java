@@ -7,8 +7,11 @@ package ca.ontariohealth.smilecdr.support.commands;
  * @author adminuser
  *
  */
-public enum ReportRecordType
+public enum ProcessingMessageSeverity
 {
-STRING,
-DLQ_ENTRY_SPEC;
+DEBUG,
+INFO,
+WARN,
+ERROR,
+FATAL;
 }

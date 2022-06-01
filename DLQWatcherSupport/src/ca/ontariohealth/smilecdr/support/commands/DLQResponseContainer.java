@@ -8,6 +8,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
+import ca.ontariohealth.smilecdr.support.commands.response.DLQRecordEntry;
+import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
+import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
+
 /**
  * @author adminuser
  *
@@ -20,6 +24,7 @@ private Instant                 processingCompleteTS        = null;
 private Instant                 receivedResponseTS          = null;
 private DLQCommandContainer     srcCommand                  = null;
 private DLQCommandOutcome       processingOutcome           = null;
+private List<ProcessingMessage> processingMessages          = new LinkedList<>();
 private List<ReportRecord>      reportLines                 = new LinkedList<>();
 
 public DLQResponseContainer()
@@ -84,10 +89,28 @@ return processingOutcome;
 
 
 
+public void addProcessingMessage( ProcessingMessage newMsg )
+{
+if (newMsg != null)
+    processingMessages.add( newMsg );
+
+return;
+}
+
 public void addReportEntry( String rprtLine )
 {
 if (rprtLine != null)
     reportLines.add( new ReportRecord( rprtLine ) );
+
+return;
+}
+
+
+
+public void addReportEntry( KeyValue keyVal )
+{
+if (keyVal != null)
+    reportLines.add( new ReportRecord( keyVal ) );
 
 return;
 }

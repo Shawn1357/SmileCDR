@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -22,12 +23,15 @@ import ca.ontariohealth.smilecdr.support.commands.DLQCommand;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandContainer;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandOutcome;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandParam;
-import ca.ontariohealth.smilecdr.support.commands.DLQRecordEntry;
 import ca.ontariohealth.smilecdr.support.commands.DLQResponseContainer;
-import ca.ontariohealth.smilecdr.support.commands.ReportRecord;
+import ca.ontariohealth.smilecdr.support.commands.ProcessingMessage;
+import ca.ontariohealth.smilecdr.support.commands.ProcessingMessageSeverity;
 import ca.ontariohealth.smilecdr.support.commands.json.CommandParamAdapter;
 import ca.ontariohealth.smilecdr.support.commands.json.InstantAdapter;
 import ca.ontariohealth.smilecdr.support.commands.json.ReportRecordAdapter;
+import ca.ontariohealth.smilecdr.support.commands.response.DLQRecordEntry;
+import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
+import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
 
@@ -350,38 +354,42 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
     {
     cmd.recordProcessingStartTimestamp();
     
-    resp = new DLQResponseContainer( cmd );
-    
+    resp = new DLQResponseContainer( cmd );    
     
     switch (cmd.getCommandToIssue())
         {
         case    HELLO:
             resp.setOutcome( DLQCommandOutcome.SUCCESS );
+            resp.addProcessingMessage( ProcessingMessage.DLQW_0000 );            
             resp.addReportEntry( DLQCommand.HELLO.commandStr() );
             break;
             
         case    LIST:
             logr.info("All known {} Commands:", appConfig.getApplicationName().appName() );
             resp.setOutcome( DLQCommandOutcome.SUCCESS );
+            resp.addProcessingMessage( ProcessingMessage.DLQW_0000 );            
             
             for (DLQCommand crnt : DLQCommand.values())
                 if (crnt != DLQCommand.UNKNOWN)
                     {
+                    KeyValue keyVal = new KeyValue( crnt.commandStr(), crnt.usageStr() );
+                    
                     String  rprtLine = String.format( "%s - %s", crnt.commandStr(), crnt.usageStr() );
                     logr.info( "   {}", rprtLine);
-                    resp.addReportEntry( rprtLine );
+                    
+                    resp.addReportEntry( keyVal );
                     }
                 
             break;
             
         case    START:
             logr.info( "Starting the DLQ Poller Thread if it is not already running." );
-            startPollingThread();
+            startPollingThread( resp );
             break;
                 
         case    STOP:
             logr.info( "Stopping the DLQ Poller Thread if it is running." );
-            stopPollingThread();
+            stopPollingThread( resp );
             break;
                 
         case    QUIT:
@@ -389,6 +397,7 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
             exitWatcher = true;
             
             resp.setOutcome( DLQCommandOutcome.SUCCESS );
+            resp.addProcessingMessage( ProcessingMessage.DLQW_0000 );            
             break;
             
         case    UNKNOWN:
@@ -406,8 +415,9 @@ return resp;
 
 
 
-private void	startPollingThread()
+private void	startPollingThread( DLQResponseContainer resp )
 {
+
 logr.debug( "Entering: startPollingThread" );
 
 if (dlqPoller == null)
@@ -417,7 +427,14 @@ if (dlqPoller == null)
 	}
 
 if (dlqPoller.isAlive())
-	logr.debug( "DLQ Poller Thread is already alive: nothing to do." );
+    {
+    String  msg = "DLQ Poller Thread is already alive: nothing to do.";
+    
+	logr.debug( msg );
+	resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageSeverity.INFO,
+	                                                  "DLQW-0001",
+	                                                  msg ) );
+    }
 
 else
 	{
@@ -436,10 +453,26 @@ else
 		}
 	
 	if (dlqPoller.isAlive())
-		logr.debug( "DLQ Poller Thread is running." );
+	    {
+	    String msg = "DLQ Poller Thread is running.";
+	    
+		logr.debug( msg );
+		resp.setOutcome( DLQCommandOutcome.SUCCESS );
+		resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageSeverity.INFO,
+		                                                  "DLQW-0003",
+		                                                  msg ) );
+	    }
 	
 	else
-		logr.error( "DLQ Poller Thread did not start." );
+	    {
+	    String msg = "DLQ Poller Thread did not start.";
+	    
+		logr.error( msg );
+		resp.setOutcome( DLQCommandOutcome.ERROR );
+		resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageSeverity.ERROR,
+		                                                  "DLQW-0002",
+		                                                  msg ) );
+	    }
 	}
 
 logr.debug( "Exiting: startPollingThread" );
@@ -449,8 +482,19 @@ return;
 
 
 
+private void    stopPollingThread()
+{
+DLQResponseContainer throwaway = new DLQResponseContainer();
+
+stopPollingThread( throwaway );
+
+return;
+}
+
+
+
 @SuppressWarnings("deprecation")
-private void	stopPollingThread()
+private void	stopPollingThread( DLQResponseContainer resp )
 {
 logr.debug( "Entering: stopPollingThread" );
 if (dlqPoller != null)
@@ -483,15 +527,29 @@ if (dlqPoller != null)
 	// kill the thread.
 	if (dlqPoller.isAlive())
 		{
-		logr.debug( "Thread is still alive after max-wait. Hard stopping it." );
+		String    msg = String.format( "DLQ Poller is still alive after %l milliseconds. Killing it.", KILL_POLLER_MAX_WAIT );
+		logr.debug( msg );
 		dlqPoller.stop();
+		
+		resp.setOutcome( DLQCommandOutcome.WARNINGS );
+		resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageSeverity.WARN,
+		                                                  "DLQW-0005",
+		                                                  msg ) );
 		}
 	
 	dlqPoller = null;
 	}
 
 else
-	logr.debug( "DLQ Poller Thread object does not exist: nothing to do." );
+    {
+    String msg = "DLQ Poller Thread is not running: nothing to do.";
+	logr.debug( msg );
+	
+	resp.setOutcome( DLQCommandOutcome.SUCCESS );
+	resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageSeverity.INFO,
+	                                                  "DLQW-0004",
+	                                                  msg ) );
+    }
 
 logr.debug( "Exiting: stopPollingThread" );
 return;

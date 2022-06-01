@@ -1,7 +1,7 @@
 /**
  * 
  */
-package ca.ontariohealth.smilecdr.support.commands;
+package ca.ontariohealth.smilecdr.support.commands.response;
 
 /**
  * @author adminuser
@@ -11,6 +11,7 @@ public class ReportRecord
 {
 private ReportRecordType    rcrdType        = null;
 private String              rcrdString      = null;
+private KeyValue            rcrdKeyValue    = null;
 private DLQRecordEntry      rcrdDLQEntry    = null;
 
 
@@ -18,6 +19,14 @@ private DLQRecordEntry      rcrdDLQEntry    = null;
 public ReportRecord( String rcdStr )
 {
 setRcrdString( rcdStr );
+return;
+}
+
+
+
+public ReportRecord( KeyValue rcdKeyVal )
+{
+setRcrdKeyValue( rcdKeyVal );
 return;
 }
 
@@ -65,11 +74,26 @@ return;
 
 
 
+public KeyValue getRcrdKeyValue()
+{
+return rcrdKeyValue;
+}
+
+
+
+public void setRcrdKeyValue( KeyValue rcrdKeyValue )
+{
+setRcrdType( ReportRecordType.KEY_VALUE );
+this.rcrdKeyValue = rcrdKeyValue;
+return;
+}
+
+
+
 public DLQRecordEntry getRcrdDLQEntry()
 {
 return rcrdDLQEntry;
 }
-
 
 
 

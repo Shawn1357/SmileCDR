@@ -14,9 +14,10 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
-import ca.ontariohealth.smilecdr.support.commands.DLQRecordEntry;
-import ca.ontariohealth.smilecdr.support.commands.ReportRecord;
-import ca.ontariohealth.smilecdr.support.commands.ReportRecordType;
+import ca.ontariohealth.smilecdr.support.commands.response.DLQRecordEntry;
+import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
+import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
+import ca.ontariohealth.smilecdr.support.commands.response.ReportRecordType;
 
 /**
  * @author adminuser
@@ -27,6 +28,8 @@ public class ReportRecordAdapter extends TypeAdapter<ReportRecord>
 private static  Logger          logr                    = LoggerFactory.getLogger( ReportRecordAdapter.class );
 
 private static  String          FIELD_STRING_LINE       = "text";
+private static  String          FIELD_KEY               = "key";
+private static  String          FIELD_VALUE             = "value";
 private static  String          FIELD_ENTRY_TS          = "entryTimestamp";
 private static  String          FIELD_SUBSCRIPTION_ID   = "subscriptionID";
 private static  String          FIELD_RESOURCE_TYPE     = "resourceType";
@@ -53,6 +56,18 @@ if (value != null)
             writer.value( rprtLine );
             break;
             
+            
+        case    KEY_VALUE:
+            KeyValue    keyVal = value.getRcrdKeyValue();
+            
+            writer.name( FIELD_KEY );
+            writer.value( keyVal.getKey() );
+            
+            writer.name( FIELD_VALUE );
+            writer.value( keyVal.getValue() );
+            break;
+            
+            
         case    DLQ_ENTRY_SPEC:
             DLQRecordEntry  dlqEntry    = value.getRcrdDLQEntry();
             Instant         dlqTS       = dlqEntry.getEntryTimestamp();
@@ -71,6 +86,7 @@ if (value != null)
             
             break;
         
+            
         default:
             // Unexpected Report Record Type
             logr.error( "Unexpected Report Record Type: {}", rcrdTyp.toString() );
@@ -99,6 +115,8 @@ Instant             rprtDLQEntryTS      = null;
 String              rprtDLQSubID        = null;
 String              rprtDLQRsrcType     = null;
 String              rprtDLQRsrcID       = null;
+String              rprtKey             = null;
+String              rprtValue           = null;
 
 reader.beginObject();
 while (reader.hasNext())
@@ -120,6 +138,22 @@ while (reader.hasNext())
         
         rprtTextLine = reader.nextString();
         rprtRcrdType = ReportRecordType.STRING;
+        }
+    
+    else if (FIELD_KEY.equals( fieldName ))
+        {
+        token = reader.peek();
+        
+        rprtKey = reader.nextString();
+        rprtRcrdType = ReportRecordType.KEY_VALUE;
+        }
+    
+    else if (FIELD_VALUE.equals( fieldName ))
+        {
+        token = reader.peek();
+        
+        rprtValue = reader.nextString();
+        rprtRcrdType = ReportRecordType.KEY_VALUE;
         }
     
     else if (FIELD_ENTRY_TS.equals( fieldName ))
@@ -163,6 +197,11 @@ if (rprtRcrdType != null)
         {
         case    STRING:
             rtrn = new ReportRecord( rprtTextLine );
+            break;
+            
+        case    KEY_VALUE:
+            KeyValue keyVal = new KeyValue( rprtKey, rprtValue );
+            rtrn = new ReportRecord( keyVal );
             break;
             
         case    DLQ_ENTRY_SPEC:
