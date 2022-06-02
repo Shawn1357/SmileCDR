@@ -135,7 +135,7 @@ return;
 
 private DLQResponseContainer    waitForResponse( DLQCommandContainer cmdSent, Long maxWaitMillis )
 {
-logr.debug( "Entering: waitForResoinse" );
+logr.debug( "Entering: waitForResponse" );
 
 DLQResponseContainer    resp        = null;
 String                  respChannel = (cmdSent != null) ? cmdSent.getResponseChannelName() : null;
@@ -188,6 +188,7 @@ if ((cmdSent != null) && (respChannel != null) && (respChannel.length() > 0))
     }
 
 
+logr.debug( "Exiting: waitForResponse" );
 return resp;
 }
 
