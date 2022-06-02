@@ -157,7 +157,7 @@ if ((cmdSent != null) && (respChannel != null) && (respChannel.length() > 0))
             {
             // Look for the specific repsonse pertaining to the command that
             // was sent.
-            
+            logr.debug( "Received {} record(s) from Kafka.", rcrds.count() );
             for (ConsumerRecord<String,String> crnt : rcrds)
                 {
                 DLQResponseContainer crntResp = DLQResponseContainer.fromJSON( crnt.value() );
@@ -166,6 +166,8 @@ if ((cmdSent != null) && (respChannel != null) && (respChannel.length() > 0))
                 
                 if ((cmdUUID != null) && (cmdID.compareTo( cmdUUID ) == 0))
                     {
+                    logr.debug( "Received the response we were hoping for:" );
+                    logr.debug( "\n{}", crnt.value() );
                     resp = crntResp;
                     break;
                     }
@@ -185,6 +187,9 @@ if ((cmdSent != null) && (respChannel != null) && (respChannel.length() > 0))
         now = MyInstant.now();
         }
     while ((resp == null) && (now.getEpochMillis() < (startOfWait.getEpochMillis() + maxWaitMillis)));
+    
+    logr.debug( "Committing the topic events that have been read." );
+    consumer.commitSync();
     }
 
 
