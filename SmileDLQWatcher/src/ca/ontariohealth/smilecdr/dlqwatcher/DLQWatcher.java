@@ -629,7 +629,7 @@ if (dlqPoller != null)
 	// kill the thread.
 	if (dlqPoller.isAlive())
 		{
-		String    msg = String.format( "DLQ Poller is still alive after %l milliseconds. Killing it.", KILL_POLLER_MAX_WAIT );
+		String    msg = String.format( "DLQ Poller is still alive after %d milliseconds. Killing it.", KILL_POLLER_MAX_WAIT );
 		logr.debug( msg );
 		dlqPoller.stop();
 		

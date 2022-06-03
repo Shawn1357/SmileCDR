@@ -39,8 +39,7 @@ RESPONSE_WAIT_MILLIS(         "response.wait.millis",          "30000" ),
 
 EMAIL_SERVER(                 "email.server.smtp" ),
 EMAIL_SMPT_PORT(              "email.server.smtp.port",        "25" ),
-EMAIL_USER_ID(                "email.userid" ),
-EMAIL_PASSWORD(               "email.password" ),
+EMAIL_CREDENTIALS_FILE(       "email.credentials.file" ),
 
 EMAIL_TEMPLATE_NAME(          "email.template.nm" ),
 EMAIL_FROM_ADDR(              "email.from" ),

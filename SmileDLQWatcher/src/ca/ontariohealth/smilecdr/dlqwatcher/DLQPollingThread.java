@@ -26,8 +26,10 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ca.ontariohealth.smilecdr.support.config.BasicAuthCredentials;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
+import ca.ontariohealth.smilecdr.support.config.FileBasedCredentials;
 
 
 /**
@@ -205,8 +207,9 @@ logr.debug( "Entering: sendEMail" );
 
 String		emailSrvr   = appConfig.configValue( ConfigProperty.EMAIL_SERVER );
 String      emailPort   = appConfig.configValue( ConfigProperty.EMAIL_SMPT_PORT );
-String      emailUser   = appConfig.configValue( ConfigProperty.EMAIL_USER_ID );
-String      emailPass   = appConfig.configValue( ConfigProperty.EMAIL_PASSWORD );
+String      emailCreds  = appConfig.configValue( ConfigProperty.EMAIL_CREDENTIALS_FILE );
+
+BasicAuthCredentials    creds = new FileBasedCredentials( emailCreds );
 
 String      templateNm  = requestedTemplate;
 
@@ -231,7 +234,7 @@ emailProps.put( "mail.smtp.port", emailPort );
 
 try
 	{
-	Authenticator auth 	  = new SMTPAuthenticator( emailUser, emailPass );
+	Authenticator auth 	  = new SMTPAuthenticator( creds.username(), creds.password() );
     Session 	  session = Session.getInstance( emailProps, auth );
     Message 	  message = new MimeMessage( session );
 
