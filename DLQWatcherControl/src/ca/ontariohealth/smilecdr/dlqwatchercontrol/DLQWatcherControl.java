@@ -4,12 +4,10 @@
 package ca.ontariohealth.smilecdr.dlqwatchercontrol;
 
 import java.time.Duration;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -21,13 +19,9 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.GsonBuilder;
 
 import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
@@ -42,7 +36,6 @@ import ca.ontariohealth.smilecdr.support.commands.json.MyInstantAdapter;
 import ca.ontariohealth.smilecdr.support.commands.json.ReportRecordAdapter;
 import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
-import ca.ontariohealth.smilecdr.support.config.Configuration;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaConsumerHelper;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaProducerHelper;
 
@@ -145,7 +138,8 @@ if ((cmdSent != null) && (respChannel != null) && (respChannel.length() > 0))
     MyInstant               startOfWait  = MyInstant.now();
     MyInstant               now          = null;
     Duration                pollInterval = Duration.ofMillis( appConfig.configLong( ConfigProperty.KAFKA_CONSUMER_POLL_INTERVAL ).longValue() );
-    Consumer<String,String> consumer     = KafkaConsumerHelper.createConsumer( appConfig, respChannel );
+    String                  groupNm      = appConfig.configValue( ConfigProperty.KAFKA_CONTROL_GROUP_ID );
+    Consumer<String,String> consumer     = KafkaConsumerHelper.createConsumer( appConfig, groupNm, respChannel );
     UUID                    cmdID        = cmdSent.getCommandUUID();
    
     

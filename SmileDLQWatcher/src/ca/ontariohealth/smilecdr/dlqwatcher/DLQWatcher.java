@@ -3,9 +3,10 @@
  */
 package ca.ontariohealth.smilecdr.dlqwatcher;
 
+import java.lang.Runtime.Version;
 import java.time.Duration;
-import java.util.Collections;
-import java.util.HashMap;
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -32,20 +33,15 @@ import ca.ontariohealth.smilecdr.support.commands.json.ReportRecordAdapter;
 import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
 import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
-import ca.ontariohealth.smilecdr.support.config.Configuration;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaConsumerHelper;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaProducerHelper;
 
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
@@ -63,9 +59,6 @@ static private final String				        CLI_INITIAL_CMD_SHRT = "i";
 static private final String                     CLI_INITIAL_CMD_LONG = "initCmd";
 
 static private final Long				        KILL_POLLER_MAX_WAIT = 10000L; // milliseconds
-
-private Map<String, Consumer<String,String>>    allConsumers         = new HashMap<>();
-private Map<String, Producer<String,String>>    allProducers         = new HashMap<>();
 
 private	Consumer<String, String>		        controlConsumer 	 = null;
 private	boolean							        exitWatcher     	 = false;
@@ -98,6 +91,8 @@ protected	void launch()
 {
 logr.debug( "Entering: {}.launch", DLQWatcher.class.getSimpleName() );
 
+System.err.println( appSignature() );
+
 //sendEMail( appConfig.configValue( ConfigProperty.EMAIL_TEMPLATE ) );
 
 jsonBuilder.registerTypeAdapter( DLQCommandParam.class, new CommandParamAdapter() );
@@ -112,9 +107,12 @@ jsonBuilder.setPrettyPrinting();
  * 
  */
 
+String      groupID = appConfig.configValue( ConfigProperty.KAFKA_CONTROL_GROUP_ID,
+                                             appConfig.getApplicationName().appName() + ".control.group.id" );
+
 String	controlTopic = appConfig.configValue( ConfigProperty.CONTROL_TOPIC_NAME_COMMAND );
 
-controlConsumer = KafkaConsumerHelper.createConsumer( appConfig, controlTopic );
+controlConsumer = KafkaConsumerHelper.createConsumer( appConfig, groupID, controlTopic );
 
 logr.debug( "Subscribed to Control Topic: {}", controlTopic );
 
@@ -129,6 +127,8 @@ stopPollingThread();
 logr.debug( "Exiting: {}.launch", DLQWatcher.class.getSimpleName() );
 return;
 }
+
+
 
 
 
@@ -334,6 +334,7 @@ if ((initCmd != null) && (initCmd.length() > 0))
             case    LIST:
             case    START:
             case    STOP:
+            case    DLQLIST:
             case    QUIT:
                 cmdLineCmd.setCommandToIssue( newCmdType );
                 break;
@@ -427,6 +428,11 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
                 
             break;
             
+        case    DLQLIST:
+            logr.info( "Starting process to list DLQ entries." );
+            listDLQEntries( resp );
+            break;
+            
         case    START:
             logr.info( "Starting the DLQ Poller Thread if it is not already running." );
             startPollingThread( resp );
@@ -458,6 +464,57 @@ return resp;
 }
 
 
+
+private void    listDLQEntries( DLQResponseContainer resp )
+{
+Properties  disabledAutoCommit = new Properties();     
+
+String topicNm = appConfig.configValue( ConfigProperty.KAFKA_DLQ_TOPIC_NAME );
+String groupID = appConfig.configValue( ConfigProperty.KAFKA_DLQ_LISTER_GROUP_ID,
+                                        appConfig.getApplicationName().appName() + ".control.group.id" );
+
+disabledAutoCommit.setProperty( "enable.auto.commit", "false" );
+
+Consumer<String,String> lister = KafkaConsumerHelper.createConsumer( appConfig,
+                                                                     groupID,
+                                                                     topicNm,
+                                                                     disabledAutoCommit );
+
+lister.seekToBeginning( lister.assignment() );
+
+if (lister != null)
+    {
+    Long        loopStartedAt = System.currentTimeMillis();
+    Long        polInterval   = appConfig.configLong( ConfigProperty.KAFKA_CONSUMER_POLL_INTERVAL, Long.valueOf( 250L ) );
+    Long        maxWait       = appConfig.configLong( ConfigProperty.RESPONSE_WAIT_MILLIS, Long.valueOf( 10000L ) );
+    Duration    interval      = Duration.ofMillis( polInterval );
+    
+    do
+        {
+        final   ConsumerRecords<String, String> rcrds = lister.poll( interval );
+        logr.debug( "Received {} KAFKA.DLQ entries.", rcrds.count() );
+        
+        if ((rcrds != null) && (rcrds.count() > 0))
+            {
+            logr.debug( "Received {} KAFKA.DLQ Events", rcrds.count() );
+            for (ConsumerRecord<String, String> crnt : rcrds)
+                {
+                if (crnt != null)
+                    {
+                    String  dlqEntry = crnt.value();
+                    logr.debug( "DLQ Entry:" );
+                    logr.debug( "\n{}", dlqEntry );
+                    }
+                }
+            }
+        }
+    
+    while ((System.currentTimeMillis() <= loopStartedAt + maxWait));
+    
+    lister.close();
+    }
+return;
+}
 
 
 private void	startPollingThread( DLQResponseContainer resp )

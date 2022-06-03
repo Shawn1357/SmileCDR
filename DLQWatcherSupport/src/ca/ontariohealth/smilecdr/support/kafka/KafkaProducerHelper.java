@@ -70,6 +70,8 @@ else
         props.put( ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,    valueSerializer );
         
         producer = new KafkaProducer<>( props );
+        
+        //allProducers.put( topicName, producer );
         }
     }
 

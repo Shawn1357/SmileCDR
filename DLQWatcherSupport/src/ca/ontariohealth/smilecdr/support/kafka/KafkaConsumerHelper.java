@@ -5,24 +5,12 @@ package ca.ontariohealth.smilecdr.support.kafka;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerPartitionAssignor;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.consumer.internals.ConsumerCoordinator;
-import org.apache.kafka.clients.consumer.internals.ConsumerInterceptors;
-import org.apache.kafka.clients.consumer.internals.ConsumerMetadata;
-import org.apache.kafka.clients.consumer.internals.ConsumerNetworkClient;
-import org.apache.kafka.clients.consumer.internals.Fetcher;
-import org.apache.kafka.clients.consumer.internals.SubscriptionState;
-import org.apache.kafka.common.metrics.Metrics;
-import org.apache.kafka.common.serialization.Deserializer;
-import org.apache.kafka.common.utils.LogContext;
-import org.apache.kafka.common.utils.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +37,21 @@ return;
 
 
 
-public static Consumer<String,String>     createConsumer( Configuration appConfig, String topicName )
+public static Consumer<String,String>     createConsumer( Configuration appConfig,
+                                                          String        groupID,
+                                                          String        topicName )
+
+{
+return createConsumer( appConfig, groupID, topicName, null );
+}
+
+
+
+
+public static Consumer<String,String>     createConsumer( Configuration appConfig, 
+                                                          String        groupID,
+                                                          String        topicName,
+                                                          Properties    kafkaProps )
 {
 Consumer<String,String> consumer = null;
 
@@ -58,40 +60,60 @@ logr.debug( "Entering: createConsumer" );
 if (appConfig == null)
     throw new IllegalArgumentException( "Applciation Configuration parameter must not be null" );
 
+else if ((groupID == null) || (groupID.length() == 0))
+    throw new IllegalArgumentException( "Consumer Group Name must not be null or zero-length." );
+
 else if ((topicName == null) || (topicName.length() == 0))
-    throw new IllegalArgumentException( "Producer Topic Name must not be null or zero-length." );
+    throw new IllegalArgumentException( "Consumer Topic Name must not be null or zero-length." );
 
 else
     {
-    consumer  = allConsumers.get( topicName );
+    String  consumerKey = groupID.concat( "--" ).concat( topicName );
+    
+    consumer  = allConsumers.get( consumerKey );
 
     if (consumer == null)
         {
         Properties  props               = new Properties();
         
+/*
         String      groupID             = appConfig.configValue( ConfigProperty.KAFKA_CONTROL_GROUP_ID,
                                                                  appConfig.getApplicationName().appName() + ".control.group.id" );
-        
+*/        
         String      bootstrapServers    = appConfig.configValue( ConfigProperty.BOOTSTRAP_SERVERS );
         String      keyDeserializer     = Configuration.KAFKA_KEY_DESERIALIZER_CLASS_NAME;
         String      valueDeserializer   = Configuration.KAFKA_VALUE_DESERIALIZER_CLASS_NAME;
         
-        logr.debug( "   Group ID:           {}", groupID );
-        logr.debug( "   Bootstrap Servers:  {}", bootstrapServers );
-        logr.debug( "   Key Deserializer:   {}", keyDeserializer );
-        logr.debug( "   Value Deserializer: {}", valueDeserializer );
-        
+        logr.debug( "Defining standard consumer properties..." );
         props.put( ConsumerConfig.GROUP_ID_CONFIG,                 groupID );
         props.put( ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,        bootstrapServers );
         props.put( ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,   keyDeserializer );
         props.put( ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, valueDeserializer );
         
+        if (kafkaProps != null)
+            {
+            logr.debug( "Adding caller provided properties..," );
+            props.putAll( kafkaProps );
+            }
+        
+        logr.debug( "Consumer Property Listing:" );
+        for (Object propKey : props.keySet())
+            {
+            String  key = (String) propKey;
+            if (propKey != null)
+                {
+                String  propVal = props.getProperty(key);
+                logr.debug( "   {}: {}", propKey, propVal );
+                }
+            }
+            
         consumer = new KafkaConsumer<>( props );
+        
+        logr.debug( "Subscribing to Topic: {}", topicName );
         consumer.subscribe( Collections.singletonList( topicName ) );
         
-        allConsumers.put( topicName,  consumer );
+        //allConsumers.put( consumerKey,  consumer );
         }
-    
     }
 
 logr.debug( "Exiting: createConsumer" );

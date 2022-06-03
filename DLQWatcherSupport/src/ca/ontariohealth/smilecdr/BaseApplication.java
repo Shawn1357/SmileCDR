@@ -1,6 +1,9 @@
 package ca.ontariohealth.smilecdr;
 
 import java.io.File;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.Optional;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -12,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.ontariohealth.smilecdr.support.config.ApplicationName;
+import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
 import ca.ontariohealth.smilecdr.support.config.EnvironmentName;
 
@@ -44,6 +48,254 @@ public BaseApplication()
 super();
 return;
 }
+
+
+
+public Optional<String>              appName()
+{
+Optional<String>    appNm = Optional.empty();
+
+if (appConfig != null)
+    {
+    String appNmStr = appConfig.configValue( ConfigProperty.APP_NAME, (String) null );
+    appNm           = Optional.ofNullable( appNmStr );
+    }
+
+return appNm;
+}
+
+
+
+
+public Optional<String>             appDescription()
+{
+Optional<String>    appDesc = Optional.empty();
+
+if (appConfig != null)
+    {
+    String appDescStr = appConfig.configValue( ConfigProperty.APP_DESCRIPTION, (String) null );
+    appDesc           = Optional.ofNullable( appDescStr );
+    }
+
+return appDesc;
+}
+
+
+
+
+public Optional<Runtime.Version>     appVersion()
+{
+Optional<Runtime.Version> version = Optional.empty();
+
+if (appConfig != null)
+    {
+    String  verStr = appConfig.configValue( ConfigProperty.APP_VERSION, (String) null );
+    
+    if (verStr != null)
+        {
+        Runtime.Version ver = null;
+        try
+            {
+            ver = Runtime.Version.parse( verStr );
+            }
+        
+        catch (IllegalArgumentException | NullPointerException e)
+            {
+            ver = null;
+            }
+        
+        finally
+            {
+            version = Optional.ofNullable( ver );        
+            }
+        }
+    }
+
+
+return version;
+}
+
+
+
+
+public Optional<LocalDate>             buildDate()
+{
+Optional<LocalDate>    bldDate = Optional.empty();
+
+if (appConfig != null)
+    {
+    String bldDtStr = appConfig.configValue( ConfigProperty.BUILD_DATE, (String) null );
+    
+    if (bldDtStr != null)
+        {
+        LocalDate    bldDt = null;
+        
+        try
+            {
+            bldDt = LocalDate.parse( bldDtStr );
+            }
+        
+        catch (DateTimeParseException e)
+            {
+            bldDt = null;
+            }
+        
+        finally
+            {
+            bldDate = Optional.ofNullable( bldDt );
+            }
+        }
+    }
+
+return bldDate;
+}
+
+
+
+public Optional<Integer>        copyrightYearStart()
+{
+Optional<Integer>    copyrightStartYear = Optional.empty();
+
+if (appConfig != null)
+    {
+    Integer startYr = null;
+    
+    try
+        {
+        startYr = appConfig.configInt( ConfigProperty.COPYRIGHT_YEAR_START, null );
+        }
+    
+    catch(NumberFormatException e)
+        {
+        startYr = null;
+        }
+    
+    copyrightStartYear = Optional.ofNullable( startYr );
+    }
+
+return copyrightStartYear;
+}
+            
+
+
+
+public Optional<Integer>        copyrightYearEnd()
+{
+Optional<Integer>    copyrightEndYear = Optional.empty();
+
+if (appConfig != null)
+    {
+    Integer endYr    = null;
+    
+    try
+        {
+        endYr = appConfig.configInt( ConfigProperty.COPYRIGHT_YEAR_END, null );
+        }
+    
+    catch (NumberFormatException e)
+        {
+        endYr = null;
+        }
+
+    copyrightEndYear = Optional.ofNullable( endYr );
+    }
+
+return copyrightEndYear;
+}
+            
+
+
+public String     copyrightNotice()
+{
+String              copyright = "";
+StringBuilder       bldr      = new StringBuilder();
+
+bldr.appendCodePoint( 169 );  // Copyright symbol.
+bldr.append( " " );
+
+Optional<Integer> fromYear = copyrightYearStart();
+Optional<Integer> toYear   = copyrightYearEnd();
+Optional<String>  holder   = copyrightHolder();
+
+if (fromYear.isPresent())
+    {
+    bldr.append( String.valueOf( fromYear.get() ) );
+    
+    if (toYear.isPresent())
+        {
+        bldr.append( "-" ).append( String.valueOf( toYear.get() ) );
+        }
+    
+    if (holder.isPresent())
+        bldr.append( ", " );
+    }
+
+if (holder.isPresent())
+    bldr.append( holder.get().strip() );
+
+copyright = bldr.toString();
+return copyright;
+}
+
+
+
+
+public String     appSignature()
+{
+String  signature = "";
+
+StringBuilder   bldr = new StringBuilder();
+
+Optional<String> appNm = appName();
+if (appNm.isPresent())
+    {
+    bldr.append( appNm.get().strip() );
+    
+    Optional<Runtime.Version> ver = appVersion();
+    if (ver.isPresent())
+        {
+        if (bldr.length() > 0)
+            bldr.append( " " );
+        
+        bldr.append( ver.toString() );
+        }
+    
+    Optional<String> desc = appDescription();
+    if (desc.isPresent())
+        {
+        if (bldr.length() > 0)
+            bldr.append( " - " );
+        
+        bldr.append( desc.get().strip() );
+        }
+    
+    bldr.append( "\n" );
+    }
+
+bldr.append( copyrightNotice() );
+
+signature = bldr.toString();
+return signature;
+}
+
+
+
+
+public Optional<String>        copyrightHolder()
+{
+Optional<String>    holder = Optional.empty();
+
+if (appConfig != null)
+    {
+    String holderStr = appConfig.configValue( ConfigProperty.COPYRIGHT_HOLDER, (String) null );
+    holder           = Optional.ofNullable( holderStr );
+    }
+
+return holder;
+}
+
+
+
 
 
 protected void launch( String[] args )

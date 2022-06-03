@@ -9,12 +9,13 @@ package ca.ontariohealth.smilecdr.support.commands;
  */
 public enum DLQCommand 
 {
-LIST(    "LIST",    "Dump all known DLQWatcher commands to the logging system." ),
-QUIT(    "QUIT",    "Causes the DLQWatcher to shutdown and exit." ),
-START(   "START",   "Starts the DLQ Polling Thread if not already started." ),
-STOP(    "STOP",    "Stops the DLQ Polling Thread if it is running." ),
-HELLO(   "HELLO",   "A no-operation command that can be used to test connectivity." ),
-UNKNOWN( "UNKNOWN", "Used when the supplied command is notr recognized." );
+LIST(     "LIST",    "Dump all known DLQWatcher commands to the logging system." ),
+QUIT(     "QUIT",    "Causes the DLQWatcher to shutdown and exit." ),
+START(    "START",   "Starts the DLQ Polling Thread if not already started." ),
+STOP(     "STOP",    "Stops the DLQ Polling Thread if it is running." ),
+DLQLIST(  "DLQLIST", "Lists all entries currently on the Dead Letter Queue." ),
+HELLO(    "HELLO",   "A no-operation command that can be used to test connectivity." ),
+UNKNOWN(  "UNKNOWN", "Used when the supplied command is notr recognized." );
 
 private	final	String	                                commandString;
 private	final	String	                                usageDescription;

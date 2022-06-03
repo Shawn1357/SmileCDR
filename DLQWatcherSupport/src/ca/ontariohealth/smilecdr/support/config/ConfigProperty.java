@@ -3,6 +3,7 @@
  */
 package ca.ontariohealth.smilecdr.support.config;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 /**
@@ -16,9 +17,18 @@ import java.util.Optional;
  */
 public enum ConfigProperty 
 {
+APP_NAME(                     "application.name" ),
+APP_DESCRIPTION(              "application.desc" ),
+APP_VERSION(                  "version.num" ),
+BUILD_DATE(                   "build.date" ),
+COPYRIGHT_HOLDER(             "copyright.holder",              "Accenture, Inc." ),
+COPYRIGHT_YEAR_START(         "copyright.year.start",          String.valueOf( LocalDate.now().getYear() ) ),
+COPYRIGHT_YEAR_END(           "copyright.year.end" ),
+
 BOOTSTRAP_SERVERS(            "bootstrap.servers" ),
 KAFKA_CONTROL_GROUP_ID(       "control.group.id" ),
 KAFKA_DLQ_GROUP_ID(           "dlq.group.id" ),
+KAFKA_DLQ_LISTER_GROUP_ID(    "dlq.lister.group.id" ),
 CONTROL_TOPIC_NAME_COMMAND(   "topic.name.command" ),
 CONTROL_TOPIC_NAME_RESPONSE(  "topic.name.response" ),
 KAFKA_CONSUMER_POLL_INTERVAL( "consumer.poll.interval",        "500" ),
