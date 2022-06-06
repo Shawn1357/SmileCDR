@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="DLQUtilitiesDistribution" basedir="." default="rebuild">
+
+	<property name="finalJAR"                     value="dlqutilities.jar" />
+	
+	<property name="workspaceDir"                 value="{basedir}/../.." />
+	
+    <property name="CommonResourcesProj"          value="CommonResources" />
+	<property name="DLQUtilitiesDistributionProj" value="DLQUtilitiesDistribution" />
+	<property name="DLQWatcherSupportProj"        value="DLQWatcherSupport" />
+	<property name="DLQWatcherControlProj"        value="DLQWatcherControl" />
+	<property name="SmileCDRLibProj"              value="SmileCDRLib" />
+	<property name="SmileDLQRetriggerProj"        value="SmileDLQRetrigger" />
+	<property name="SmileDLQWatcherProj"          value="SmileDLQWatcher" />
+	<property name="ThirdPartyProj"               value="Thirdparty" />
+	
+	<property name="configPropsFile"              value="DLQWatcher.properties" />
+	<property name="emailCredentialsFile"         value="${workspaceDir}/${CommonResourcesProj}/emailcredentials.cred" />
+	<property name="emailTemplate01File"          value="${workspaceDir}/${CommonResourcesProj}/emailTemplate01.txt" />
+	<property name="dlqWatcherControlLogbackFile" value="${workspaceDir}/${CommonResourcesProj}/DLQWatcherControl-logback.xml" />
+    <property name="dlqWatcherLogbackFile"        value="${workspaceDir}/${CommonResourcesProj}/DLQWatcher-logback.xml" />
+    <property name="genericLogbackFile"           value="${workspaceDir}/${CommonResourcesProj}/logback.xml" />
+
+    <property name="targetDirectory"              value="${workspaceDir}/${DLQUtilitiesDistributionProj}/dist" />
+    
+    <target name="rebuild" depends="clean,build">
+    </target>
+
+	<target name="build" depends="buildJAR,assembleResources">
+	</target>
+	
+    <target name="buildJAR">
+    	<jar destfile="${targetDirectory}/${finalJAR}">
+    		<fileset dir="${workspaceDir}/${DLQWatcherSupportProj}/bin"/>
+    		<fileset dir="${workspaceDir}/${DLQWatcherControlProj}/bin"/>
+    		<fileset dir="${workspaceDir}/${SmileDLQRetriggerProj}/bin"/>
+    		<fileset dir="${workspaceDir}/${SmileDLQWatcherProj}/bin"/>
+    	</jar>
+    </target>
+	
+	<target name="assembleResources">
+		<copy file="${workspaceDir}/${CommonResourcesProj}/${configPropsFile}"              todir="${targetDirectory}"/>
+		<copy file="${workspaceDir}/${CommonResourcesProj}/${emailCredentialsFile}"         todir="${targetDirectory}"/>
+        <copy file="${workspaceDir}/${CommonResourcesProj}/${emailTemplate01File}"          todir="${targetDirectory}"/>
+        <copy file="${workspaceDir}/${CommonResourcesProj}/${dlqWatcherControlLogbackFile}" todir="${targetDirectory}"/>
+        <copy file="${workspaceDir}/${CommonResourcesProj}/${dlqWatcherLogbackFile}"        todir="${targetDirectory}"/>
+        <copy file="${workspaceDir}/${CommonResourcesProj}/${genericLogbackFile}"           todir="${targetDirectory}"/>
+	</target>
+	
+    <target name="clean">
+    	<delete dir="${targetDirectory}" />
+    	<mkdir dir="${targetDirectory}" />
+    	
+    </target>
+
+</project>

@@ -1,14 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>DLQWatcherControl</name>
+	<name>DLQUtilitiesDistribution</name>
 	<comment></comment>
 	<projects>
-		<project>DLQWatcherSupport</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
 			<name>org.eclipse.jdt.core.javabuilder</name>
 			<arguments>
+			</arguments>
+		</buildCommand>
+		<buildCommand>
+			<name>org.eclipse.ui.externaltools.ExternalToolBuilder</name>
+			<arguments>
+				<dictionary>
+					<key>LaunchConfigHandle</key>
+					<value>&lt;project&gt;/.externalToolBuilders/Asseemble Distribution.launch</value>
+				</dictionary>
 			</arguments>
 		</buildCommand>
 	</buildSpec>

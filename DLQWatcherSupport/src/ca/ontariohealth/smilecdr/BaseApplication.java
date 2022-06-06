@@ -18,29 +18,32 @@ import ca.ontariohealth.smilecdr.support.config.ApplicationName;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
 import ca.ontariohealth.smilecdr.support.config.EnvironmentName;
+import ca.ontariohealth.smilecdr.support.config.InstanceName;
 
 public abstract class BaseApplication 
 {
-static final Logger 						logr      		= LoggerFactory.getLogger(BaseApplication.class);
+static final Logger 						logr      		 = LoggerFactory.getLogger(BaseApplication.class);
 
-protected static final	String 				CLI_APP_NM_SHRT = "a";
-protected static final	String 				CLI_APP_NM_LONG = "appName";
-protected static final	String 				CLI_CFG_NM_SHRT = "c";
-protected static final	String 				CLI_CFG_NM_LONG = "cfgFile";
-protected static final	String 				CLI_ENV_NM_SHRT = "e";
-protected static final	String 				CLI_ENV_NM_LONG = "envName";
-protected static final	String 				CLI_HLP_NM_SHRT = "h";
-protected static final	String 				CLI_HLP_NM_LONG = "help";
+protected static final	String 				CLI_APP_NM_SHRT  = "a";
+protected static final	String 				CLI_APP_NM_LONG  = "appName";
+protected static final	String 				CLI_CFG_NM_SHRT  = "c";
+protected static final	String 				CLI_CFG_NM_LONG  = "cfgFile";
+protected static final	String 				CLI_ENV_NM_SHRT  = "e";
+protected static final	String 				CLI_ENV_NM_LONG  = "envName";
+protected static final	String 				CLI_HLP_NM_SHRT  = "h";
+protected static final	String 				CLI_HLP_NM_LONG  = "help";
+protected static final  String              CLI_INST_NM_SHRT = "i";
+protected static final  String              CLI_INST_NM_LONG = "instName";
 
-protected 				Options				cliOpts			= new Options();
-protected				CommandLineParser	parser			= new DefaultParser();
-protected 				CommandLine			cmdLine			= null;
-protected				String[]			origCmdLine		= null;
+protected 				Options				cliOpts			 = new Options();
+protected				CommandLineParser	parser			 = new DefaultParser();
+protected 				CommandLine			cmdLine			 = null;
+protected				String[]			origCmdLine		 = null;
 
-protected				Configuration		appConfig 		= new Configuration();
+protected				Configuration		appConfig 		 = new Configuration();
 
-protected				ApplicationName		appName			= null;
-protected				EnvironmentName		envName			= null;
+protected				ApplicationName		appName			 = null;
+protected				EnvironmentName		envName			 = null;
 
 
 public BaseApplication() 
@@ -377,13 +380,15 @@ if ((!startProcessing) 	||
 
 if (startProcessing)
 	{
-	String cliAppName = this.getClass().getSimpleName();
-	String cliEnvName = null;
-	String cliCfgFile = cliAppName + ".properties";
+	String cliAppName  = this.getClass().getSimpleName();
+	String cliEnvName  = null;
+	String cliInstName = null;
+	String cliCfgFile  = cliAppName + ".properties";
 	
 	
 	ApplicationName appName       = null;
 	EnvironmentName envName       = null;
+	InstanceName    instName      = null;
 	
 	if (cmdLine.hasOption(CLI_APP_NM_LONG))
 		cliAppName = cmdLine.getOptionValue( CLI_APP_NM_LONG );
@@ -394,11 +399,16 @@ if (startProcessing)
 	if (cmdLine.hasOption(CLI_CFG_NM_LONG))
 		cliCfgFile = cmdLine.getOptionValue( CLI_CFG_NM_LONG );
 	
-	if ((cliAppName != null) && (cliAppName.length() > 0)) appName = ApplicationName.getApplicationName( cliAppName );
-	if ((cliEnvName != null) && (cliEnvName.length() > 0)) envName = EnvironmentName.getEnvironment( cliEnvName );
+	if (cmdLine.hasOption(CLI_INST_NM_LONG))
+	    cliInstName = cmdLine.getOptionValue( CLI_INST_NM_LONG );
+	
+	
+	if ((cliAppName  != null) && (cliAppName.length()  > 0)) appName  = ApplicationName.getApplicationName( cliAppName );
+	if ((cliEnvName  != null) && (cliEnvName.length()  > 0)) envName  = EnvironmentName.getEnvironment( cliEnvName );
+	if ((cliInstName != null) && (cliInstName.length() > 0)) instName = InstanceName.getInstanceName( cliInstName );
 	
 	logr.debug( "About to load configuration from: {}", cliCfgFile );
-	appConfig.loadConfiguration( appName, envName, cliCfgFile );
+	appConfig.loadConfiguration( appName, envName, instName, cliCfgFile );
 	}
 
 if (startProcessing)
@@ -436,10 +446,11 @@ return parsedCmdLine;
 
 protected void	createCLIOptions( Options cmdLineOpts )
 {
-cmdLineOpts.addOption( CLI_CFG_NM_SHRT, CLI_CFG_NM_LONG, true,  "Configuration Properties file name");
-cmdLineOpts.addOption( CLI_APP_NM_SHRT, CLI_APP_NM_LONG, true,  "Set the name of the application");
-cmdLineOpts.addOption( CLI_ENV_NM_SHRT, CLI_ENV_NM_LONG, true,  "Set Operating Environment Name (DEV, tst01, ...)" );
-cmdLineOpts.addOption( CLI_HLP_NM_SHRT, CLI_HLP_NM_LONG, false, "Display Command Line Usage information.");
+cmdLineOpts.addOption( CLI_CFG_NM_SHRT,  CLI_CFG_NM_LONG,  true,  "Configuration Properties file name");
+cmdLineOpts.addOption( CLI_APP_NM_SHRT,  CLI_APP_NM_LONG,  true,  "Set the name of the application");
+cmdLineOpts.addOption( CLI_ENV_NM_SHRT,  CLI_ENV_NM_LONG,  true,  "Set Operating Environment Name (DEV, tst01, ...)" );
+cmdLineOpts.addOption( CLI_INST_NM_SHRT, CLI_INST_NM_LONG, true,  "Set the instance name of multiple instance of an app." );
+cmdLineOpts.addOption( CLI_HLP_NM_SHRT,  CLI_HLP_NM_LONG,  false, "Display Command Line Usage information.");
 
 return;
 }

@@ -40,12 +40,14 @@ import org.apache.commons.lang3.BooleanUtils;
  */
 public class Configuration implements ConfigMap< PropertiesConfigSource >,
                                       ConfigAppNameAware,
-                                      ConfigEnvironmentAware
+                                      ConfigEnvironmentAware,
+                                      ConfigInstanceNameAware
 {
 private static final Logger	logr = LoggerFactory.getLogger(Configuration.class);
 
 private ApplicationName                                 appName     = null;
 private EnvironmentName				                    envName     = null;
+private InstanceName                                    instName    = null;
 private ConfigSource<Map<String, ArrayList<String>>>    cfgSrc      = null;
 
 private String                                          lastFileNm  = null;
@@ -145,7 +147,7 @@ return;
 
 public void		loadConfiguration( String fileNm )
 {
-loadConfiguration( appName, envName, fileNm );
+loadConfiguration( appName, envName, instName, fileNm );
 return;
 }
 
@@ -158,10 +160,12 @@ return;
  */
 public void		loadConfiguration( ApplicationName	appName,
 		                           EnvironmentName  envName,
+		                           InstanceName     instName,
 		                           String fileNm )
 {
 this.appName    = appName;
 this.envName    = envName;
+this.instName   = instName;
 
 this.lastFileNm = fileNm;
 this.lastProps  = null;
@@ -177,7 +181,7 @@ return;
 
 public  void    loadConfiguration( Properties props )
 {
-loadConfiguration( appName, envName, props );
+loadConfiguration( appName, envName, instName, props );
 return;
 }
 
@@ -185,10 +189,12 @@ return;
 
 public  void    loadConfiguration( ApplicationName  appName,
                                    EnvironmentName  envName,
+                                   InstanceName     instName,
                                    Properties       props )
 {
 this.appName    = appName;
 this.envName    = envName;
+this.instName   = instName;
 
 this.lastFileNm = null;
 this.lastProps  = props;
@@ -256,6 +262,24 @@ return cfgSrc.getAllConfigValues();
 
 
 
+
+@Override
+public void setInstanceName( InstanceName instName )
+{
+this.instName = instName;
+return;
+}
+
+
+
+@Override
+public InstanceName getInstanceName()
+{
+return instName;
+}
+
+
+
 @Override
 public boolean hasConfigItem( String configKey ) 
 {
@@ -299,7 +323,7 @@ if (rtrn == null)
     {
     for (PropertyNamePermutation perm : PropertyNamePermutation.values())
     	{
-    	String	cfgKy = perm.propertyName( appName, envName, cfgKey );
+    	String	cfgKy = perm.propertyName( appName, envName, instName, cfgKey );
     	
     	if (cfgKy != null)
     	    {
@@ -790,28 +814,84 @@ private enum    PropertyNamePart
 {
 APP,
 ENV,
+INST,
 KEY
 };
 
 
 private enum    PropertyNamePermutation
 {
-APP_ENV_KEY( PropertyNamePart.APP, PropertyNamePart.ENV, PropertyNamePart.KEY ),
-APP_KEY_ENV( PropertyNamePart.APP, PropertyNamePart.KEY, PropertyNamePart.ENV ),
-ENV_APP_KEY( PropertyNamePart.ENV, PropertyNamePart.APP, PropertyNamePart.KEY ),
-ENV_KEY_APP( PropertyNamePart.ENV, PropertyNamePart.KEY, PropertyNamePart.APP ),
-KEY_APP_ENV( PropertyNamePart.KEY, PropertyNamePart.APP, PropertyNamePart.ENV ),
-KEY_ENV_APP( PropertyNamePart.KEY, PropertyNamePart.ENV, PropertyNamePart.APP ),
+// Possible permutations of APP, ENV, INST, and KEY
+// KEY must be used, all others are optional.
+// Search is from most specific (more elements used) to most general (only KEY used).
 
-APP_KEY( PropertyNamePart.APP, PropertyNamePart.KEY ),
-ENV_KEY( PropertyNamePart.ENV, PropertyNamePart.KEY ),
-KEY_APP( PropertyNamePart.KEY, PropertyNamePart.APP ),
-KEY_ENV( PropertyNamePart.KEY, PropertyNamePart.ENV ),
+// Most Specific: all components are used.
+APP_ENV_INST_KEY( PropertyNamePart.APP,  PropertyNamePart.ENV,  PropertyNamePart.INST, PropertyNamePart.KEY  ),
+APP_ENV_KEY_INST( PropertyNamePart.APP,  PropertyNamePart.ENV,  PropertyNamePart.KEY,  PropertyNamePart.INST ),
+APP_INST_ENV_KEY( PropertyNamePart.APP,  PropertyNamePart.INST, PropertyNamePart.ENV,  PropertyNamePart.KEY  ),
+APP_INST_KEY_ENV( PropertyNamePart.APP,  PropertyNamePart.INST, PropertyNamePart.KEY,  PropertyNamePart.ENV  ),
+APP_KEY_ENV_INST( PropertyNamePart.APP,  PropertyNamePart.KEY,  PropertyNamePart.ENV,  PropertyNamePart.INST ),
+APP_KEY_INST_ENV( PropertyNamePart.APP,  PropertyNamePart.KEY,  PropertyNamePart.INST, PropertyNamePart.ENV  ),
 
+ENV_APP_INST_KEY( PropertyNamePart.ENV,  PropertyNamePart.APP,  PropertyNamePart.INST, PropertyNamePart.KEY  ),
+ENV_APP_KEY_INST( PropertyNamePart.ENV,  PropertyNamePart.APP,  PropertyNamePart.KEY,  PropertyNamePart.INST ),
+ENV_INST_APP_KEY( PropertyNamePart.ENV,  PropertyNamePart.INST, PropertyNamePart.APP,  PropertyNamePart.KEY  ),
+ENV_INST_KEY_APP( PropertyNamePart.ENV,  PropertyNamePart.INST, PropertyNamePart.KEY,  PropertyNamePart.APP  ),
+ENV_KEY_INST_APP( PropertyNamePart.ENV,  PropertyNamePart.KEY,  PropertyNamePart.INST, PropertyNamePart.APP  ),
+ENV_KEY_APP_INST( PropertyNamePart.ENV,  PropertyNamePart.KEY,  PropertyNamePart.APP,  PropertyNamePart.INST ),
+
+INST_APP_ENV_KEY( PropertyNamePart.INST, PropertyNamePart.APP,  PropertyNamePart.ENV,  PropertyNamePart.KEY  ),
+INST_APP_KEY_ENV( PropertyNamePart.INST, PropertyNamePart.APP,  PropertyNamePart.KEY,  PropertyNamePart.ENV  ),
+INST_ENV_APP_KEY( PropertyNamePart.INST, PropertyNamePart.ENV,  PropertyNamePart.APP,  PropertyNamePart.KEY  ),
+INST_ENV_KEY_APP( PropertyNamePart.INST, PropertyNamePart.ENV,  PropertyNamePart.KEY,  PropertyNamePart.APP  ),
+INST_KEY_APP_ENV( PropertyNamePart.INST, PropertyNamePart.KEY,  PropertyNamePart.APP,  PropertyNamePart.ENV  ),
+INST_KEY_ENV_APP( PropertyNamePart.INST, PropertyNamePart.KEY,  PropertyNamePart.ENV,  PropertyNamePart.APP  ),
+
+KEY_APP_ENV_INST( PropertyNamePart.KEY,  PropertyNamePart.APP,  PropertyNamePart.ENV,  PropertyNamePart.INST ),
+KEY_APP_INST_ENV( PropertyNamePart.KEY,  PropertyNamePart.APP,  PropertyNamePart.INST, PropertyNamePart.ENV  ),
+KEY_ENV_APP_INST( PropertyNamePart.KEY,  PropertyNamePart.ENV,  PropertyNamePart.APP,  PropertyNamePart.INST ),
+KEY_ENV_INST_APP( PropertyNamePart.KEY,  PropertyNamePart.ENV,  PropertyNamePart.INST, PropertyNamePart.APP  ),
+KEY_INST_APP_ENV( PropertyNamePart.KEY,  PropertyNamePart.INST, PropertyNamePart.APP,  PropertyNamePart.ENV  ),
+KEY_INST_ENV_APP( PropertyNamePart.KEY,  PropertyNamePart.INST, PropertyNamePart.ENV,  PropertyNamePart.APP  ),
+
+// All but one components are used.
+//Missing APP
+INST_ENV_KEY( PropertyNamePart.INST, PropertyNamePart.ENV,  PropertyNamePart.KEY  ),
+INST_KEY_ENV( PropertyNamePart.INST, PropertyNamePart.KEY,  PropertyNamePart.ENV  ),
+ENV_INST_KEY( PropertyNamePart.ENV,  PropertyNamePart.INST, PropertyNamePart.KEY  ),
+ENV_KEY_INST( PropertyNamePart.ENV,  PropertyNamePart.KEY,  PropertyNamePart.INST ),
+KEY_INST_ENV( PropertyNamePart.KEY,  PropertyNamePart.INST, PropertyNamePart.ENV  ),
+KEY_ENV_INST( PropertyNamePart.KEY,  PropertyNamePart.ENV,  PropertyNamePart.INST ),
+
+//Missing ENV
+INST_APP_KEY( PropertyNamePart.INST, PropertyNamePart.APP,  PropertyNamePart.KEY  ),
+INST_KEY_APP( PropertyNamePart.INST, PropertyNamePart.KEY,  PropertyNamePart.APP  ),
+APP_INST_KEY( PropertyNamePart.APP,  PropertyNamePart.INST, PropertyNamePart.KEY  ),
+APP_KEY_INST( PropertyNamePart.APP,  PropertyNamePart.KEY,  PropertyNamePart.INST ),
+KEY_INST_APP( PropertyNamePart.KEY,  PropertyNamePart.INST, PropertyNamePart.APP  ),
+KEY_APP_INST( PropertyNamePart.KEY,  PropertyNamePart.APP,  PropertyNamePart.INST ),
+
+// Missing INST
+APP_ENV_KEY(  PropertyNamePart.APP,  PropertyNamePart.ENV,  PropertyNamePart.KEY  ),
+APP_KEY_ENV(  PropertyNamePart.APP,  PropertyNamePart.KEY,  PropertyNamePart.ENV  ),
+ENV_APP_KEY(  PropertyNamePart.ENV,  PropertyNamePart.APP,  PropertyNamePart.KEY  ),
+ENV_KEY_APP(  PropertyNamePart.ENV,  PropertyNamePart.KEY,  PropertyNamePart.APP  ),
+KEY_APP_ENV(  PropertyNamePart.KEY,  PropertyNamePart.APP,  PropertyNamePart.ENV  ),
+KEY_ENV_APP(  PropertyNamePart.KEY,  PropertyNamePart.ENV,  PropertyNamePart.APP  ),
+
+// Two components are used.
+APP_KEY(  PropertyNamePart.APP,  PropertyNamePart.KEY  ),
+ENV_KEY(  PropertyNamePart.ENV,  PropertyNamePart.KEY  ),
+INST_KEY( PropertyNamePart.INST, PropertyNamePart.KEY  ),
+KEY_APP(  PropertyNamePart.KEY,  PropertyNamePart.APP  ),
+KEY_ENV(  PropertyNamePart.KEY,  PropertyNamePart.ENV  ),
+KEY_INST( PropertyNamePart.KEY,  PropertyNamePart.INST ),
+
+// Only the required KEY component is used.
 KEY( PropertyNamePart.KEY );
 
 
-private PropertyNamePart[]    parts = new PropertyNamePart[3];
+private PropertyNamePart[]    parts = new PropertyNamePart[4];
 
 
 PropertyNamePermutation( PropertyNamePart part1 )
@@ -819,6 +899,7 @@ PropertyNamePermutation( PropertyNamePart part1 )
 parts[0]  = part1;
 parts[1]  = null;
 parts[2]  = null;
+parts[3]  = null;
 
 return;
 }
@@ -832,6 +913,7 @@ PropertyNamePermutation( PropertyNamePart part1,
 parts[0]  = part1;
 parts[1]  = part2;
 parts[2]  = null;
+parts[3]  = null;
 
 return;
 }
@@ -846,6 +928,23 @@ PropertyNamePermutation( PropertyNamePart part1,
 parts[0]  = part1;
 parts[1]  = part2;
 parts[2]  = part3;
+parts[3]  = null;
+
+return;
+}
+
+
+
+
+PropertyNamePermutation( PropertyNamePart part1,
+                         PropertyNamePart part2,
+                         PropertyNamePart part3,
+                         PropertyNamePart part4 )
+{
+parts[0]  = part1;
+parts[1]  = part2;
+parts[2]  = part3;
+parts[3]  = part4;
 
 return;
 }
@@ -854,6 +953,7 @@ return;
 
 public String   propertyName( ApplicationName    appNm,
                               EnvironmentName    envNm,
+                              InstanceName       instNm,
                               String             propKey )
 {
 String  rtrn = "";
@@ -885,6 +985,15 @@ for (int ndx = 0; (ndx < parts.length) && (rtrn != null); ndx++)
                 
                 break;
                 
+            case    INST:
+                if ((instNm != null) && (instNm.nrmlzdInstName().length() > 0))
+                    rtrn = rtrn.concat( rtrn.length() > 0 ? "." : "")
+                               .concat( instNm.nrmlzdInstName() );
+                
+                else
+                    rtrn = null;
+                
+                break;
                 
             case    KEY:
                 if ((propKey != null) && (propKey.length() > 0))
