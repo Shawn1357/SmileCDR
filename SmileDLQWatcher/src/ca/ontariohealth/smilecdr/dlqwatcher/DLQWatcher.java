@@ -3,10 +3,7 @@
  */
 package ca.ontariohealth.smilecdr.dlqwatcher;
 
-import java.lang.Runtime.Version;
 import java.time.Duration;
-import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -485,9 +482,9 @@ lister.seekToBeginning( lister.assignment() );
 if (lister != null)
     {
     Long        loopStartedAt = System.currentTimeMillis();
-    Long        polInterval   = appConfig.configLong( ConfigProperty.KAFKA_CONSUMER_POLL_INTERVAL, Long.valueOf( 250L ) );
+    Long        pollInterval  = appConfig.configLong( ConfigProperty.KAFKA_CONSUMER_POLL_INTERVAL, Long.valueOf( 250L ) );
     Long        maxWait       = appConfig.configLong( ConfigProperty.RESPONSE_WAIT_MILLIS, Long.valueOf( 10000L ) );
-    Duration    interval      = Duration.ofMillis( polInterval );
+    Duration    interval      = Duration.ofMillis( pollInterval );
     
     do
         {

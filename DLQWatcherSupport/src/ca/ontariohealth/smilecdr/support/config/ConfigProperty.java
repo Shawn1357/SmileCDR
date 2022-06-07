@@ -25,6 +25,9 @@ COPYRIGHT_HOLDER(             "copyright.holder",              "Accenture, Inc."
 COPYRIGHT_YEAR_START(         "copyright.year.start",          String.valueOf( LocalDate.now().getYear() ) ),
 COPYRIGHT_YEAR_END(           "copyright.year.end" ),
 
+DATE_FORMAT(                  "date.format",                   "yyyy-MM-dd" ),
+TIMESTAMP_FORMAT(             "timestamp.format",              "yyyy-MM-dd HH:mm:ss" ),
+
 BOOTSTRAP_SERVERS(            "bootstrap.servers" ),
 KAFKA_CONTROL_GROUP_ID(       "control.group.id" ),
 KAFKA_DLQ_GROUP_ID(           "dlq.group.id" ),
