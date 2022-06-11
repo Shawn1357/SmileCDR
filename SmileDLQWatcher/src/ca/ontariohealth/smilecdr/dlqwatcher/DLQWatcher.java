@@ -27,6 +27,7 @@ import ca.ontariohealth.smilecdr.support.commands.ProcessingMessageSeverity;
 import ca.ontariohealth.smilecdr.support.commands.json.CommandParamAdapter;
 import ca.ontariohealth.smilecdr.support.commands.json.MyInstantAdapter;
 import ca.ontariohealth.smilecdr.support.commands.json.ReportRecordAdapter;
+import ca.ontariohealth.smilecdr.support.commands.response.DLQRecordEntry;
 import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
 import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
@@ -42,6 +43,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
+import org.apache.kafka.common.TopicPartition;
 
 
 /**
@@ -477,7 +479,22 @@ Consumer<String,String> lister = KafkaConsumerHelper.createConsumer( appConfig,
                                                                      topicNm,
                                                                      disabledAutoCommit );
 
+logr.debug( "Actually subscribed to the following topic(s):" );
+for (String crntSub : lister.subscription())
+    {
+    if (crntSub != null)
+        logr.debug( "   {}", crntSub );
+    }
+
+logr.debug( "Assigned to the following topic partition(s):" );
+for (TopicPartition crntPart : lister.assignment())
+    {
+    if (crntPart != null)
+        logr.debug( "   {} - {}", crntPart.topic(), crntPart.partition() );
+    }
+
 lister.seekToBeginning( lister.assignment() );
+lister.commitSync();
 
 if (lister != null)
     {
@@ -489,24 +506,26 @@ if (lister != null)
     do
         {
         final   ConsumerRecords<String, String> rcrds = lister.poll( interval );
-        logr.debug( "Received {} KAFKA.DLQ entries.", rcrds.count() );
+        logr.debug( "Received {} KAFKA.DLQ Event(s).", rcrds.count() );
         
         if ((rcrds != null) && (rcrds.count() > 0))
             {
-            logr.debug( "Received {} KAFKA.DLQ Events", rcrds.count() );
             for (ConsumerRecord<String, String> crnt : rcrds)
                 {
                 if (crnt != null)
                     {
-                    String  dlqEntry = crnt.value();
-                    logr.debug( "DLQ Entry:" );
-                    logr.debug( "\n{}", dlqEntry );
+                    DLQRecordEntry  entry = new DLQRecordEntry( crnt );
+                    logr.info( "DLQ Entry:" );
+                    logr.info( "    Timestamp:       {}", entry.getEntryTimestamp().getEpochMillis() );
+                    logr.info( "    Subscription ID: {}", entry.getSubscriptionID() );
+                    logr.info( "    Resource Type:   {}", entry.getResourceType() );
+                    logr.info( "    Resource ID:     {}", entry.getResourceID() );
                     }
                 }
             }
         }
     
-    while ((System.currentTimeMillis() <= loopStartedAt + maxWait));
+    while (System.currentTimeMillis() <= loopStartedAt + maxWait);
     
     lister.close();
     }
