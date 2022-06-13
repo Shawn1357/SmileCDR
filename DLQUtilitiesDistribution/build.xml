@@ -1,27 +1,58 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="DLQUtilitiesDistribution" basedir="." default="rebuild">
 
-	<property name="finalJAR"                     value="dlqutilities.jar" />
+	<property name="finalJAR"                        value="dlqutilities.jar" />
 	
-	<property name="workspaceDir"                 value="{basedir}/../.." />
+	<property name="workspaceDir"                    value="{basedir}/../.." />
 	
-    <property name="CommonResourcesProj"          value="CommonResources" />
-	<property name="DLQUtilitiesDistributionProj" value="DLQUtilitiesDistribution" />
-	<property name="DLQWatcherSupportProj"        value="DLQWatcherSupport" />
-	<property name="DLQWatcherControlProj"        value="DLQWatcherControl" />
-	<property name="SmileCDRLibProj"              value="SmileCDRLib" />
-	<property name="SmileDLQRetriggerProj"        value="SmileDLQRetrigger" />
-	<property name="SmileDLQWatcherProj"          value="SmileDLQWatcher" />
-	<property name="ThirdPartyProj"               value="Thirdparty" />
+    <property name="CommonResourcesProj"             value="CommonResources" />
+	<property name="DLQUtilitiesDistributionProj"    value="DLQUtilitiesDistribution" />
+	<property name="DLQWatcherSupportProj"           value="DLQWatcherSupport" />
+	<property name="DLQWatcherControlProj"           value="DLQWatcherControl" />
+	<property name="SmileCDRLibProj"                 value="SmileCDRLib" />
+	<property name="SmileDLQRetriggerProj"           value="SmileDLQRetrigger" />
+	<property name="SmileDLQWatcherProj"             value="SmileDLQWatcher" />
+	<property name="ThirdPartyProj"                  value="Thirdparty" />
 	
-	<property name="configPropsFile"              value="DLQWatcher.properties" />
-	<property name="emailCredentialsFile"         value="${workspaceDir}/${CommonResourcesProj}/emailcredentials.cred" />
-	<property name="emailTemplate01File"          value="${workspaceDir}/${CommonResourcesProj}/emailTemplate01.txt" />
-	<property name="dlqWatcherControlLogbackFile" value="${workspaceDir}/${CommonResourcesProj}/DLQWatcherControl-logback.xml" />
-    <property name="dlqWatcherLogbackFile"        value="${workspaceDir}/${CommonResourcesProj}/DLQWatcher-logback.xml" />
-    <property name="genericLogbackFile"           value="${workspaceDir}/${CommonResourcesProj}/logback.xml" />
+	<property name="LaunchersDir"                    value="${workspaceDir}/${DLQUtilitiesDistributionProj}/launchers" />
+	
+	<property name="DLQWatcherScriptFileNm"          value="DLQWatcher.sh" />
+	<property name="DLQWatcherScriptSrcFile"         value="${LaunchersDir}/${DLQWatcherScriptFileNm}" />
+	
+    <property name="DLQWatcherControlScriptFileNm"   value="DLQWatcherControl.sh" />
+    <property name="DLQWatcherControlScriptSrcFile"  value="${LaunchersDir}/${DLQWatcherControlScriptFileNm}" />
+    
+	<property name="configPropsFileNm"               value="DLQWatcher.properties" />
+	<property name="configPropsSrcFile"              value="${workspaceDir}/${CommonResourcesProj}/${configPropsFileNm}" />
+	
+    <property name="emailCredentialsFileNm"          value="emailcredentials.cred" />
+	<property name="emailCredentialsSrcFile"         value="${workspaceDir}/${CommonResourcesProj}/${emailCredentialsFileNm}" />
+	
+    <property name="emailTemplate01FileNm"           value="emailTemplate01.txt" />
+	<property name="emailTemplate01SrcFile"          value="${workspaceDir}/${CommonResourcesProj}/${emailTemplate01FileNm}" />
+	
+    <property name="dlqWatcherControlLogbackFileNm"  value="DLQWatcherControl-logback.xml" />
+	<property name="dlqWatcherControlLogbackSrcFile" value="${workspaceDir}/${CommonResourcesProj}/${dlqWatcherControlLogbackFileNm}" />
+	
+    <property name="dlqWatcherLogbackFileNm"         value="DLQWatcher-logback.xml" />
+    <property name="dlqWatcherLogbackSrcFile"        value="${workspaceDir}/${CommonResourcesProj}/${dlqWatcherLogbackFileNm}" />
+	
+    <property name="genericLogbackFileNm"            value="logback.xml" />
+    <property name="genericLogbackSrcFile"           value="${workspaceDir}/${CommonResourcesProj}/${genericLogbackFileNm}" />
 
-    <property name="targetDirectory"              value="${workspaceDir}/${DLQUtilitiesDistributionProj}/dist" />
+	<property name="javabeansActFrmwrkJarNm"         value="activation.jar" />
+	<property name="javabeansActFrmwrkJarSrcFile"    value="${workspaceDir}/${ThirdPartyProj}/JavaBeansActivationFramework/jaf-1_1_1/${javabeansActFrmwrkJarNm}" />
+	
+	<property name="javamailJarNm"                   value="javax.mail-1.6.2.jar" />
+	<property name="javamailJarSrcFile"              value="${workspaceDir}/${ThirdPartyProj}/JavaMail/${javamailJarNm}" />
+	
+    <property name="targetDirectory"                 value="${workspaceDir}/${DLQUtilitiesDistributionProj}/dist" />
+	<property name="logsSubdirectory"                value="logs" />
+	<property name="logsDirectory"                   value="${targetDirectory}/${logsSubdirectory}" />
+	
+	<property name="libsSubdirectory"                value="lib" />
+	<property name="libsDirectory"                   value="${targetDirectory}/${libsSubdirectory}" />
+	
     
     <target name="rebuild" depends="clean,build">
     </target>
@@ -39,17 +70,28 @@
     </target>
 	
 	<target name="assembleResources">
-		<copy file="${workspaceDir}/${CommonResourcesProj}/${configPropsFile}"              todir="${targetDirectory}"/>
-		<copy file="${workspaceDir}/${CommonResourcesProj}/${emailCredentialsFile}"         todir="${targetDirectory}"/>
-        <copy file="${workspaceDir}/${CommonResourcesProj}/${emailTemplate01File}"          todir="${targetDirectory}"/>
-        <copy file="${workspaceDir}/${CommonResourcesProj}/${dlqWatcherControlLogbackFile}" todir="${targetDirectory}"/>
-        <copy file="${workspaceDir}/${CommonResourcesProj}/${dlqWatcherLogbackFile}"        todir="${targetDirectory}"/>
-        <copy file="${workspaceDir}/${CommonResourcesProj}/${genericLogbackFile}"           todir="${targetDirectory}"/>
+		<copy file="${configPropsSrcFile}"                                   todir="${targetDirectory}"/>
+		<copy file="${emailCredentialsSrcFile}"                              todir="${targetDirectory}"/>
+        <copy file="${emailTemplate01SrcFile}"                               todir="${targetDirectory}"/>
+		<copy file="${DLQWatcherScriptSrcFile}"                              todir="${targetDirectory}"/>
+        <copy file="${DLQWatcherControlScriptSrcFile}"                       todir="${targetDirectory}"/>
+		<copy file="${javabeansActFrmwrkJarSrcFile}"                         todir="${libsDirectory}"/>
+		<copy file="${javamailJarSrcFile}"                                   todir="${libsDirectory}"/>
+		
+        <copy    file="${dlqWatcherControlLogbackSrcFile}"                   todir="${targetDirectory}"/>
+		<replace file="${targetDirectory}/${dlqWatcherControlLogbackFileNm}" token="${logfolder}" value="${logsSubdirectory}" />
+
+        <copy    file="${dlqWatcherLogbackSrcFile}"                          todir="${targetDirectory}"/>
+        <replace file="${targetDirectory}/${dlqWatcherLogbackFileNm}"        token="${logfolder}"  value="${logsSubdirectory}" />
+		
+        <copy    file="${genericLogbackSrcFile}"                             todir="${targetDirectory}"/>
+        <replace file="${targetDirectory}/${genericLogbackFileNm}"           token="${logfolder}"  value="${logsSubdirectory}" />
 	</target>
 	
     <target name="clean">
     	<delete dir="${targetDirectory}" />
     	<mkdir dir="${targetDirectory}" />
+    	<mkdir dir="${logsDirectory}" />
     	
     </target>
 

@@ -1,4 +1,6 @@
 <configuration scan="true" scanPeriod="15 seconds">
+  <property scope="context" name="logfolder" value="." />
+  
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
       <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
@@ -7,7 +9,7 @@
   </appender>
 
   <appender name='FILE' class="ch.qos.logback.core.FileAppender">
-    <file>DLQWatcherControl.log</file>
+    <file>${logfolder}/DLQWatcherControl.log</file>
     <append>false</append>
     <immediateFlush>true</immediateFlush>
     <encoder>

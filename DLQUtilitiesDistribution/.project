@@ -12,10 +12,11 @@
 		</buildCommand>
 		<buildCommand>
 			<name>org.eclipse.ui.externaltools.ExternalToolBuilder</name>
+			<triggers>full,incremental,</triggers>
 			<arguments>
 				<dictionary>
 					<key>LaunchConfigHandle</key>
-					<value>&lt;project&gt;/.externalToolBuilders/Asseemble Distribution.launch</value>
+					<value>&lt;project&gt;/.externalToolBuilders/Assemble-Distribution.launch</value>
 				</dictionary>
 			</arguments>
 		</buildCommand>
