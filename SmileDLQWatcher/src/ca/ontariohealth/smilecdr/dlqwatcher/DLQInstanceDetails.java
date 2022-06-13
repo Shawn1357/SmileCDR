@@ -3,19 +3,25 @@
  */
 package ca.ontariohealth.smilecdr.dlqwatcher;
 
+import java.time.Instant;
+
+import ca.ontariohealth.smilecdr.support.MyInstant;
+
 /**
  * @author adminuser
  *
  */
 public class DLQInstanceDetails 
 {
-private	String	subID		= null;
-private	String	resType		= null;
-private String	resID		= null;
+private MyInstant   rcrdInstant = null;
+private	String	    subID		= null;
+private	String	    resType		= null;
+private String	    resID		= null;
 
-public	DLQInstanceDetails( String subscriptionID,
-		                    String failedResourceType,
-		                    String failedResourceID )
+public	DLQInstanceDetails( MyInstant   rcrdTimestamp,
+                            String      subscriptionID,
+		                    String      failedResourceType,
+		                    String      failedResourceID )
 {
 if ((subscriptionID     		 == null) 	||
 	(failedResourceType 		 == null)	||
@@ -26,11 +32,18 @@ if ((subscriptionID     		 == null) 	||
 	
 	throw new IllegalArgumentException( "No constructor arguments may be null or zero-length." );
 
-subID 	= subscriptionID;
-resType = failedResourceType;
-resID   = failedResourceID;
+rcrdInstant = rcrdTimestamp;
+subID 	    = subscriptionID;
+resType     = failedResourceType;
+resID       = failedResourceID;
 
 return;
+}
+
+
+public MyInstant  rcrdInstant()
+{
+return rcrdInstant;
 }
 
 
@@ -56,7 +69,7 @@ return resID;
 
 public String[]	instanceDetails()
 {
-String[]	details = { subID, resType, resID };
+String[]	details = { String.valueOf( rcrdInstant.getEpochMillis() ), subID, resType, resID };
 
 return details;
 }

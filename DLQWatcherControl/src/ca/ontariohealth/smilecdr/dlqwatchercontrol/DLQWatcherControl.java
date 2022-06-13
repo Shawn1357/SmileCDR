@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -104,8 +105,10 @@ else
 if (cmdsToSend != null)
     {
     Long   maxRespWait = appConfig.configLong( ConfigProperty.RESPONSE_WAIT_MILLIS );
+    Long   pauseForResp = appConfig.configLong( ConfigProperty.PAUSE_BEFORE_WAIT_FOR_RESPONSE );
     
 	for (String crntCmd : cmdsToSend)
+	    {
 		if ((crntCmd != null) && (crntCmd.length() > 0))
 		    {
 		    DLQCommandContainer   cmdToSend   = null;
@@ -114,9 +117,23 @@ if (cmdsToSend != null)
 		    cmdToSend = createWatcherCommand( crntCmd );
 		    
 			sendCommand( kafkaTopicName, cmdToSend );
+		
+			if ((pauseForResp != null) && (pauseForResp > 0))
+			    {
+                try
+                    {
+                    Thread.sleep( pauseForResp.longValue() );
+                    }
+			
+                catch (InterruptedException e)
+                    {
+                    // Nothing to do...
+                    }
+			    }
 			
 			cmdResp = waitForResponse( cmdToSend, maxRespWait );
 		    }
+	    }
     }
 
 logr.debug("Exiting: DLQWatcherControl.launch" );
@@ -130,8 +147,12 @@ private DLQResponseContainer    waitForResponse( DLQCommandContainer cmdSent, Lo
 {
 logr.debug( "Entering: waitForResponse" );
 
-DLQResponseContainer    resp        = null;
-String                  respChannel = (cmdSent != null) ? cmdSent.getResponseChannelName() : null;
+DLQResponseContainer    resp         = null;
+String                  respChannel  = (cmdSent != null) ? cmdSent.getResponseChannelName() : null;
+Properties              maxPollRcrds = new Properties();
+
+maxPollRcrds.put( "max.poll.records", "1" );
+
 
 if ((cmdSent != null) && (respChannel != null) && (respChannel.length() > 0))
     {
@@ -139,7 +160,7 @@ if ((cmdSent != null) && (respChannel != null) && (respChannel.length() > 0))
     MyInstant               now          = null;
     Duration                pollInterval = Duration.ofMillis( appConfig.configLong( ConfigProperty.KAFKA_CONSUMER_POLL_INTERVAL ).longValue() );
     String                  groupNm      = appConfig.configValue( ConfigProperty.KAFKA_CONTROL_GROUP_ID );
-    Consumer<String,String> consumer     = KafkaConsumerHelper.createConsumer( appConfig, groupNm, respChannel );
+    Consumer<String,String> consumer     = KafkaConsumerHelper.createConsumer( appConfig, groupNm, respChannel, maxPollRcrds );
     UUID                    cmdID        = cmdSent.getCommandUUID();
    
     
@@ -212,7 +233,7 @@ String                         jsonCmd      = commandToSend.toJSON( jsonBuilder 
 if (rollingNdx >= 10000)
     rollingNdx = 0;
 
-logr.debug( "About to send the following command to the DLQ Wastcher:" );
+logr.debug( "About to send the following command to the DLQ Watcher:" );
 logr.debug( "\n{}", jsonCmd );
 
 ProducerRecord<String, String> record = new ProducerRecord<>( kafkaTopicName,
@@ -223,7 +244,7 @@ try
 	logr.debug( "Sending Command to Kafka Topic" );
 	RecordMetadata	metadata = prdcr.send( record ).get();
 	
-	prdcr.close();
+	// prdcr.close();
 	
 	if (metadata != null)
 		{

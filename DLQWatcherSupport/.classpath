@@ -26,5 +26,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="/SmileCDRLib/gson-2.8.9.jar"/>
+	<classpathentry kind="lib" path="/SmileCDRLib/json-20210307.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

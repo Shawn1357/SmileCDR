@@ -3,6 +3,8 @@
  */
 package ca.ontariohealth.smilecdr.dlqwatcher;
 
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -10,6 +12,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ca.ontariohealth.smilecdr.support.MyInstant;
+import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
 
 /**
@@ -83,7 +87,11 @@ private void	extractOneRecordDetails( ConsumerRecord<String, String> rcrd )
 {
 logr.debug( "Entering: extractOneRecordDetails" );
 
-String	rcrdJSONString = rcrd.value();
+MyInstant rcrdTimestamp  = new MyInstant( rcrd.timestamp() );
+String	  rcrdJSONString = rcrd.value();
+
+logr.debug( "Extracting information from:" );
+logr.debug( "\n{}", rcrdJSONString );
 
 if ((rcrdJSONString != null) && (rcrdJSONString.length() > 0))
 	{
@@ -102,13 +110,16 @@ if ((rcrdJSONString != null) && (rcrdJSONString.length() > 0))
 	colonIndex = rcrdJSONString.indexOf( ':', commaIndex );
 	commaIndex = rcrdJSONString.indexOf( ',', colonIndex );
 	
-	String resourceID = rcrdJSONString.substring( colonIndex + 3, commaIndex - 2 );
+	String            resourceID = rcrdJSONString.substring( colonIndex + 3, commaIndex - 2 );
+	DateTimeFormatter fmtr       = DateTimeFormatter.ofPattern( appConfig.configValue( ConfigProperty.TIMESTAMP_FORMAT ) );
+	String            recordTS   = rcrdTimestamp != null ? fmtr.format( rcrdTimestamp.asLocalDateTime() ) : "<null>";
 	
-	logr.debug( "Subscription ID: {}", subscrID );
-	logr.debug( "Resource Type:   {}", resourceType );
-	logr.debug( "Resource ID:     {}", resourceID );
+	logr.debug( "Record Timestamp:  {}", recordTS );
+	logr.debug( "Subscription ID:   {}", subscrID );
+	logr.debug( "Resource Type:     {}", resourceType );
+	logr.debug( "Resource ID:       {}", resourceID );
 	
-	DLQInstanceDetails	dtls = new DLQInstanceDetails( subscrID, resourceType, resourceID );
+	DLQInstanceDetails	dtls = new DLQInstanceDetails( rcrdTimestamp, subscrID, resourceType, resourceID );
 	dlqDetails.add( dtls );
 	}
 

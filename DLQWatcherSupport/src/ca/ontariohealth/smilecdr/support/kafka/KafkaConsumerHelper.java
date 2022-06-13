@@ -112,7 +112,7 @@ else
         logr.debug( "Subscribing to Topic: {}", topicName );
         consumer.subscribe( Collections.singletonList( topicName ) );
         
-        //allConsumers.put( consumerKey,  consumer );
+        allConsumers.put( consumerKey,  consumer );
         }
     }
 

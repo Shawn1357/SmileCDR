@@ -4,6 +4,8 @@
 package ca.ontariohealth.smilecdr.support;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /**
  * @author adminuser
@@ -63,6 +65,15 @@ return millis;
 public Instant  asInstant()
 {
 Instant rtrn = Instant.ofEpochMilli( millis );
+return rtrn;
+}
+
+
+
+public LocalDateTime   asLocalDateTime()
+{
+LocalDateTime   rtrn = LocalDateTime.ofInstant( this.asInstant(), ZoneId.systemDefault() );
+
 return rtrn;
 }
 }

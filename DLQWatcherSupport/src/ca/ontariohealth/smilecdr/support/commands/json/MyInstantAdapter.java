@@ -4,6 +4,7 @@
 package ca.ontariohealth.smilecdr.support.commands.json;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -25,17 +26,17 @@ private static  String  FIELD_EPOCH_MILLIS  = "epochMillis";
 private static  String  FIELD_ISO8601_STR   = "iso8601Format";
 private static  String  FIELD_LOCAL_TS      = "localDateTime";
 
-private static  ZoneId  systemZone          = ZoneId.systemDefault();
-private static  DateTimeFormatter   lclFmt  = DateTimeFormatter.ofPattern( "yyyy-MM-dd HH:mm:ss" );
+private static  ZoneId              systemZone  = ZoneId.systemDefault();
+private static  DateTimeFormatter   lclFmt      = DateTimeFormatter.ofPattern( "yyyy-MM-dd HH:mm:ss" );
 
 @Override
 public void write (JsonWriter writer, MyInstant value) throws IOException
 {
 if (value != null)
     {
-    Long            epochMillis   = Long.valueOf( value.getEpochMillis() );
-    String          iso8601Fmt    = value.toString();
-    LocalDateTime   localDateTime = LocalDateTime.ofInstant( value.asInstant(), systemZone );
+    Long                epochMillis   = Long.valueOf( value.getEpochMillis() );
+    LocalDateTime       isoDateTime   = LocalDateTime.ofInstant( value.asInstant(), ZoneId.of( "UTC" ) );
+    LocalDateTime       localDateTime = LocalDateTime.ofInstant( value.asInstant(), systemZone );
     
     writer.beginObject();
     
@@ -44,7 +45,7 @@ if (value != null)
     writer.name( FIELD_LOCAL_TS );
     writer.value( lclFmt.format( localDateTime ) );
     writer.name( FIELD_ISO8601_STR );
-    writer.value( iso8601Fmt );
+    writer.value( DateTimeFormatter.ISO_DATE_TIME.format( isoDateTime ) );
     
     writer.endObject();
     }

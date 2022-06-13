@@ -71,7 +71,7 @@ else
         
         producer = new KafkaProducer<>( props );
         
-        //allProducers.put( topicName, producer );
+        allProducers.put( topicName, producer );
         }
     }
 

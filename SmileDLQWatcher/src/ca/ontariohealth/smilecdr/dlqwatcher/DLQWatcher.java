@@ -3,10 +3,7 @@
  */
 package ca.ontariohealth.smilecdr.dlqwatcher;
 
-import java.lang.Runtime.Version;
 import java.time.Duration;
-import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -30,6 +27,7 @@ import ca.ontariohealth.smilecdr.support.commands.ProcessingMessageSeverity;
 import ca.ontariohealth.smilecdr.support.commands.json.CommandParamAdapter;
 import ca.ontariohealth.smilecdr.support.commands.json.MyInstantAdapter;
 import ca.ontariohealth.smilecdr.support.commands.json.ReportRecordAdapter;
+import ca.ontariohealth.smilecdr.support.commands.response.DLQRecordEntry;
 import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
 import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
@@ -45,6 +43,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
+import org.apache.kafka.common.TopicPartition;
 
 
 /**
@@ -228,8 +227,8 @@ while (!exitWatcher)
 		exitWatcher = ((System.currentTimeMillis() - startTime) > maxTime);
 	}
 
-if (controlConsumer != null)
-	controlConsumer.close();
+//if (controlConsumer != null)
+	//controlConsumer.close();
 
 logr.debug( "Exiting: listenForControlCommands" );
 return;
@@ -305,10 +304,11 @@ if ((resp != null) && (cmd != null) && (channel != null) && (channel.length() > 
         else
             logr.error( "Kafka Send Request resulted in null Metadata" );
         
+        //producer.close();
         }
     }
 
-logr.debug( "Exiting: resturnResponse()" );
+logr.debug( "Exiting: returnResponse()" );
 return;
 }
 
@@ -474,44 +474,71 @@ String groupID = appConfig.configValue( ConfigProperty.KAFKA_DLQ_LISTER_GROUP_ID
                                         appConfig.getApplicationName().appName() + ".control.group.id" );
 
 disabledAutoCommit.setProperty( "enable.auto.commit", "false" );
+disabledAutoCommit.setProperty( "auto.offset.reset",  "earliest" );
 
 Consumer<String,String> lister = KafkaConsumerHelper.createConsumer( appConfig,
                                                                      groupID,
                                                                      topicNm,
                                                                      disabledAutoCommit );
 
+logr.debug( "Actually subscribed to the following topic(s):" );
+for (String crntSub : lister.subscription())
+    {
+    if (crntSub != null)
+        logr.debug( "   {}", crntSub );
+    }
+
+logr.debug( "Assigned to the following topic partition(s):" );
+for (TopicPartition crntPart : lister.assignment())
+    {
+    if (crntPart != null)
+        logr.debug( "   {} - {}", crntPart.topic(), crntPart.partition() );
+    }
+
 lister.seekToBeginning( lister.assignment() );
+lister.commitSync();
 
 if (lister != null)
     {
     Long        loopStartedAt = System.currentTimeMillis();
-    Long        polInterval   = appConfig.configLong( ConfigProperty.KAFKA_CONSUMER_POLL_INTERVAL, Long.valueOf( 250L ) );
+    Long        pollInterval  = appConfig.configLong( ConfigProperty.KAFKA_CONSUMER_POLL_INTERVAL, Long.valueOf( 250L ) );
     Long        maxWait       = appConfig.configLong( ConfigProperty.RESPONSE_WAIT_MILLIS, Long.valueOf( 10000L ) );
-    Duration    interval      = Duration.ofMillis( polInterval );
+    Duration    interval      = Duration.ofMillis( pollInterval );
+    int         totalRcvd     = 0;
+    boolean     loopAgain     = true;
     
     do
         {
         final   ConsumerRecords<String, String> rcrds = lister.poll( interval );
-        logr.debug( "Received {} KAFKA.DLQ entries.", rcrds.count() );
+        logr.debug( "Received {} KAFKA.DLQ Event(s).", rcrds.count() );
         
         if ((rcrds != null) && (rcrds.count() > 0))
             {
-            logr.debug( "Received {} KAFKA.DLQ Events", rcrds.count() );
             for (ConsumerRecord<String, String> crnt : rcrds)
                 {
                 if (crnt != null)
-                    {
-                    String  dlqEntry = crnt.value();
-                    logr.debug( "DLQ Entry:" );
-                    logr.debug( "\n{}", dlqEntry );
+                    {                    
+                    DLQRecordEntry  entry = new DLQRecordEntry( crnt );
+                    logr.info( "DLQ Entry:" );
+                    logr.info( "    Timestamp:       {}", entry.getEntryTimestamp().getEpochMillis() );
+                    logr.info( "    Subscription ID: {}", entry.getSubscriptionID() );
+                    logr.info( "    Resource Type:   {}", entry.getResourceType() );
+                    logr.info( "    Resource ID:     {}", entry.getResourceID() );
+                    
+                    resp.addReportEntry( entry );
                     }
                 }
             }
+        
+        totalRcvd += rcrds.count();
+        
+        loopAgain = ((System.currentTimeMillis() <= loopStartedAt + maxWait) &&
+                     ((totalRcvd == 0) || (rcrds.count() == 0)));
         }
     
-    while ((System.currentTimeMillis() <= loopStartedAt + maxWait));
+    while (loopAgain);
     
-    lister.close();
+    //lister.close();
     }
 return;
 }

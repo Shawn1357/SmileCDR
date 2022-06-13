@@ -1,6 +1,7 @@
 package ca.ontariohealth.smilecdr;
 
 import java.io.File;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
@@ -34,6 +35,8 @@ protected static final	String 				CLI_HLP_NM_SHRT  = "h";
 protected static final	String 				CLI_HLP_NM_LONG  = "help";
 protected static final  String              CLI_INST_NM_SHRT = "i";
 protected static final  String              CLI_INST_NM_LONG = "instName";
+
+protected               Instant             appStartTime     = Instant.now();
 
 protected 				Options				cliOpts			 = new Options();
 protected				CommandLineParser	parser			 = new DefaultParser();
