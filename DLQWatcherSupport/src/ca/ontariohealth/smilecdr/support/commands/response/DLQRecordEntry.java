@@ -87,12 +87,33 @@ String  rsrcType = null;
 if (json != null)
     {
     JSONObject payload      = json.getJSONObject( "payload" );
-    String     dlqPayload   = null;
+    String     dlqString    = null;
+    JSONObject dlqPayload   = null;
+    String     rsrcTypeStr  = null;
     
     if (payload != null)
         {
-        dlqPayload = payload.getString( "payload" );
-        
+        dlqString = payload.getString( "payload" );
+        }
+    
+    if ((dlqString != null) && (dlqString.length() > 0))
+        {
+        dlqPayload = new JSONObject( dlqString );
+        }
+    
+    if (dlqPayload != null)
+        {
+        rsrcTypeStr = dlqPayload.getString( "resourceType" ); 
+        }
+    
+    if (rsrcTypeStr != null)
+        {
+        rsrcType = rsrcTypeStr;
+        }
+    
+    else
+        {
+        // Assume Bundle.
         rsrcType = "Bundle";
         }
     }

@@ -17,41 +17,42 @@ import java.util.Optional;
  */
 public enum ConfigProperty 
 {
-APP_NAME(                     "application.name" ),
-APP_DESCRIPTION(              "application.desc" ),
-APP_VERSION(                  "version.num" ),
-BUILD_DATE(                   "build.date" ),
-COPYRIGHT_HOLDER(             "copyright.holder",              "Accenture, Inc." ),
-COPYRIGHT_YEAR_START(         "copyright.year.start",          String.valueOf( LocalDate.now().getYear() ) ),
-COPYRIGHT_YEAR_END(           "copyright.year.end" ),
+APP_NAME(                       "application.name" ),
+APP_DESCRIPTION(                "application.desc" ),
+APP_VERSION(                    "version.num" ),
+BUILD_DATE(                     "build.date" ),
+COPYRIGHT_HOLDER(               "copyright.holder",              "Accenture, Inc." ),
+COPYRIGHT_YEAR_START(           "copyright.year.start",          String.valueOf( LocalDate.now().getYear() ) ),
+COPYRIGHT_YEAR_END(             "copyright.year.end" ),
 
-DATE_FORMAT(                  "date.format",                   "yyyy-MM-dd" ),
-TIMESTAMP_FORMAT(             "timestamp.format",              "yyyy-MM-dd HH:mm:ss" ),
+DATE_FORMAT(                    "date.format",                   "yyyy-MM-dd" ),
+TIMESTAMP_FORMAT(               "timestamp.format",              "yyyy-MM-dd HH:mm:ss" ),
 
-BOOTSTRAP_SERVERS(            "bootstrap.servers" ),
-KAFKA_CONTROL_GROUP_ID(       "control.group.id" ),
-KAFKA_DLQ_GROUP_ID(           "dlq.group.id" ),
-KAFKA_DLQ_LISTER_GROUP_ID(    "dlq.lister.group.id" ),
-CONTROL_TOPIC_NAME_COMMAND(   "topic.name.command" ),
-CONTROL_TOPIC_NAME_RESPONSE(  "topic.name.response" ),
-KAFKA_CONSUMER_POLL_INTERVAL( "consumer.poll.interval",        "500" ),
-KAFKA_DLQ_TOPIC_NAME(         "kafka.dlq.topic.name",          "KAFKA.DLQ" ),
+BOOTSTRAP_SERVERS(              "bootstrap.servers" ),
+KAFKA_CONTROL_GROUP_ID(         "control.group.id" ),
+KAFKA_DLQ_GROUP_ID(             "dlq.group.id" ),
+KAFKA_DLQ_LISTER_GROUP_ID(      "dlq.lister.group.id" ),
+CONTROL_TOPIC_NAME_COMMAND(     "topic.name.command" ),
+CONTROL_TOPIC_NAME_RESPONSE(    "topic.name.response" ),
+KAFKA_CONSUMER_POLL_INTERVAL(   "consumer.poll.interval",        "500" ),
+KAFKA_DLQ_TOPIC_NAME(           "kafka.dlq.topic.name",          "KAFKA.DLQ" ),
 
-QUIT_AFTER_MILLIS(            "quit.after.millis" ),
-RESPONSE_WAIT_MILLIS(         "response.wait.millis",          "30000" ),
+QUIT_AFTER_MILLIS(              "quit.after.millis" ),
+PAUSE_BEFORE_WAIT_FOR_RESPONSE( "pause.before.response",         "0" ),
+RESPONSE_WAIT_MILLIS(           "response.wait.millis",          "30000" ),
 
-EMAIL_SERVER(                 "email.server.smtp" ),
-EMAIL_SMPT_PORT(              "email.server.smtp.port",        "25" ),
-EMAIL_CREDENTIALS_FILE(       "email.credentials.file" ),
+EMAIL_SERVER(                   "email.server.smtp" ),
+EMAIL_SMPT_PORT(                "email.server.smtp.port",        "25" ),
+EMAIL_CREDENTIALS_FILE(         "email.credentials.file" ),
 
-EMAIL_TEMPLATE_NAME(          "email.template.nm" ),
-EMAIL_FROM_ADDR(              "email.from" ),
-EMAIL_TO_ADDRS(               "email.to" ),
-EMAIL_CC_ADDRS(               "email.cc",                      "" ),
-EMAIL_BCC_ADDRS(              "email.bcc",                     "" ),
-EMAIL_SUBJECT(                "email.subject" ),
-EMAIL_INCL_HASHTAG_LINES(     "email.body.incl.hashtag.lines", "false" ),
-EMAIL_BODY_FILE_NM(           "email.body.file.nm" );
+EMAIL_TEMPLATE_NAME(            "email.template.nm" ),
+EMAIL_FROM_ADDR(                "email.from" ),
+EMAIL_TO_ADDRS(                 "email.to" ),
+EMAIL_CC_ADDRS(                 "email.cc",                      "" ),
+EMAIL_BCC_ADDRS(                "email.bcc",                     "" ),
+EMAIL_SUBJECT(                  "email.subject" ),
+EMAIL_INCL_HASHTAG_LINES(       "email.body.incl.hashtag.lines", "false" ),
+EMAIL_BODY_FILE_NM(             "email.body.file.nm" );
 
 
 	

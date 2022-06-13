@@ -227,8 +227,8 @@ while (!exitWatcher)
 		exitWatcher = ((System.currentTimeMillis() - startTime) > maxTime);
 	}
 
-if (controlConsumer != null)
-	controlConsumer.close();
+//if (controlConsumer != null)
+	//controlConsumer.close();
 
 logr.debug( "Exiting: listenForControlCommands" );
 return;
@@ -304,10 +304,11 @@ if ((resp != null) && (cmd != null) && (channel != null) && (channel.length() > 
         else
             logr.error( "Kafka Send Request resulted in null Metadata" );
         
+        //producer.close();
         }
     }
 
-logr.debug( "Exiting: resturnResponse()" );
+logr.debug( "Exiting: returnResponse()" );
 return;
 }
 
@@ -473,6 +474,7 @@ String groupID = appConfig.configValue( ConfigProperty.KAFKA_DLQ_LISTER_GROUP_ID
                                         appConfig.getApplicationName().appName() + ".control.group.id" );
 
 disabledAutoCommit.setProperty( "enable.auto.commit", "false" );
+disabledAutoCommit.setProperty( "auto.offset.reset",  "earliest" );
 
 Consumer<String,String> lister = KafkaConsumerHelper.createConsumer( appConfig,
                                                                      groupID,
@@ -502,6 +504,8 @@ if (lister != null)
     Long        pollInterval  = appConfig.configLong( ConfigProperty.KAFKA_CONSUMER_POLL_INTERVAL, Long.valueOf( 250L ) );
     Long        maxWait       = appConfig.configLong( ConfigProperty.RESPONSE_WAIT_MILLIS, Long.valueOf( 10000L ) );
     Duration    interval      = Duration.ofMillis( pollInterval );
+    int         totalRcvd     = 0;
+    boolean     loopAgain     = true;
     
     do
         {
@@ -513,21 +517,28 @@ if (lister != null)
             for (ConsumerRecord<String, String> crnt : rcrds)
                 {
                 if (crnt != null)
-                    {
+                    {                    
                     DLQRecordEntry  entry = new DLQRecordEntry( crnt );
                     logr.info( "DLQ Entry:" );
                     logr.info( "    Timestamp:       {}", entry.getEntryTimestamp().getEpochMillis() );
                     logr.info( "    Subscription ID: {}", entry.getSubscriptionID() );
                     logr.info( "    Resource Type:   {}", entry.getResourceType() );
                     logr.info( "    Resource ID:     {}", entry.getResourceID() );
+                    
+                    resp.addReportEntry( entry );
                     }
                 }
             }
+        
+        totalRcvd += rcrds.count();
+        
+        loopAgain = ((System.currentTimeMillis() <= loopStartedAt + maxWait) &&
+                     ((totalRcvd == 0) || (rcrds.count() == 0)));
         }
     
-    while (System.currentTimeMillis() <= loopStartedAt + maxWait);
+    while (loopAgain);
     
-    lister.close();
+    //lister.close();
     }
 return;
 }
