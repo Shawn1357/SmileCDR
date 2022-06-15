@@ -27,7 +27,7 @@ import ca.ontariohealth.smilecdr.support.commands.ProcessingMessageSeverity;
 import ca.ontariohealth.smilecdr.support.commands.json.CommandParamAdapter;
 import ca.ontariohealth.smilecdr.support.commands.json.MyInstantAdapter;
 import ca.ontariohealth.smilecdr.support.commands.json.ReportRecordAdapter;
-import ca.ontariohealth.smilecdr.support.commands.response.DLQRecordEntry;
+import ca.ontariohealth.smilecdr.support.commands.response.CWMDLQRecordEntry;
 import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
 import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
@@ -335,6 +335,7 @@ if ((initCmd != null) && (initCmd.length() > 0))
             case    START:
             case    STOP:
             case    DLQLIST:
+            case    DLQEMAIL:
             case    QUIT:
                 cmdLineCmd.setCommandToIssue( newCmdType );
                 break;
@@ -432,6 +433,11 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
             logr.info( "Starting process to list DLQ entries." );
             listDLQEntries( resp );
             break;
+         
+        case    DLQEMAIL:
+            logr.info( "Starting process to email DLQ entries." );
+            listDLQEntries( resp );
+            break;
             
         case    START:
             logr.info( "Starting the DLQ Poller Thread if it is not already running." );
@@ -518,12 +524,12 @@ if (lister != null)
                 {
                 if (crnt != null)
                     {                    
-                    DLQRecordEntry  entry = new DLQRecordEntry( crnt );
+                    CWMDLQRecordEntry  entry = new CWMDLQRecordEntry( crnt, appConfig );
                     logr.info( "DLQ Entry:" );
-                    logr.info( "    Timestamp:       {}", entry.getEntryTimestamp().getEpochMillis() );
-                    logr.info( "    Subscription ID: {}", entry.getSubscriptionID() );
-                    logr.info( "    Resource Type:   {}", entry.getResourceType() );
-                    logr.info( "    Resource ID:     {}", entry.getResourceID() );
+                    logr.info( "    Timestamp:       {}", entry.dlqEntryTimestamp().getEpochMillis() );
+                    logr.info( "    Subscription ID: {}", entry.subscriptionID() );
+                    logr.info( "    Resource Type:   {}", entry.resourceType() );
+                    logr.info( "    Resource ID:     {}", entry.resourceID() );
                     
                     resp.addReportEntry( entry );
                     }

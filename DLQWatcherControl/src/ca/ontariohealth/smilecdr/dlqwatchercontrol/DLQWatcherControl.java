@@ -4,10 +4,8 @@
 package ca.ontariohealth.smilecdr.dlqwatchercontrol;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -59,9 +57,6 @@ protected static final  String                  CLI_OPERTN_LONG = "operation";
 private GsonBuilder                             jsonBuilder     = new GsonBuilder();
 
 private int                                     rollingNdx      = 0;
-
-private Map<String, Consumer<String,String>>    allConsumers    = new HashMap<>();
-
 
 public static void main( String[] args )
 {

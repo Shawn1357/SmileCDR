@@ -12,7 +12,7 @@ public class ReportRecord
 private ReportRecordType    rcrdType        = null;
 private String              rcrdString      = null;
 private KeyValue            rcrdKeyValue    = null;
-private DLQRecordEntry      rcrdDLQEntry    = null;
+private CWMDLQRecordEntry      rcrdDLQEntry    = null;
 
 
 
@@ -32,7 +32,7 @@ return;
 
 
 
-public ReportRecord( DLQRecordEntry rcdDLQEntry )
+public ReportRecord( CWMDLQRecordEntry rcdDLQEntry )
 {
 setRcrdDLQEntry( rcdDLQEntry );
 return;
@@ -90,14 +90,14 @@ return;
 
 
 
-public DLQRecordEntry getRcrdDLQEntry()
+public CWMDLQRecordEntry getRcrdDLQEntry()
 {
 return rcrdDLQEntry;
 }
 
 
 
-public void setRcrdDLQEntry( DLQRecordEntry rcrdDLQEntry )
+public void setRcrdDLQEntry( CWMDLQRecordEntry rcrdDLQEntry )
 {
 setRcrdType( ReportRecordType.DLQ_ENTRY_SPEC );
 this.rcrdString   = null;

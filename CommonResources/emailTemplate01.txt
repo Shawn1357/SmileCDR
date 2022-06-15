@@ -1,13 +1,20 @@
-# Lines beginning with a '#' are not emailed.
+# Lines beginning with a '#' are not (normally) included in the email.
 # Available Expansion Variables:
-#   {{DLQRecordCount}} - Number of new Dead Letter Queue entries being reported.
-#   {{DLQRecordsAsCSV}} - Each of the DLQ Entries as individual rows of CSV Data
-#                         showing Subscription ID, Resource Type, Resource ID
+#   {{Now}}                 - Formatted timestamp when the report was generated.
+#   {{DLQRecordCount}}      - Number of new Dead Letter Queue entries being reported.
+#   {{DLQRecordsCSVHeader}} - The column headers for the CSV report.
+#   {{DLQRecordsAsCSV}}     - Each of the DLQ Entries as individual rows of CSV Data
+#
 #
 Sample Body for EMail Template 01
+
+# Now string is formatted according to App Config property: timestamp.format
+Report Generated at: {{Now}}
+
+
 Detected DLQ Record Count: {{DLQRecordCount}}
 
-    SubscrID, RsrceType, ResrceID
+{{DLQRecordsCSVHeader}}
 {{DLQRecordsAsCSV}}
 
 Yours truly,

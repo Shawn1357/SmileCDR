@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Properties;
 
@@ -52,8 +54,10 @@ private					Long			maxRunTime			= null;
 
 private					Consumer<String, String>		dlqConsumer = null;
 private                 String                  		dlqTopic    = null;
-private					ConsumerRecords<String, String> dlqRecords	= null;	
 private					DLQRecordsInterpreter			dlqInterp   = null;
+
+private                 DateTimeFormatter               tsFormatter = null;
+private                 LocalDateTime                   emailedAt   = null;
 
 
 public	DLQPollingThread( Configuration appCfg )
@@ -67,9 +71,12 @@ appConfig 		   = appCfg;
 
 pollingInterval    = appConfig.configInt( ConfigProperty.KAFKA_CONSUMER_POLL_INTERVAL,
 									      DEFAULT_INTERVAL );
+
 pollingDuration    = Duration.ofMillis( pollingInterval );
 
 dlqTopic           = appConfig.configValue( ConfigProperty.KAFKA_DLQ_TOPIC_NAME, DEFAULT_DLQ_TOPIC );
+
+tsFormatter        = DateTimeFormatter.ofPattern( appConfig.configValue( ConfigProperty.TIMESTAMP_FORMAT ) );
 
 return;
 }
@@ -98,14 +105,14 @@ while (continueRunning)
 	
 	if (continueRunning)
 		{
-		dlqRecords = dlqConsumer.poll( pollingDuration );
+		ConsumerRecords<String,String> dlqRecords = dlqConsumer.poll( pollingDuration );
 		
 		if ((dlqRecords != null) && (dlqRecords.count() > 0))
 			{
 			logr.debug( "Received {} DLQ Record(s).", dlqRecords.count() );
 			
 			dlqInterp = new DLQRecordsInterpreter( dlqRecords, appConfig );
-			sendEMail( appConfig.configValue( ConfigProperty.EMAIL_TEMPLATE_NAME ));
+			sendEMail( appConfig.configValue( ConfigProperty.EMAIL_DLQLIST_TEMPLATE_NAME ), dlqInterp );
 			
 			/*
 			for (ConsumerRecord<String, String> crnt : rcrds)
@@ -201,7 +208,7 @@ this.maxRunTime = maxRunTime;
 
 
 
-private void sendEMail( String requestedTemplate )
+private void sendEMail( String requestedTemplate, DLQRecordsInterpreter dlqInterp )
 {
 logr.debug( "Entering: sendEMail" );
 
@@ -213,8 +220,11 @@ BasicAuthCredentials    creds = new FileBasedCredentials( emailCreds );
 
 String      templateNm  = requestedTemplate;
 
+this.emailedAt = LocalDateTime.now();
+
+
 if ((templateNm == null) || (templateNm.length() == 0))
-	templateNm = appConfig.configValue( ConfigProperty.EMAIL_TEMPLATE_NAME );
+	templateNm = appConfig.configValue( ConfigProperty.EMAIL_NEWDLQ_TEMPLATE_NAME );
 
 
 String      emailFrom   = appConfig.configValue( ConfigProperty.EMAIL_FROM_ADDR.propertyName() + "." + templateNm, "" );
@@ -225,7 +235,7 @@ String      subject     = appConfig.configValue( ConfigProperty.EMAIL_SUBJECT.pr
  
 String  	bodyFileNm	= appConfig.configValue( ConfigProperty.EMAIL_BODY_FILE_NM.propertyName() + "." + templateNm, "" );
 
-String  	body    	= loadFileIntoString( bodyFileNm, templateNm );
+String  	body    	= loadFileIntoString( bodyFileNm, templateNm, dlqInterp );
 
 Properties	emailProps = new Properties();
 emailProps.put( "mail.smtp.auth", "true" );
@@ -271,7 +281,9 @@ return;
 
 
 
-private String	loadFileIntoString( String fileNm, String template )
+private String	loadFileIntoString( String                  fileNm, 
+                                    String                  template, 
+                                    DLQRecordsInterpreter   dlqInterp )
 {
 logr.debug("Entering: loadFileIntoString");
 String	    rtrn  = "";
@@ -291,7 +303,7 @@ try (InputStream iStrm = ClassLoader.getSystemResourceAsStream( fileNm ) )
 		if ((line != null) && 
 			(inclComments || !line.strip().startsWith( "#")))
 			{
-			String	expandedLine = expandVariables( line );
+			String	expandedLine = expandVariables( line, dlqInterp );
 			content.append( expandedLine + System.lineSeparator() );
 			}
 		}
@@ -311,12 +323,14 @@ return rtrn;
 
 
 
-private String		expandVariables( String line )
+private String		expandVariables( String line, DLQRecordsInterpreter dlqInterp )
 {
 String 	expandedLine = line;
 
-expandedLine = expandedLine.replace( "{{DLQRecordCount}}", Integer.toString( dlqRecords.count() ) );
-expandedLine = expandedLine.replace( "{{DLQRecordsAsCSV}}", dlqInterp.asCSVReport() );
+expandedLine = expandedLine.replace( "{{Now}}",                 emailedAt.format( tsFormatter ) );
+expandedLine = expandedLine.replace( "{{DLQRecordCount}}",      Integer.toString( dlqInterp.recordCount() ) );
+expandedLine = expandedLine.replace( "{{DLQRecordsCSVHeader}}", dlqInterp.csvHeaders() );
+expandedLine = expandedLine.replace( "{{DLQRecordsAsCSV}}",     dlqInterp.asCSVReport() );
 		
 return expandedLine;
 }

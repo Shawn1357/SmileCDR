@@ -10,7 +10,7 @@ import java.util.UUID;
 import com.google.gson.Gson;
 
 import ca.ontariohealth.smilecdr.support.MyInstant;
-import ca.ontariohealth.smilecdr.support.commands.response.DLQRecordEntry;
+import ca.ontariohealth.smilecdr.support.commands.response.CWMDLQRecordEntry;
 import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
 import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
 
@@ -141,7 +141,7 @@ return;
 
 
 
-public void addReportEntry( DLQRecordEntry dlqEntry )
+public void addReportEntry( CWMDLQRecordEntry dlqEntry )
 {
 if (dlqEntry != null)
     reportLines.add( new ReportRecord( dlqEntry ) );

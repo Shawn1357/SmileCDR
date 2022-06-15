@@ -3,7 +3,7 @@
  */
 package ca.ontariohealth.smilecdr.dlqwatcher;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.ontariohealth.smilecdr.support.MyInstant;
+import ca.ontariohealth.smilecdr.support.commands.response.CWMDLQRecordEntry;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
 
@@ -26,8 +27,18 @@ private static final	Logger				logr		= LoggerFactory.getLogger(DLQRecordsInterpr
 
 private	Configuration						appConfig	= null;
 private	ConsumerRecords<String, String>		dlqRecords	= null;
-private ArrayList<DLQInstanceDetails>		dlqDetails  = new ArrayList<>();
+private ArrayList<CWMDLQRecordEntry>		dlqDetails  = new ArrayList<>();
 private String								dlqAsCSV    = null;
+
+private static final String[]               CSV_HDRS    = { "SubscriptionID",
+                                                            "ResourceType",
+                                                            "ResourceID",
+                                                            "DLQEntryEpochMillis",
+                                                            "DLQEntryLocalTimeStamp" };
+
+private static final String                 CSV_COL_HDR = String.join( ",", CSV_HDRS );
+
+
 
 
 public	DLQRecordsInterpreter( ConsumerRecords<String, String> dlqRcrds,
@@ -71,9 +82,9 @@ if (dlqRecords != null)
 	
 	logr.debug( "Convert {} DLQ Detail Record(s) into a CSV Report.", dlqDetails.size() );
 	dlqAsCSV = "";
-	for (DLQInstanceDetails crntInst : dlqDetails)
+	for (CWMDLQRecordEntry crntInst : dlqDetails)
 		if (crntInst != null)
-			dlqAsCSV = dlqAsCSV.concat( "    " ).concat( crntInst.asCSV() ).concat( System.lineSeparator() );
+			dlqAsCSV = dlqAsCSV.concat( "    " ).concat( asCSV( crntInst ) ).concat( System.lineSeparator() );
 	}
 
 
@@ -83,45 +94,61 @@ return;
 
 
 
+private String  asCSV( CWMDLQRecordEntry rcrd )
+{
+StringBuffer        rtrn  = new StringBuffer();
+
+if (rcrd != null)
+    {
+    String              crntVal = rcrd.subscriptionID();
+    DateTimeFormatter   frmtr   = DateTimeFormatter.ofPattern( appConfig.configValue( ConfigProperty.TIMESTAMP_FORMAT ) );
+    
+    rtrn.append( crntVal != null ? crntVal : "" );
+    
+    crntVal = rcrd.resourceType();
+    rtrn.append( "," ).append( crntVal != null ? crntVal : "" );
+    
+    crntVal = rcrd.resourceID();
+    rtrn.append( "," ).append( crntVal != null ? crntVal : "" );
+    
+    MyInstant ts = rcrd.dlqEntryTimestamp();
+    if (ts != null)
+        {
+        crntVal = rcrd.dlqEntryTimestamp().getEpochMillis().toString();
+        rtrn.append( "," ).append( crntVal != null ? crntVal : "" );
+        }
+    
+    else
+        rtrn.append( "," );
+    
+    LocalDateTime lclTS = (ts != null) ? ts.asLocalDateTime() : null;
+    if (lclTS != null)
+        {
+        crntVal = lclTS.format( frmtr );
+        rtrn.append( "," ).append( crntVal != null ? crntVal : "" );
+        }
+    
+    else
+        rtrn.append( "," );
+    }
+
+
+return rtrn.toString();
+}
+
+
+
 private void	extractOneRecordDetails( ConsumerRecord<String, String> rcrd )
 {
 logr.debug( "Entering: extractOneRecordDetails" );
 
-MyInstant rcrdTimestamp  = new MyInstant( rcrd.timestamp() );
-String	  rcrdJSONString = rcrd.value();
+if (rcrd != null)
+    {
+    CWMDLQRecordEntry  crntRcrd = new CWMDLQRecordEntry( rcrd, appConfig );
 
-logr.debug( "Extracting information from:" );
-logr.debug( "\n{}", rcrdJSONString );
-
-if ((rcrdJSONString != null) && (rcrdJSONString.length() > 0))
-	{
-	int canonIndex = rcrdJSONString.indexOf( "canonicalSubscription" );
-	int slashIndex = rcrdJSONString.indexOf( '/', canonIndex );
-	int commaIndex = rcrdJSONString.indexOf( ',', canonIndex );
-	
-	String subscrID = rcrdJSONString.substring( slashIndex + 1, commaIndex - 1 );
-	
-	int resourceTypeIndex = rcrdJSONString.indexOf( "resourceType" );
-	int colonIndex        = rcrdJSONString.indexOf( ':', resourceTypeIndex );
-	commaIndex            = rcrdJSONString.indexOf( ',', colonIndex );
-	
-	String resourceType = rcrdJSONString.substring( colonIndex + 3, commaIndex - 2 );
-	
-	colonIndex = rcrdJSONString.indexOf( ':', commaIndex );
-	commaIndex = rcrdJSONString.indexOf( ',', colonIndex );
-	
-	String            resourceID = rcrdJSONString.substring( colonIndex + 3, commaIndex - 2 );
-	DateTimeFormatter fmtr       = DateTimeFormatter.ofPattern( appConfig.configValue( ConfigProperty.TIMESTAMP_FORMAT ) );
-	String            recordTS   = rcrdTimestamp != null ? fmtr.format( rcrdTimestamp.asLocalDateTime() ) : "<null>";
-	
-	logr.debug( "Record Timestamp:  {}", recordTS );
-	logr.debug( "Subscription ID:   {}", subscrID );
-	logr.debug( "Resource Type:     {}", resourceType );
-	logr.debug( "Resource ID:       {}", resourceID );
-	
-	DLQInstanceDetails	dtls = new DLQInstanceDetails( rcrdTimestamp, subscrID, resourceType, resourceID );
-	dlqDetails.add( dtls );
-	}
+    if (crntRcrd != null)
+        dlqDetails.add( crntRcrd );
+    }
 
 
 logr.debug( "Exiting: extractOneRecordDetails" );
@@ -138,6 +165,14 @@ if (dlqDetails != null)
 
 return rtrn;
 }
+
+
+
+public  final String  csvHeaders()
+{
+return CSV_COL_HDR;
+}
+
 
 
 

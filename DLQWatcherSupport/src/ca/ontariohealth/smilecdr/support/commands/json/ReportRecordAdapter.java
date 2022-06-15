@@ -14,7 +14,7 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 import ca.ontariohealth.smilecdr.support.MyInstant;
-import ca.ontariohealth.smilecdr.support.commands.response.DLQRecordEntry;
+import ca.ontariohealth.smilecdr.support.commands.response.CWMDLQRecordEntry;
 import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
 import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
 import ca.ontariohealth.smilecdr.support.commands.response.ReportRecordType;
@@ -69,20 +69,20 @@ if (value != null)
             
             
         case    DLQ_ENTRY_SPEC:
-            DLQRecordEntry  dlqEntry    = value.getRcrdDLQEntry();
-            MyInstant       dlqTS       = dlqEntry.getEntryTimestamp();
+            CWMDLQRecordEntry  dlqEntry    = value.getRcrdDLQEntry();
+            MyInstant          dlqTS       = dlqEntry.dlqEntryTimestamp();
             
             writer.name( FIELD_ENTRY_TS );
             instantAdapter.write( writer, dlqTS );
             
             writer.name( FIELD_SUBSCRIPTION_ID );
-            writer.value( dlqEntry.getSubscriptionID() );
+            writer.value( dlqEntry.subscriptionID() );
             
             writer.name( FIELD_RESOURCE_TYPE );
-            writer.value( dlqEntry.getResourceType() );
+            writer.value( dlqEntry.resourceType() );
             
             writer.name( FIELD_RESOURCE_ID );
-            writer.value( dlqEntry.getResourceID() );
+            writer.value( dlqEntry.resourceID() );
             
             break;
         
@@ -205,7 +205,10 @@ if (rprtRcrdType != null)
             break;
             
         case    DLQ_ENTRY_SPEC:
-            DLQRecordEntry  dlqEntry = new DLQRecordEntry( rprtDLQEntryTS, rprtDLQSubID, rprtDLQRsrcType, rprtDLQRsrcID );
+            CWMDLQRecordEntry  dlqEntry = new CWMDLQRecordEntry( rprtDLQEntryTS, 
+                                                                 rprtDLQSubID, 
+                                                                 rprtDLQRsrcType, 
+                                                                 rprtDLQRsrcID );
             rtrn = new ReportRecord( dlqEntry );
             break;
             

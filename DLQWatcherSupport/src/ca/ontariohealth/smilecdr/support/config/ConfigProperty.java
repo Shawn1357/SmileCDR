@@ -25,6 +25,8 @@ COPYRIGHT_HOLDER(               "copyright.holder",              "Accenture, Inc
 COPYRIGHT_YEAR_START(           "copyright.year.start",          String.valueOf( LocalDate.now().getYear() ) ),
 COPYRIGHT_YEAR_END(             "copyright.year.end" ),
 
+DLQ_PARSER_FQCN_CLASS(          "dlq.parser.class.name" ),
+
 DATE_FORMAT(                    "date.format",                   "yyyy-MM-dd" ),
 TIMESTAMP_FORMAT(               "timestamp.format",              "yyyy-MM-dd HH:mm:ss" ),
 
@@ -45,7 +47,9 @@ EMAIL_SERVER(                   "email.server.smtp" ),
 EMAIL_SMPT_PORT(                "email.server.smtp.port",        "25" ),
 EMAIL_CREDENTIALS_FILE(         "email.credentials.file" ),
 
-EMAIL_TEMPLATE_NAME(            "email.template.nm" ),
+EMAIL_NEWDLQ_TEMPLATE_NAME(     "email.newdlq.template.nm" ),
+EMAIL_DLQLIST_TEMPLATE_NAME(    "email.dlqlist.template.nm" ),
+
 EMAIL_FROM_ADDR(                "email.from" ),
 EMAIL_TO_ADDRS(                 "email.to" ),
 EMAIL_CC_ADDRS(                 "email.cc",                      "" ),

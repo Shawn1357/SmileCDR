@@ -33,7 +33,7 @@ protected static final	String 				CLI_ENV_NM_SHRT  = "e";
 protected static final	String 				CLI_ENV_NM_LONG  = "envName";
 protected static final	String 				CLI_HLP_NM_SHRT  = "h";
 protected static final	String 				CLI_HLP_NM_LONG  = "help";
-protected static final  String              CLI_INST_NM_SHRT = "i";
+protected static final  String              CLI_INST_NM_SHRT = "n";
 protected static final  String              CLI_INST_NM_LONG = "instName";
 
 protected               Instant             appStartTime     = Instant.now();
