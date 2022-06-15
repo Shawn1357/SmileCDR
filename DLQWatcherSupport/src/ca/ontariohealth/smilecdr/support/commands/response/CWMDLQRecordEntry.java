@@ -3,6 +3,8 @@
  */
 package ca.ontariohealth.smilecdr.support.commands.response;
 
+import java.time.Duration;
+
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.json.JSONObject;
 
@@ -154,6 +156,25 @@ if (parsedJSON != null)
 
 return;
 }
+
+
+
+public  String      elapsedTimeOnDLQ()
+{
+String      elapsedTime  = null;
+MyInstant   crntTime     = MyInstant.now();
+MyInstant   dlqEntryTime = dlqEntryTimestamp();
+
+if ((dlqEntryTime != null) && (crntTime != null))
+    {
+    Duration dur = Duration.between( dlqEntryTime.asInstant(), crntTime.asInstant() );
+    
+    elapsedTime = String.format( "%dd %d:%02d", dur.toDays(), dur.toHoursPart(), dur.toMinutesPart() );
+    }
+
+return elapsedTime;
+}
+
 
 
 

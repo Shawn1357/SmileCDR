@@ -34,8 +34,9 @@ private static  String          FIELD_ENTRY_TS          = "entryTimestamp";
 private static  String          FIELD_SUBSCRIPTION_ID   = "subscriptionID";
 private static  String          FIELD_RESOURCE_TYPE     = "resourceType";
 private static  String          FIELD_RESOURCE_ID       = "resourceID";
+private static  String          FIELD_ELAPSED_DLQ_TIME  = "elapsedTimeOnDLQ";
 
-private static  MyInstantAdapter  instantAdapter          = new MyInstantAdapter();
+private static  MyInstantAdapter  instantAdapter        = new MyInstantAdapter();
 
 
 @Override
@@ -83,6 +84,9 @@ if (value != null)
             
             writer.name( FIELD_RESOURCE_ID );
             writer.value( dlqEntry.resourceID() );
+            
+            writer.name( FIELD_ELAPSED_DLQ_TIME );
+            writer.value( dlqEntry.elapsedTimeOnDLQ() );
             
             break;
         
