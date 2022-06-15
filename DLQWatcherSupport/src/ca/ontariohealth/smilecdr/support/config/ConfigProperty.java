@@ -76,7 +76,7 @@ private final String	propertyName;
  * Holds the default value for the predefined configuration property (if any).
  * 
  */
-private final Optional<String>	defaultValue;
+private final String	defaultValue;
 
 
 
@@ -139,7 +139,7 @@ if ((propNm == null) || (propNm.length() == 0))
 	throw new IllegalArgumentException( "Property Name must not be null or zero length." );
 
 propertyName = propNm;
-defaultValue = Optional.ofNullable( hardCodedDefault );
+defaultValue = hardCodedDefault;
 
 return;
 }
@@ -211,6 +211,6 @@ public final String		hardCodedDefaultValue()
 				throws NullPointerException
 				
 {
-return defaultValue.get();
+return defaultValue;
 }
 }

@@ -6,7 +6,7 @@
 #   {{DLQRecordsAsCSV}}     - Each of the DLQ Entries as individual rows of CSV Data
 #
 #
-Sample Body for EMail Template 01
+Newly Arrived entries into the Smile Dead letter Queue:
 
 # Now string is formatted according to App Config property: timestamp.format
 Report Generated at: {{Now}}

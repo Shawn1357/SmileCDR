@@ -76,6 +76,8 @@ protected void launch()
 {
 logr.debug("Entering: DLQWatcherControl.launch" );
 
+System.err.println( appSignature() );
+
 jsonBuilder.registerTypeAdapter( DLQCommandParam.class, new CommandParamAdapter() );
 jsonBuilder.registerTypeAdapter( ReportRecord.class,    new ReportRecordAdapter() );
 jsonBuilder.registerTypeAdapter( MyInstant.class,       new MyInstantAdapter() );
@@ -177,15 +179,15 @@ if ((cmdSent != null) && (respChannel != null) && (respChannel.length() > 0))
                 if ((cmdUUID != null) && (cmdID.compareTo( cmdUUID ) == 0))
                     {
                     logr.debug( "Received the response we were hoping for:" );
-                    logr.debug( "\n{}", crnt.value() );
+                    logr.info( "\n{}", crnt.value() );
                     resp = crntResp;
                     break;
                     }
                 
                 else
                     {
-                    logr.debug( "Unexpected response was retrieved not matching Cmd ID: {}", cmdID.toString() );
-                    logr.debug( "\n{}", crnt.value() );
+                    logr.warn( "Unexpected response was retrieved not matching Cmd ID: {}", cmdID.toString() );
+                    logr.warn( "\n{}", crnt.value() );
                     }
                 }
             }

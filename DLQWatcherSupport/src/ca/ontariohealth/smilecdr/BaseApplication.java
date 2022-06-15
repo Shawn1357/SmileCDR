@@ -4,7 +4,6 @@ import java.io.File;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.Optional;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -57,15 +56,12 @@ return;
 
 
 
-public Optional<String>              appName()
+public String              appName()
 {
-Optional<String>    appNm = Optional.empty();
+String    appNm = null;
 
 if (appConfig != null)
-    {
-    String appNmStr = appConfig.configValue( ConfigProperty.APP_NAME, (String) null );
-    appNm           = Optional.ofNullable( appNmStr );
-    }
+    appNm = appConfig.configValue( ConfigProperty.APP_NAME, (String) null );
 
 return appNm;
 }
@@ -73,15 +69,12 @@ return appNm;
 
 
 
-public Optional<String>             appDescription()
+public String             appDescription()
 {
-Optional<String>    appDesc = Optional.empty();
+String    appDesc = null;
 
 if (appConfig != null)
-    {
-    String appDescStr = appConfig.configValue( ConfigProperty.APP_DESCRIPTION, (String) null );
-    appDesc           = Optional.ofNullable( appDescStr );
-    }
+    appDesc = appConfig.configValue( ConfigProperty.APP_DESCRIPTION, (String) null );
 
 return appDesc;
 }
@@ -89,9 +82,9 @@ return appDesc;
 
 
 
-public Optional<Runtime.Version>     appVersion()
+public Runtime.Version     appVersion()
 {
-Optional<Runtime.Version> version = Optional.empty();
+Runtime.Version version = null;
 
 if (appConfig != null)
     {
@@ -112,7 +105,7 @@ if (appConfig != null)
         
         finally
             {
-            version = Optional.ofNullable( ver );        
+            version = ver;        
             }
         }
     }
@@ -124,9 +117,9 @@ return version;
 
 
 
-public Optional<LocalDate>             buildDate()
+public LocalDate             buildDate()
 {
-Optional<LocalDate>    bldDate = Optional.empty();
+LocalDate    bldDate = null;
 
 if (appConfig != null)
     {
@@ -148,7 +141,7 @@ if (appConfig != null)
         
         finally
             {
-            bldDate = Optional.ofNullable( bldDt );
+            bldDate = bldDt;
             }
         }
     }
@@ -158,9 +151,9 @@ return bldDate;
 
 
 
-public Optional<Integer>        copyrightYearStart()
+public Integer        copyrightYearStart()
 {
-Optional<Integer>    copyrightStartYear = Optional.empty();
+Integer    copyrightStartYear = null;
 
 if (appConfig != null)
     {
@@ -176,7 +169,7 @@ if (appConfig != null)
         startYr = null;
         }
     
-    copyrightStartYear = Optional.ofNullable( startYr );
+    copyrightStartYear = startYr;
     }
 
 return copyrightStartYear;
@@ -185,9 +178,9 @@ return copyrightStartYear;
 
 
 
-public Optional<Integer>        copyrightYearEnd()
+public Integer        copyrightYearEnd()
 {
-Optional<Integer>    copyrightEndYear = Optional.empty();
+Integer    copyrightEndYear = null;
 
 if (appConfig != null)
     {
@@ -203,7 +196,7 @@ if (appConfig != null)
         endYr = null;
         }
 
-    copyrightEndYear = Optional.ofNullable( endYr );
+    copyrightEndYear = endYr;
     }
 
 return copyrightEndYear;
@@ -219,25 +212,25 @@ StringBuilder       bldr      = new StringBuilder();
 bldr.appendCodePoint( 169 );  // Copyright symbol.
 bldr.append( " " );
 
-Optional<Integer> fromYear = copyrightYearStart();
-Optional<Integer> toYear   = copyrightYearEnd();
-Optional<String>  holder   = copyrightHolder();
+Integer fromYear = copyrightYearStart();
+Integer toYear   = copyrightYearEnd();
+String  holder   = copyrightHolder();
 
-if (fromYear.isPresent())
+if (fromYear != null)
     {
-    bldr.append( String.valueOf( fromYear.get() ) );
+    bldr.append( String.valueOf( fromYear ) );
     
-    if (toYear.isPresent())
+    if (toYear != null)
         {
-        bldr.append( "-" ).append( String.valueOf( toYear.get() ) );
+        bldr.append( "-" ).append( String.valueOf( toYear ) );
         }
     
-    if (holder.isPresent())
+    if (holder != null)
         bldr.append( ", " );
     }
 
-if (holder.isPresent())
-    bldr.append( holder.get().strip() );
+if (holder != null)
+    bldr.append( holder.strip() );
 
 copyright = bldr.toString();
 return copyright;
@@ -252,13 +245,13 @@ String  signature = "";
 
 StringBuilder   bldr = new StringBuilder();
 
-Optional<String> appNm = appName();
-if (appNm.isPresent())
+String appNm = appName();
+if (appNm != null)
     {
-    bldr.append( appNm.get().strip() );
+    bldr.append( appNm.strip() );
     
-    Optional<Runtime.Version> ver = appVersion();
-    if (ver.isPresent())
+    Runtime.Version ver = appVersion();
+    if (ver != null)
         {
         if (bldr.length() > 0)
             bldr.append( " " );
@@ -266,13 +259,13 @@ if (appNm.isPresent())
         bldr.append( ver.toString() );
         }
     
-    Optional<String> desc = appDescription();
-    if (desc.isPresent())
+    String desc = appDescription();
+    if (desc != null)
         {
         if (bldr.length() > 0)
             bldr.append( " - " );
         
-        bldr.append( desc.get().strip() );
+        bldr.append( desc.strip() );
         }
     
     bldr.append( "\n" );
@@ -287,15 +280,12 @@ return signature;
 
 
 
-public Optional<String>        copyrightHolder()
+public String        copyrightHolder()
 {
-Optional<String>    holder = Optional.empty();
+String    holder = null;
 
 if (appConfig != null)
-    {
-    String holderStr = appConfig.configValue( ConfigProperty.COPYRIGHT_HOLDER, (String) null );
-    holder           = Optional.ofNullable( holderStr );
-    }
+    holder = appConfig.configValue( ConfigProperty.COPYRIGHT_HOLDER, (String) null );
 
 return holder;
 }

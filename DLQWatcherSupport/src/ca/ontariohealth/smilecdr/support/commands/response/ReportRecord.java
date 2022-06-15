@@ -12,7 +12,7 @@ public class ReportRecord
 private ReportRecordType    rcrdType        = null;
 private String              rcrdString      = null;
 private KeyValue            rcrdKeyValue    = null;
-private CWMDLQRecordEntry      rcrdDLQEntry    = null;
+private CWMDLQRecordEntry   rcrdDLQEntry    = null;
 
 
 
