@@ -6,6 +6,7 @@ package ca.ontariohealth.smilecdr.dlqwatchercontrol;
 import java.time.Duration;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;

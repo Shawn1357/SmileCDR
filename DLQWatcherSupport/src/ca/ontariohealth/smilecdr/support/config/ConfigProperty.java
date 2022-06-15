@@ -4,7 +4,6 @@
 package ca.ontariohealth.smilecdr.support.config;
 
 import java.time.LocalDate;
-import java.util.Optional;
 
 /**
  * The list of predefined configuration entries.

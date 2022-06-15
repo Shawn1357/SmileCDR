@@ -26,7 +26,9 @@ private MyInstant               processingCompleteTS        = null;
 private MyInstant               receivedResponseTS          = null;
 private DLQCommandContainer     srcCommand                  = null;
 private DLQCommandOutcome       processingOutcome           = null;
+private int                     processingMessageCount      = 0;
 private List<ProcessingMessage> processingMessages          = new LinkedList<>();
+private int                     reportLineCount             = 0;
 private List<ReportRecord>      reportLines                 = new LinkedList<>();
 
 
@@ -116,7 +118,10 @@ return processingOutcome;
 public void addProcessingMessage( ProcessingMessage newMsg )
 {
 if (newMsg != null)
+    {
     processingMessages.add( newMsg );
+    processingMessageCount++;
+    }
 
 return;
 }
@@ -124,7 +129,10 @@ return;
 public void addReportEntry( String rprtLine )
 {
 if (rprtLine != null)
+    {
     reportLines.add( new ReportRecord( rprtLine ) );
+    reportLineCount++;
+    }
 
 return;
 }
@@ -134,7 +142,10 @@ return;
 public void addReportEntry( KeyValue keyVal )
 {
 if (keyVal != null)
+    {
     reportLines.add( new ReportRecord( keyVal ) );
+    reportLineCount++;
+    }
 
 return;
 }
@@ -144,7 +155,10 @@ return;
 public void addReportEntry( CWMDLQRecordEntry dlqEntry )
 {
 if (dlqEntry != null)
+    {
     reportLines.add( new ReportRecord( dlqEntry ) );
+    reportLineCount++;
+    }
 
 return;
 }
