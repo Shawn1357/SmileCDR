@@ -30,6 +30,8 @@ DATE_FORMAT(                    "date.format",                   "yyyy-MM-dd" ),
 TIMESTAMP_FORMAT(               "timestamp.format",              "yyyy-MM-dd HH:mm:ss" ),
 
 BOOTSTRAP_SERVERS(              "bootstrap.servers" ),
+KAFKA_DEFAULT_TOPIC_RETENTION(  "kafka.default.rentention.hours","168" ),
+
 KAFKA_CONTROL_GROUP_ID(         "control.group.id" ),
 KAFKA_DLQ_GROUP_ID(             "dlq.group.id" ),
 KAFKA_DLQ_LISTER_GROUP_ID(      "dlq.lister.group.id" ),
@@ -37,6 +39,11 @@ CONTROL_TOPIC_NAME_COMMAND(     "topic.name.command" ),
 CONTROL_TOPIC_NAME_RESPONSE(    "topic.name.response" ),
 KAFKA_CONSUMER_POLL_INTERVAL(   "consumer.poll.interval",        "500" ),
 KAFKA_DLQ_TOPIC_NAME(           "kafka.dlq.topic.name",          "KAFKA.DLQ" ),
+KAFKA_DLQ_RETENTION_HOURS(      "dlq.entry.retention.hours",     "168" ),  // 7 days
+DLQ_PARK_ENTRIES_AFTER_HOURS(   "dlq.park.after.hours",          "150" ),  // 6.25 days
+
+KAFKA_PARK_TOPIC_NAME(          "kafka.park.topic.name",         "KAFKA.PARK" ),
+KAFKA_PARK_RETENTION_HOURS(     "parked.entry.retention.hours",  "Forever" ),
 
 QUIT_AFTER_MILLIS(              "quit.after.millis" ),
 PAUSE_BEFORE_WAIT_FOR_RESPONSE( "pause.before.response",         "0" ),

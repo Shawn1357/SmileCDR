@@ -4,6 +4,10 @@
 package ca.ontariohealth.smilecdr.dlqwatcher;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -35,19 +39,30 @@ import ca.ontariohealth.smilecdr.support.commands.response.CWMDLQRecordEntry;
 import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
 import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
+import ca.ontariohealth.smilecdr.support.kafka.KafkaAdministration;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaConsumerHelper;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaProducerHelper;
 
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.apache.kafka.clients.admin.AlterConfigOp;
+import org.apache.kafka.clients.admin.AlterConfigsResult;
+import org.apache.kafka.clients.admin.Config;
+import org.apache.kafka.clients.admin.ConfigEntry;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.config.ConfigResource;
+import org.apache.kafka.common.config.ConfigResource.Type;
+import org.apache.kafka.common.config.TopicConfig;
+import org.apache.kafka.common.internals.KafkaFutureImpl;
 
 
 /**
@@ -105,7 +120,42 @@ jsonBuilder.setPrettyPrinting();
 
 
 /*
- * Create the consume that will be waiting for commands to appear on the
+ * Ensure all the Kafka topics exist and are set to the correct
+ * entry retention periods.
+ * 
+ */
+
+{
+KafkaAdministration adminConn = new KafkaAdministration( appConfig );
+
+String  topicName = appConfig.configValue( ConfigProperty.KAFKA_DLQ_TOPIC_NAME );
+String  retention = appConfig.configValue( ConfigProperty.KAFKA_DLQ_RETENTION_HOURS );
+
+adminConn.ensureTopicExists( topicName );
+adminConn.setTopicRetentionPeriod( topicName, retention );
+
+topicName = appConfig.configValue( ConfigProperty.KAFKA_PARK_TOPIC_NAME );
+retention = appConfig.configValue( ConfigProperty.KAFKA_PARK_RETENTION_HOURS );
+
+adminConn.ensureTopicExists( topicName );
+adminConn.setTopicRetentionPeriod( topicName, retention );
+
+topicName = appConfig.configValue( ConfigProperty.CONTROL_TOPIC_NAME_COMMAND );
+retention = appConfig.configValue( ConfigProperty.KAFKA_DEFAULT_TOPIC_RETENTION );
+
+adminConn.ensureTopicExists( topicName );
+adminConn.setTopicRetentionPeriod( topicName, retention );
+
+topicName = appConfig.configValue( ConfigProperty.CONTROL_TOPIC_NAME_RESPONSE );
+retention = appConfig.configValue( ConfigProperty.KAFKA_DEFAULT_TOPIC_RETENTION );
+
+adminConn.ensureTopicExists( topicName );
+adminConn.setTopicRetentionPeriod( topicName, retention );
+}
+
+
+/*
+ * Create the consumer that will be waiting for commands to appear on the
  * Control Kafka topic.
  * 
  */
@@ -113,13 +163,19 @@ jsonBuilder.setPrettyPrinting();
 String      groupID = appConfig.configValue( ConfigProperty.KAFKA_CONTROL_GROUP_ID,
                                              appConfig.getApplicationName().appName() + ".control.group.id" );
 
-String	controlTopic = appConfig.configValue( ConfigProperty.CONTROL_TOPIC_NAME_COMMAND );
+String  controlTopic = appConfig.configValue( ConfigProperty.CONTROL_TOPIC_NAME_COMMAND );
 
 controlConsumer = KafkaConsumerHelper.createConsumer( appConfig, groupID, controlTopic );
 
 logr.debug( "Subscribed to Control Topic: {}", controlTopic );
 
-Integer	maxRunTime = appConfig.configInt( ConfigProperty.QUIT_AFTER_MILLIS, null );
+Integer maxRunTime = appConfig.configInt( ConfigProperty.QUIT_AFTER_MILLIS, null );
+
+
+/*
+ * Start listening for Control Commands.
+ * 
+ */
 
 listenForControlCommands( maxRunTime );
 
@@ -130,8 +186,6 @@ stopPollingThread();
 logr.debug( "Exiting: {}.launch", DLQWatcher.class.getSimpleName() );
 return;
 }
-
-
 
 
 
