@@ -3,23 +3,10 @@
  */
 package ca.ontariohealth.smilecdr.dlqwatcher;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Properties;
 
-import javax.mail.Authenticator;
-import javax.mail.Message;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
 
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -28,10 +15,10 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ca.ontariohealth.smilecdr.support.config.BasicAuthCredentials;
+import ca.ontariohealth.smilecdr.support.commands.DLQRecordsInterpreter;
+import ca.ontariohealth.smilecdr.support.commands.EMailNotifier;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
-import ca.ontariohealth.smilecdr.support.config.FileBasedCredentials;
 
 
 /**
@@ -56,9 +43,6 @@ private					Consumer<String, String>		dlqConsumer = null;
 private                 String                  		dlqTopic    = null;
 private					DLQRecordsInterpreter			dlqInterp   = null;
 
-private                 DateTimeFormatter               tsFormatter = null;
-private                 LocalDateTime                   emailedAt   = null;
-
 
 public	DLQPollingThread( Configuration appCfg )
 {
@@ -75,8 +59,6 @@ pollingInterval    = appConfig.configInt( ConfigProperty.KAFKA_CONSUMER_POLL_INT
 pollingDuration    = Duration.ofMillis( pollingInterval );
 
 dlqTopic           = appConfig.configValue( ConfigProperty.KAFKA_DLQ_TOPIC_NAME, DEFAULT_DLQ_TOPIC );
-
-tsFormatter        = DateTimeFormatter.ofPattern( appConfig.configValue( ConfigProperty.TIMESTAMP_FORMAT ) );
 
 return;
 }
@@ -112,15 +94,7 @@ while (continueRunning)
 			logr.debug( "Received {} DLQ Record(s).", dlqRecords.count() );
 			
 			dlqInterp = new DLQRecordsInterpreter( dlqRecords, appConfig );
-			sendEMail( appConfig.configValue( ConfigProperty.EMAIL_DLQLIST_TEMPLATE_NAME ), dlqInterp );
-			
-			/*
-			for (ConsumerRecord<String, String> crnt : rcrds)
-				{
-				if (crnt != null)
-					processReceivedCommand( crnt.value() );
-				}
-			*/
+			EMailNotifier.sendEMail( appConfig, appConfig.configValue( ConfigProperty.EMAIL_NEWDLQ_TEMPLATE_NAME ), dlqInterp );
 			}
 		
 		dlqConsumer.commitAsync();
@@ -206,155 +180,6 @@ public void setMaxRunTime(Long maxRunTime)
 this.maxRunTime = maxRunTime;
 }
 
-
-
-private void sendEMail( String requestedTemplate, DLQRecordsInterpreter dlqInterp )
-{
-logr.debug( "Entering: sendEMail" );
-
-String		emailSrvr   = appConfig.configValue( ConfigProperty.EMAIL_SERVER );
-String      emailPort   = appConfig.configValue( ConfigProperty.EMAIL_SMPT_PORT );
-String      emailCreds  = appConfig.configValue( ConfigProperty.EMAIL_CREDENTIALS_FILE );
-
-BasicAuthCredentials    creds = new FileBasedCredentials( emailCreds );
-
-String      templateNm  = requestedTemplate;
-
-this.emailedAt = LocalDateTime.now();
-
-
-if ((templateNm == null) || (templateNm.length() == 0))
-	templateNm = appConfig.configValue( ConfigProperty.EMAIL_NEWDLQ_TEMPLATE_NAME );
-
-
-String      emailFrom   = appConfig.configValue( ConfigProperty.EMAIL_FROM_ADDR.propertyName() + "." + templateNm, "" );
-String		addrTo  	= appConfig.configValue( ConfigProperty.EMAIL_TO_ADDRS.propertyName()  + "." + templateNm, "" );
-String  	addrCC  	= appConfig.configValue( ConfigProperty.EMAIL_CC_ADDRS.propertyName()  + "." + templateNm, "" );
-String  	addrBCC 	= appConfig.configValue( ConfigProperty.EMAIL_BCC_ADDRS.propertyName() + "." + templateNm, "" );
-String      subject     = appConfig.configValue( ConfigProperty.EMAIL_SUBJECT.propertyName()   + "." + templateNm, "" );
- 
-String  	bodyFileNm	= appConfig.configValue( ConfigProperty.EMAIL_BODY_FILE_NM.propertyName() + "." + templateNm, "" );
-
-String  	body    	= loadFileIntoString( bodyFileNm, templateNm, dlqInterp );
-
-Properties	emailProps = new Properties();
-emailProps.put( "mail.smtp.auth", "true" );
-emailProps.put( "mail.smtp.host", emailSrvr );
-emailProps.put( "mail.smtp.port", emailPort );
-
-try
-	{
-	Authenticator auth 	  = new SMTPAuthenticator( creds.username(), creds.password() );
-    Session 	  session = Session.getInstance( emailProps, auth );
-    Message 	  message = new MimeMessage( session );
-
-    message.setFrom( new InternetAddress( emailFrom ) );
-    if ((addrTo != null) && (addrTo.length() > 0))
-    	message.setRecipients( Message.RecipientType.TO, 
-    						   InternetAddress.parse( addrTo ) );
-
-    if ((addrCC != null) && (addrCC.length() > 0))
-    	message.setRecipients( Message.RecipientType.CC, 
-    						   InternetAddress.parse( addrCC ) );
-
-    if ((addrBCC != null) && (addrBCC.length() > 0))
-    	message.setRecipients( Message.RecipientType.BCC, 
-    						   InternetAddress.parse( addrBCC ) );
- 
-    message.setSubject( subject );
-    message.setText( body );
-
-    Transport.send(message);
-    logr.info( "EMail Message has been sent." );
-	}
-
-catch (Exception e)
-	{
-	logr.error( "Unable to send email: ", e );
-	}
-
-
-logr.debug( "Exiting: sendEMail" );
-return;
-}
-
-
-
-
-private String	loadFileIntoString( String                  fileNm, 
-                                    String                  template, 
-                                    DLQRecordsInterpreter   dlqInterp )
-{
-logr.debug("Entering: loadFileIntoString");
-String	    rtrn  = "";
-
-try (InputStream iStrm = ClassLoader.getSystemResourceAsStream( fileNm ) )
-	{
-	StringBuilder	content 	 = new StringBuilder();
-	BufferedReader	rdr     	 = new BufferedReader( new InputStreamReader(iStrm) );
-	Boolean			inclComments = appConfig.configBool(    ConfigProperty.EMAIL_INCL_HASHTAG_LINES.propertyName() 
-			                                              + "." 
-			                                              + template, 
-			                                              Boolean.FALSE );
-
-	String	line = null;
-	while ((line = rdr.readLine()) != null)
-		{
-		if ((line != null) && 
-			(inclComments || !line.strip().startsWith( "#")))
-			{
-			String	expandedLine = expandVariables( line, dlqInterp );
-			content.append( expandedLine + System.lineSeparator() );
-			}
-		}
-	
-	rtrn = content.toString();
-	}
-
-catch (IOException ioe)
-	{
-	logr.error( "Unable to read from: {}", fileNm, ioe );
-	}
-
-
-logr.debug("Exiting: loadFileIntoString");
-return rtrn;
-}
-
-
-
-private String		expandVariables( String line, DLQRecordsInterpreter dlqInterp )
-{
-String 	expandedLine = line;
-
-expandedLine = expandedLine.replace( "{{Now}}",                 emailedAt.format( tsFormatter ) );
-expandedLine = expandedLine.replace( "{{DLQRecordCount}}",      Integer.toString( dlqInterp.recordCount() ) );
-expandedLine = expandedLine.replace( "{{DLQRecordsCSVHeader}}", dlqInterp.csvHeaders() );
-expandedLine = expandedLine.replace( "{{DLQRecordsAsCSV}}",     dlqInterp.asCSVReport() );
-		
-return expandedLine;
-}
-
-
-
-private class SMTPAuthenticator extends Authenticator 
-{
-String	emailUserID		= null;
-String  userPassword	= null;
-
-public SMTPAuthenticator( String emailID, String passwd )
-{
-emailUserID  = emailID;
-userPassword = passwd;
-}
-
-
-public PasswordAuthentication getPasswordAuthentication() 
-	{
-    return new PasswordAuthentication(emailUserID, 
-    		userPassword);
-	}
-}
 
 
 }

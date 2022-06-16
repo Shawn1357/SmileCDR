@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
+import javax.mail.search.IntegerComparisonTerm;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +23,9 @@ import ca.ontariohealth.smilecdr.support.commands.DLQCommand;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandContainer;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandOutcome;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandParam;
+import ca.ontariohealth.smilecdr.support.commands.DLQRecordsInterpreter;
 import ca.ontariohealth.smilecdr.support.commands.DLQResponseContainer;
+import ca.ontariohealth.smilecdr.support.commands.EMailNotifier;
 import ca.ontariohealth.smilecdr.support.commands.ProcessingMessage;
 import ca.ontariohealth.smilecdr.support.commands.ProcessingMessageSeverity;
 import ca.ontariohealth.smilecdr.support.commands.json.CommandParamAdapter;
@@ -138,8 +142,10 @@ logr.debug( "Entering: listenForControlCommands");
 long	startTime = System.currentTimeMillis();
 long    maxTime   = (maxRunTime != null) ? maxRunTime.longValue() : -1L;
 
-int		pollInterval = appConfig.configInt( ConfigProperty.KAFKA_CONSUMER_POLL_INTERVAL, 500 ).intValue();
-if (pollInterval < 0) pollInterval = 500;
+int		pollInterval = appConfig.configInt( ConfigProperty.KAFKA_CONSUMER_POLL_INTERVAL ).intValue();
+
+if (pollInterval < 0)
+    pollInterval = 500;
 
 Duration	pollDuration = Duration.ofMillis( pollInterval );
 
@@ -395,7 +401,8 @@ return resp;
 
 protected   DLQResponseContainer    processReceivedCommand( DLQCommandContainer cmd )
 {
-DLQResponseContainer    resp = null;
+DLQResponseContainer    resp  = null;
+DLQRecordsInterpreter   rcrds = null;
 
 if ((cmd != null) && (cmd.getCommandToIssue() != null))
     {
@@ -431,21 +438,29 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
             
         case    DLQLIST:
             logr.info( "Starting process to list DLQ entries." );
-            listDLQEntries( resp );
+            resp.setOutcome( DLQCommandOutcome.SUCCESS );
+            resp.addProcessingMessage( ProcessingMessage.DLQW_0000 );            
+            rcrds = listDLQEntries( resp );
             break;
          
         case    DLQEMAIL:
             logr.info( "Starting process to email DLQ entries." );
-            listDLQEntries( resp );
+            resp.setOutcome( DLQCommandOutcome.SUCCESS );
+            resp.addProcessingMessage( ProcessingMessage.DLQW_0000 );            
+            rcrds = listDLQEntries( resp );
             break;
             
         case    START:
             logr.info( "Starting the DLQ Poller Thread if it is not already running." );
+            resp.setOutcome( DLQCommandOutcome.SUCCESS );
+            resp.addProcessingMessage( ProcessingMessage.DLQW_0000 );            
             startPollingThread( resp );
             break;
                 
         case    STOP:
             logr.info( "Stopping the DLQ Poller Thread if it is running." );
+            resp.setOutcome( DLQCommandOutcome.SUCCESS );
+            resp.addProcessingMessage( ProcessingMessage.DLQW_0000 );            
             stopPollingThread( resp );
             break;
                 
@@ -463,6 +478,25 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
         }
     
     resp.recordCompleteTimestamp();
+    
+    /*
+     * Process further if the request is email the response.
+     * 
+     */
+    
+    switch (cmd.getCommandToIssue())
+        {
+        case    DLQEMAIL:
+            // The response has some number of records to be emailed.
+            // Lets do that:
+            String  dlqEmailTemplateNm = appConfig.configValue( ConfigProperty.EMAIL_DLQLIST_TEMPLATE_NAME );
+            EMailNotifier.sendEMail( appConfig, dlqEmailTemplateNm, rcrds );
+            break;
+            
+        default:
+            // Nothing to do... we can skip this part.
+            break;
+        }
     }
 
 
@@ -471,8 +505,10 @@ return resp;
 
 
 
-private void    listDLQEntries( DLQResponseContainer resp )
+private DLQRecordsInterpreter    listDLQEntries( DLQResponseContainer resp )
 {
+DLQRecordsInterpreter interpRcrds = new DLQRecordsInterpreter( appConfig );
+
 Properties  disabledAutoCommit = new Properties();     
 
 String topicNm = appConfig.configValue( ConfigProperty.KAFKA_DLQ_TOPIC_NAME );
@@ -515,11 +551,13 @@ if (lister != null)
     
     do
         {
-        final   ConsumerRecords<String, String> rcrds = lister.poll( interval );
+        ConsumerRecords<String,String> rcrds = lister.poll( interval );
         logr.debug( "Received {} KAFKA.DLQ Event(s).", rcrds.count() );
         
         if ((rcrds != null) && (rcrds.count() > 0))
             {
+            interpRcrds.addDLQRecords( rcrds );
+            
             for (ConsumerRecord<String, String> crnt : rcrds)
                 {
                 if (crnt != null)
@@ -532,6 +570,7 @@ if (lister != null)
                     logr.info( "    Resource ID:     {}", entry.resourceID() );
                     
                     resp.addReportEntry( entry );
+                    
                     }
                 }
             }
@@ -546,7 +585,9 @@ if (lister != null)
     
     //lister.close();
     }
-return;
+
+
+return interpRcrds;
 }
 
 
