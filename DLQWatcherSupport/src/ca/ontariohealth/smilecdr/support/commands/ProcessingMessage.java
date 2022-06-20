@@ -3,34 +3,29 @@
  */
 package ca.ontariohealth.smilecdr.support.commands;
 
+import java.util.IllegalFormatException;
+
+import ca.ontariohealth.smilecdr.support.config.Configuration;
+
 /**
  * @author adminuser
  *
  */
 public class ProcessingMessage
 {
-private ProcessingMessageSeverity   sev     = null;
-private String                      msgCode = null;
-private String                      desc    = null;
+private Configuration               appCfg  = null;
+private ProcessingMessageCode       msgCode = null;
+private String[]                    args    = null;
+private String                      msgDesc = null;
 
-public static final     ProcessingMessage   DLQW_0000 = new ProcessingMessage( ProcessingMessageSeverity.INFO,
-                                                                               "DLQW-0000",
-                                                                               "Success" );
 
-public  ProcessingMessage()
+public   ProcessingMessage( boolean genDescr, ProcessingMessageCode messageCode, String... messageArgs )
 {
-return;
-}
+setMsgCode( messageCode );
+args = messageArgs;
 
-
-
-public  ProcessingMessage( ProcessingMessageSeverity    msgSev,
-                           String                       code,
-                           String                       descr )
-{
-setSev( msgSev );
-setMsgCode( code );
-setDesc( descr );
+if (genDescr)
+    genMsgDesc();
 
 return;
 }
@@ -38,26 +33,32 @@ return;
 
 
 
-public ProcessingMessageSeverity getSev()
+public   ProcessingMessage( ProcessingMessageCode   messageCode, String...  messageArgs )
 {
-return sev;
-}
+setMsgCode( messageCode );
+args = messageArgs;
+genMsgDesc();
 
-
-
-
-
-public void setSev( ProcessingMessageSeverity sev )
-{
-this.sev = sev;
 return;
 }
 
 
 
+public  ProcessingMessage( ProcessingMessageCode    messageCode,
+                           Configuration            appConfig,
+                           String...                messageArgs )
+{
+appCfg = appConfig;
+args   = messageArgs;
+setMsgCode( messageCode );
+genMsgDesc();
+
+return;
+}
 
 
-public String getMsgCode()
+
+public ProcessingMessageCode getMsgCode()
 {
 return msgCode;
 }
@@ -66,27 +67,63 @@ return msgCode;
 
 
 
-public void setMsgCode( String msgCode )
+public void setMsgCode( ProcessingMessageCode messageCode )
 {
-this.msgCode = msgCode;
+if (messageCode == null)
+    throw new IllegalArgumentException( "messageCode argument must not be null" );
+
+msgCode = messageCode;
+genMsgDesc();
+
 return;
 }
 
 
 
 
-
-public String getDesc()
+public ProcessingMessageSeverity    getMsgSeverity()
 {
-return desc;
+return msgCode.getSeverity( appCfg );
+}
+
+
+
+private void genMsgDesc()
+{
+if (msgCode != null)
+    {
+    String  fmt      = msgCode.getFormat( appCfg );
+    String  origDesc = msgDesc;
+    try
+        {
+        msgDesc = String.format( fmt, (Object[]) args );
+        }
+    
+    catch (IllegalFormatException e)
+        {
+        msgDesc = origDesc;
+        }
+    }
+
+
+
+return;
 }
 
 
 
 
-public void setDesc( String desc )
+public String getMsgDesc()
 {
-this.desc = desc;
+return msgDesc;
+}
+
+
+
+
+public void setMsgDesc( String newDesc )
+{
+msgDesc = newDesc;
 return;
 }
 }

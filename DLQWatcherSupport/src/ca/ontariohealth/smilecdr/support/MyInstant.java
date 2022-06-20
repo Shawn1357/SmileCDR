@@ -11,9 +11,9 @@ import java.time.ZoneId;
  * @author adminuser
  *
  */
-public class MyInstant
+public class MyInstant  implements Comparable<MyInstant>
 {
-private Long    millis = null;
+private Long    millis  = null;
 
 
 public static   MyInstant   now()
@@ -75,5 +75,14 @@ public LocalDateTime   asLocalDateTime()
 LocalDateTime   rtrn = LocalDateTime.ofInstant( this.asInstant(), ZoneId.systemDefault() );
 
 return rtrn;
+}
+
+
+
+
+@Override
+public int compareTo( MyInstant o )
+{
+return millis.compareTo( o.millis );
 }
 }

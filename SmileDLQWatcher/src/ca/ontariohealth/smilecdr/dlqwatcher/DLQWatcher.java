@@ -4,16 +4,10 @@
 package ca.ontariohealth.smilecdr.dlqwatcher;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
-
-import javax.mail.search.IntegerComparisonTerm;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,9 +25,11 @@ import ca.ontariohealth.smilecdr.support.commands.DLQRecordsInterpreter;
 import ca.ontariohealth.smilecdr.support.commands.DLQResponseContainer;
 import ca.ontariohealth.smilecdr.support.commands.EMailNotifier;
 import ca.ontariohealth.smilecdr.support.commands.ProcessingMessage;
-import ca.ontariohealth.smilecdr.support.commands.ProcessingMessageSeverity;
+import ca.ontariohealth.smilecdr.support.commands.ProcessingMessageCode;
 import ca.ontariohealth.smilecdr.support.commands.json.CommandParamAdapter;
+import ca.ontariohealth.smilecdr.support.commands.json.JSONApplicationSupport;
 import ca.ontariohealth.smilecdr.support.commands.json.MyInstantAdapter;
+import ca.ontariohealth.smilecdr.support.commands.json.ProcessingMessageAdapter;
 import ca.ontariohealth.smilecdr.support.commands.json.ReportRecordAdapter;
 import ca.ontariohealth.smilecdr.support.commands.response.CWMDLQRecordEntry;
 import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
@@ -45,24 +41,14 @@ import ca.ontariohealth.smilecdr.support.kafka.KafkaProducerHelper;
 
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
-import org.apache.kafka.clients.admin.AlterConfigOp;
-import org.apache.kafka.clients.admin.AlterConfigsResult;
-import org.apache.kafka.clients.admin.Config;
-import org.apache.kafka.clients.admin.ConfigEntry;
-import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.config.ConfigResource;
-import org.apache.kafka.common.config.ConfigResource.Type;
-import org.apache.kafka.common.config.TopicConfig;
-import org.apache.kafka.common.internals.KafkaFutureImpl;
 
 
 /**
@@ -76,16 +62,25 @@ static private final Logger 			        logr                 = LoggerFactory.getL
 static private final String				        CLI_INITIAL_CMD_SHRT = "i";
 static private final String                     CLI_INITIAL_CMD_LONG = "initCmd";
 
-static private final Long				        KILL_POLLER_MAX_WAIT = 10000L; // milliseconds
-
 private	Consumer<String, String>		        controlConsumer 	 = null;
 private	boolean							        exitWatcher     	 = false;
 private	DLQPollingThread				        dlqPoller       	 = null;
+private DLQParkingThread                        dlqParker            = null;         
 
 private GsonBuilder                             jsonBuilder          = new GsonBuilder();
 
 private int                                     rollingRcrdIndex     = 0;
 
+
+private enum ThreadIndicator 
+    { DLQ_POLLING_THREAD( "DLQ Poller" ), 
+      PARKING_THREAD(     "Parker" );
+
+    private String threadNm;
+    
+    private ThreadIndicator( String name ) { threadNm = name; }
+    public  String threadName() { return threadNm; }
+    };
 
 /**
  * @param args
@@ -113,9 +108,7 @@ System.err.println( appSignature() );
 
 //sendEMail( appConfig.configValue( ConfigProperty.EMAIL_TEMPLATE ) );
 
-jsonBuilder.registerTypeAdapter( DLQCommandParam.class, new CommandParamAdapter() );
-jsonBuilder.registerTypeAdapter( ReportRecord.class,    new ReportRecordAdapter() );
-jsonBuilder.registerTypeAdapter( MyInstant.class,       new MyInstantAdapter() );
+JSONApplicationSupport.registerGsonTypeAdpaters( jsonBuilder );
 jsonBuilder.setPrettyPrinting();
 
 
@@ -180,7 +173,7 @@ Integer maxRunTime = appConfig.configInt( ConfigProperty.QUIT_AFTER_MILLIS, null
 listenForControlCommands( maxRunTime );
 
 // Ensure the Poller Thread has been stopped.
-stopPollingThread();
+stopThreads();
 
 
 logr.debug( "Exiting: {}.launch", DLQWatcher.class.getSimpleName() );
@@ -309,7 +302,7 @@ if ((resp != null) && (cmd != null) && (channel != null) && (channel.length() > 
     Gson    xltrToJSON = jsonBuilder.create();
     String  respAsJSON = xltrToJSON.toJson( resp );
     
-    logr.info( "Processed Command resulting in:" );
+    logr.info( "Processed Command resulting in the following JSON being returned:" );
     logr.info( "\n{}", respAsJSON );
     
     Producer<String, String>    producer = KafkaProducerHelper.createProducer( appConfig, channel );
@@ -468,14 +461,14 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
         {
         case    HELLO:
             resp.setOutcome( DLQCommandOutcome.SUCCESS );
-            resp.addProcessingMessage( ProcessingMessage.DLQW_0000 );            
+            resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
             resp.addReportEntry( DLQCommand.HELLO.commandStr() );
             break;
             
         case    LIST:
             logr.info("All known {} Commands:", appConfig.getApplicationName().appName() );
             resp.setOutcome( DLQCommandOutcome.SUCCESS );
-            resp.addProcessingMessage( ProcessingMessage.DLQW_0000 );            
+            resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
             
             for (DLQCommand crnt : DLQCommand.values())
                 if (crnt != DLQCommand.UNKNOWN)
@@ -493,29 +486,29 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
         case    DLQLIST:
             logr.info( "Starting process to list DLQ entries." );
             resp.setOutcome( DLQCommandOutcome.SUCCESS );
-            resp.addProcessingMessage( ProcessingMessage.DLQW_0000 );            
+            resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
             rcrds = listDLQEntries( resp );
             break;
          
         case    DLQEMAIL:
             logr.info( "Starting process to email DLQ entries." );
             resp.setOutcome( DLQCommandOutcome.SUCCESS );
-            resp.addProcessingMessage( ProcessingMessage.DLQW_0000 );            
+            resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
             rcrds = listDLQEntries( resp );
             break;
             
         case    START:
             logr.info( "Starting the DLQ Poller Thread if it is not already running." );
             resp.setOutcome( DLQCommandOutcome.SUCCESS );
-            resp.addProcessingMessage( ProcessingMessage.DLQW_0000 );            
-            startPollingThread( resp );
+            resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
+            startThreads( resp );
             break;
                 
         case    STOP:
             logr.info( "Stopping the DLQ Poller Thread if it is running." );
             resp.setOutcome( DLQCommandOutcome.SUCCESS );
-            resp.addProcessingMessage( ProcessingMessage.DLQW_0000 );            
-            stopPollingThread( resp );
+            resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
+            stopThreads( resp );
             break;
                 
         case    QUIT:
@@ -523,7 +516,7 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
             exitWatcher = true;
             
             resp.setOutcome( DLQCommandOutcome.SUCCESS );
-            resp.addProcessingMessage( ProcessingMessage.DLQW_0000 );            
+            resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
             break;
             
         case    UNKNOWN:
@@ -645,144 +638,236 @@ return interpRcrds;
 }
 
 
-private void	startPollingThread( DLQResponseContainer resp )
+
+private DLQCommandOutcome    startThreads( DLQResponseContainer resp )
 {
+DLQCommandOutcome   outcome = DLQCommandOutcome.SUCCESS;
 
-logr.debug( "Entering: startPollingThread" );
-
-if (dlqPoller == null)
-	{
-	logr.debug( "DLQ Poller Thread does not exist: creating it.");
-	dlqPoller = new DLQPollingThread( appConfig );
-	}
-
-if (dlqPoller.isAlive())
+for (ThreadIndicator crntThrdInd : ThreadIndicator.values())
     {
-    String  msg = "DLQ Poller Thread is already alive: nothing to do.";
+    DLQCommandOutcome   rslt           = DLQCommandOutcome.SUCCESS;
+    MyThread            thrdObjToStart = null;
+    Boolean             cfgStartThread = null;
     
-	logr.debug( msg );
-	resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageSeverity.INFO,
-	                                                  "DLQW-0001",
-	                                                  msg ) );
+    switch (crntThrdInd)
+        {
+        case    DLQ_POLLING_THREAD:
+            cfgStartThread = appConfig.configBool( ConfigProperty.START_DLQ_POLL_THREAD );
+            if (cfgStartThread && (dlqPoller == null))
+                dlqPoller = new DLQPollingThread( appConfig );
+            
+            thrdObjToStart = dlqPoller;
+            
+            break;
+            
+        case    PARKING_THREAD:
+            cfgStartThread = appConfig.configBool( ConfigProperty.START_DLQ_PARK_THREAD );
+            if (cfgStartThread && (dlqParker == null))
+                dlqParker = new DLQParkingThread( appConfig );
+            
+            thrdObjToStart = dlqParker;
+            
+            break;
+            
+        default:
+            // Should never get here.
+            break;
+        }
+    
+    if (thrdObjToStart != null)
+        rslt = startThread( resp, thrdObjToStart, crntThrdInd, cfgStartThread );
+    
+    if (rslt.asPriority() > outcome.asPriority())
+        outcome = rslt;
     }
 
-else
-	{
-	logr.debug( "Starting DLQ Poller Thread..." );
-	dlqPoller.start();
-	
-	// Give it a moment to fire up.
-	try 
-		{
-		Thread.sleep( 250 );
-		}
-	
-	catch (InterruptedException e) 
-		{
-		e.printStackTrace();
-		}
-	
-	if (dlqPoller.isAlive())
-	    {
-	    String msg = "DLQ Poller Thread is running.";
-	    
-		logr.debug( msg );
-		resp.setOutcome( DLQCommandOutcome.SUCCESS );
-		resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageSeverity.INFO,
-		                                                  "DLQW-0003",
-		                                                  msg ) );
-	    }
-	
-	else
-	    {
-	    String msg = "DLQ Poller Thread did not start.";
-	    
-		logr.error( msg );
-		resp.setOutcome( DLQCommandOutcome.ERROR );
-		resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageSeverity.ERROR,
-		                                                  "DLQW-0002",
-		                                                  msg ) );
-	    }
-	}
 
-logr.debug( "Exiting: startPollingThread" );
-return;	
+resp.setOutcome( outcome );
+return outcome;
 }
 
 
-
-
-private void    stopPollingThread()
+private DLQCommandOutcome    startThread( DLQResponseContainer  resp, 
+                                          MyThread              thrdObj, 
+                                          ThreadIndicator       threadInd,
+                                          Boolean               startThread )
 {
-DLQResponseContainer throwaway = new DLQResponseContainer();
+DLQCommandOutcome   rslt = DLQCommandOutcome.SUCCESS;
+logr.debug( "Entering: startThread" );
 
-stopPollingThread( throwaway );
+if (thrdObj.isAlive())
+    {
+    if (startThread)
+        {
+        // Thread is already alive. Nothing to do.
+        ProcessingMessage   procMsg = new ProcessingMessage( ProcessingMessageCode.DLQW_0001, appConfig, threadInd.threadName() );
+        resp.addProcessingMessage( procMsg );
+        logr.debug( procMsg.getMsgDesc() );
+        }
+    
+    else
+        {
+        // Thread is running but the configuration says it should not be.
+        ProcessingMessage procMsg = new ProcessingMessage( ProcessingMessageCode.DLQW_0005, appConfig, threadInd.threadName() );
+        resp.addProcessingMessage( procMsg );
+        
+        logr.debug( procMsg.getMsgDesc() );
 
-return;
-}
-
-
-
-@SuppressWarnings("deprecation")
-private void	stopPollingThread( DLQResponseContainer resp )
-{
-logr.debug( "Entering: stopPollingThread" );
-if (dlqPoller != null)
-	{
-	Long 	killStart 	= System.currentTimeMillis();
-	boolean	keepWaiting = true;
-	
-	logr.debug( "Polling Thread object exists. Setting flag for it to stop." );			
-	dlqPoller.indicateToStopThread();
-	
-	if (dlqPoller.isAlive())
-		logr.debug( "DLQ Polling Thread is Alive, we need to wait up to {} milliseconds for it to end.", KILL_POLLER_MAX_WAIT );
-	
-	while (dlqPoller.isAlive() && keepWaiting)
-		{
-		try
-			{
-			logr.debug( "Waiting..." );
-			Thread.sleep( 250 );
-			} 
-		catch (InterruptedException e)
-			{
-			e.printStackTrace();
-			}
-		
-		keepWaiting = (System.currentTimeMillis() <= killStart + KILL_POLLER_MAX_WAIT);
-		}
-	
-	// If the Poller Thread is still alive after our maximum wait time,
-	// kill the thread.
-	if (dlqPoller.isAlive())
-		{
-		String    msg = String.format( "DLQ Poller is still alive after %d milliseconds. Killing it.", KILL_POLLER_MAX_WAIT );
-		logr.debug( msg );
-		dlqPoller.stop();
-		
-		resp.setOutcome( DLQCommandOutcome.WARNINGS );
-		resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageSeverity.WARN,
-		                                                  "DLQW-0005",
-		                                                  msg ) );
-		}
-	
-	dlqPoller = null;
-	}
+        if (rslt.asPriority() < DLQCommandOutcome.WARNINGS.asPriority())
+            rslt = DLQCommandOutcome.WARNINGS;
+        }
+    }
 
 else
     {
-    String msg = "DLQ Poller Thread is not running: nothing to do.";
-	logr.debug( msg );
-	
-	resp.setOutcome( DLQCommandOutcome.SUCCESS );
-	resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageSeverity.INFO,
-	                                                  "DLQW-0004",
-	                                                  msg ) );
+    logr.debug( "Starting {} Thread...", threadInd.threadName() );
+    thrdObj.start();
+    
+    // Give it a moment to fire up.
+    try 
+        {
+        Thread.sleep( 250 );
+        }
+    
+    catch (InterruptedException e) 
+        {
+        e.printStackTrace();
+        }
+    
+    if (thrdObj.isAlive())
+        {
+        // Thread started.
+        ProcessingMessage procMsg = new ProcessingMessage( ProcessingMessageCode.DLQW_0003, appConfig, threadInd.threadName() );
+        resp.addProcessingMessage( procMsg );
+        logr.debug( procMsg.getMsgDesc() );
+        }
+    
+    else
+        {
+        // Thread did not start.
+        if (rslt.asPriority() < DLQCommandOutcome.ERROR.asPriority())
+            rslt = DLQCommandOutcome.ERROR;
+        
+        ProcessingMessage procMsg = new ProcessingMessage( ProcessingMessageCode.DLQW_0002, appConfig, threadInd.threadName() );
+        resp.addProcessingMessage( procMsg );
+        logr.error( procMsg.getMsgDesc() );
+        }
     }
 
-logr.debug( "Exiting: stopPollingThread" );
-return;
+logr.debug( "Exiting: startThread" );
+return rslt;
+}
+
+
+
+private DLQCommandOutcome   stopThreads()
+{
+return stopThreads( null );
+}
+
+
+
+private DLQCommandOutcome   stopThreads( DLQResponseContainer resp )
+{
+DLQCommandOutcome outcome = DLQCommandOutcome.SUCCESS;
+
+for (ThreadIndicator crntThrdInd : ThreadIndicator.values())
+    {
+    DLQCommandOutcome   rslt          = DLQCommandOutcome.SUCCESS;
+    MyThread            thrdObjToStop = null;
+    Boolean             cfgStopThread = null;
+    
+    switch (crntThrdInd)
+        {
+        case    DLQ_POLLING_THREAD:
+            thrdObjToStop = dlqPoller;
+            cfgStopThread = appConfig.configBool( ConfigProperty.START_DLQ_POLL_THREAD );
+            
+            break;
+            
+        case    PARKING_THREAD:
+            thrdObjToStop = dlqParker;
+            cfgStopThread = appConfig.configBool( ConfigProperty.START_POLL_PARK_THREAD );
+            break;
+            
+        default:
+            // Should never get here.
+            break;
+        }
+    
+    if (thrdObjToStop != null)
+        rslt = stopThread( resp, thrdObjToStop, crntThrdInd, cfgStopThread );
+    
+    switch (crntThrdInd)
+        {
+        case    DLQ_POLLING_THREAD:
+            dlqPoller = null;
+            break;
+            
+        case    PARKING_THREAD:
+            dlqParker = null;
+            break;
+            
+        default:
+            // Should never get here.
+            break;
+        }
+ 
+    
+    if (rslt.asPriority() > outcome.asPriority())
+        outcome = rslt;
+    }
+
+
+if (resp != null)
+    resp.setOutcome( outcome );
+
+return outcome;
+}
+
+
+
+private DLQCommandOutcome   stopThread( DLQResponseContainer resp,
+                                        MyThread             thrdToStop,
+                                        ThreadIndicator      thrdInd,
+                                        Boolean              stopThrd )
+{
+DLQCommandOutcome   outcome = DLQCommandOutcome.SUCCESS;
+logr.debug( "Entering: stopThread for {}", thrdInd.threadName() );
+
+if ((thrdToStop != null) && (thrdToStop.isAlive()))
+    {
+    if (!stopThrd)
+        {
+        // Thread is running but Configuration indicates it should not be.
+        ProcessingMessage procMsg = new ProcessingMessage( ProcessingMessageCode.DLQW_0005, appConfig, thrdInd.threadName() );
+        resp.addProcessingMessage( procMsg );        
+        logr.debug( procMsg.getMsgDesc() );
+        
+        if (outcome.asPriority() < DLQCommandOutcome.WARNINGS.asPriority())
+            outcome = DLQCommandOutcome.WARNINGS;
+        }
+    
+    DLQCommandOutcome rslt = MyThread.stopThread( resp, appConfig, thrdToStop, thrdInd.threadName() );
+    if (outcome.asPriority() < rslt.asPriority())
+        outcome = rslt;
+    }
+
+else
+    {
+    // Thread is not running. Nothing to do.
+    ProcessingMessage procMsg = new ProcessingMessage( ProcessingMessageCode.DLQW_0004, appConfig, thrdInd.threadName() );
+    logr.debug( procMsg.getMsgDesc() );
+        
+    if (resp != null)
+        resp.addProcessingMessage( procMsg );
+    
+    if (outcome.asPriority() < DLQCommandOutcome.SUCCESS.asPriority())
+        outcome = DLQCommandOutcome.SUCCESS;
+     }
+
+logr.debug( "Exiting: stopThread for {}", thrdInd.threadName() );
+return outcome;
 }
 
 
@@ -799,8 +884,6 @@ cmdLineOpts.addOption( initCmd );
 
 return;
 }
-
-
 
 
 

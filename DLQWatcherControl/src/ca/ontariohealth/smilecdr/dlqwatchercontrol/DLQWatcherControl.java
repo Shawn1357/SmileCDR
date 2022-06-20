@@ -6,7 +6,6 @@ package ca.ontariohealth.smilecdr.dlqwatchercontrol;
 import java.time.Duration;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -31,8 +30,11 @@ import ca.ontariohealth.smilecdr.support.commands.DLQCommand;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandContainer;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandParam;
 import ca.ontariohealth.smilecdr.support.commands.DLQResponseContainer;
+import ca.ontariohealth.smilecdr.support.commands.ProcessingMessage;
 import ca.ontariohealth.smilecdr.support.commands.json.CommandParamAdapter;
+import ca.ontariohealth.smilecdr.support.commands.json.JSONApplicationSupport;
 import ca.ontariohealth.smilecdr.support.commands.json.MyInstantAdapter;
+import ca.ontariohealth.smilecdr.support.commands.json.ProcessingMessageAdapter;
 import ca.ontariohealth.smilecdr.support.commands.json.ReportRecordAdapter;
 import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
@@ -79,9 +81,7 @@ logr.debug("Entering: DLQWatcherControl.launch" );
 
 System.err.println( appSignature() );
 
-jsonBuilder.registerTypeAdapter( DLQCommandParam.class, new CommandParamAdapter() );
-jsonBuilder.registerTypeAdapter( ReportRecord.class,    new ReportRecordAdapter() );
-jsonBuilder.registerTypeAdapter( MyInstant.class,       new MyInstantAdapter() );
+JSONApplicationSupport.registerGsonTypeAdpaters( jsonBuilder );
 jsonBuilder.setPrettyPrinting();
 
 /*
@@ -144,6 +144,7 @@ return;
 private DLQResponseContainer    waitForResponse( DLQCommandContainer cmdSent, Long maxWaitMillis )
 {
 logr.debug( "Entering: waitForResponse" );
+logr.debug( "Maximum wait for a response: {}", maxWaitMillis );
 
 DLQResponseContainer    resp         = null;
 String                  respChannel  = (cmdSent != null) ? cmdSent.getResponseChannelName() : null;
@@ -173,22 +174,41 @@ if ((cmdSent != null) && (respChannel != null) && (respChannel.length() > 0))
             logr.debug( "Received {} record(s) from Kafka.", rcrds.count() );
             for (ConsumerRecord<String,String> crnt : rcrds)
                 {
-                DLQResponseContainer crntResp = DLQResponseContainer.fromJSON( crnt.value() );
-                DLQCommandContainer  respCmd  = crntResp.getSourceCommand();
-                UUID                 cmdUUID  = (respCmd != null) ? respCmd.getCommandUUID() : null;
+                //logr.debug( "Received JSON:\n{}", crnt.value() );
+                DLQResponseContainer crntResp = null;
                 
-                if ((cmdUUID != null) && (cmdID.compareTo( cmdUUID ) == 0))
+                try
                     {
-                    logr.debug( "Received the response we were hoping for:" );
-                    logr.info( "\n{}", crnt.value() );
-                    resp = crntResp;
-                    break;
+                    crntResp = DLQResponseContainer.fromJSON( crnt.value() );
                     }
                 
-                else
+                catch (RuntimeException re)
                     {
-                    logr.warn( "Unexpected response was retrieved not matching Cmd ID: {}", cmdID.toString() );
-                    logr.warn( "\n{}", crnt.value() );
+                    re.printStackTrace();
+                    }
+                
+                if (crntResp != null)
+                    {
+                    DLQCommandContainer  respCmd  = crntResp.getSourceCommand();
+                    UUID                 cmdUUID  = (respCmd != null) ? respCmd.getCommandUUID() : null;
+                    
+                    if ((cmdUUID != null) && (cmdID.compareTo( cmdUUID ) == 0))
+                        {
+                        logr.debug( "Received the response we were hoping for:" );
+                        logr.info( "\n{}", crnt.value() );
+                        
+                        now = MyInstant.now();
+                        logr.debug( "Response took {} milliseconds.", now.getEpochMillis() - startOfWait.getEpochMillis() );
+                        
+                        resp = crntResp;
+                        break;
+                        }
+                    
+                    else
+                        {
+                        logr.warn( "Unexpected response was retrieved not matching Cmd ID: {}", cmdID.toString() );
+                        logr.warn( "\n{}", crnt.value() );
+                        }
                     }
                 }
             }

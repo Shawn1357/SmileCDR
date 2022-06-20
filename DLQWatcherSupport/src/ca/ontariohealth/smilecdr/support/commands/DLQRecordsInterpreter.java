@@ -98,6 +98,14 @@ if (kafkaRcrd != null)
 }
 
 
+
+public List<CWMDLQRecordEntry>  getInterpretations()
+{
+return dlqDetails;
+}
+
+
+
 private void extractDetailsList( List<CWMDLQRecordEntry>         targetList,
                                  ConsumerRecords<String, String> dlqRcrds )
 {
@@ -142,7 +150,6 @@ StringBuffer        rtrn  = new StringBuffer();
 if (rcrd != null)
     {
     int                 fldWid  = CSV_HDRS[0].length();
-    String              fldFmt  = "";
     String              crntVal = rcrd.subscriptionID();
     DateTimeFormatter   frmtr   = DateTimeFormatter.ofPattern( appConfig.configValue( ConfigProperty.TIMESTAMP_FORMAT ) );
     

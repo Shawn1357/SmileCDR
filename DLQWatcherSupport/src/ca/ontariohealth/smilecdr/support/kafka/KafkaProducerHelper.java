@@ -34,7 +34,17 @@ return;
 
 
 
-public static Producer<String, String> createProducer( Configuration appConfig, String topicName )
+public static Producer<String, String> createProducer( Configuration appConfig,
+                                                       String        topicName )
+{
+return KafkaProducerHelper.createProducer( appConfig,  topicName, null );
+}
+
+
+
+public static Producer<String, String> createProducer( Configuration appConfig, 
+                                                       String        topicName,
+                                                       Properties    kafkaProps )
 {
 Producer<String, String>    producer = null;
 
@@ -69,6 +79,9 @@ else
         props.put( ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,      keySerializer );
         props.put( ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,    valueSerializer );
         
+        if (kafkaProps != null)
+            props.putAll( kafkaProps );
+        
         producer = new KafkaProducer<>( props );
         
         allProducers.put( topicName, producer );
@@ -78,10 +91,5 @@ else
 logr.debug( "Exiting: createProducer" );;
 return producer;
 }
-
-
-
-
-
 
 }

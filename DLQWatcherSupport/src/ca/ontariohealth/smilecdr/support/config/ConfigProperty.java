@@ -32,15 +32,22 @@ TIMESTAMP_FORMAT(               "timestamp.format",              "yyyy-MM-dd HH:
 BOOTSTRAP_SERVERS(              "bootstrap.servers" ),
 KAFKA_DEFAULT_TOPIC_RETENTION(  "kafka.default.rentention.hours","168" ),
 
+START_DLQ_POLL_THREAD(          "start.cmd.include.dlqpoll.thread",        "true" ),
+START_POLL_PARK_THREAD(         "start.cmd.include.parkpoll.thread",       "true" ),
+START_DLQ_PARK_THREAD(          "start.cmd.include.parkdqlentries.thread", "true" ),
+
+STOP_THREAD_MAX_WAIT_MILLIS(    "stop.cmd.max.wait.for.thread.millis",     "10000" ),
+
 KAFKA_CONTROL_GROUP_ID(         "control.group.id" ),
 KAFKA_DLQ_GROUP_ID(             "dlq.group.id" ),
 KAFKA_DLQ_LISTER_GROUP_ID(      "dlq.lister.group.id" ),
 CONTROL_TOPIC_NAME_COMMAND(     "topic.name.command" ),
 CONTROL_TOPIC_NAME_RESPONSE(    "topic.name.response" ),
-KAFKA_CONSUMER_POLL_INTERVAL(   "consumer.poll.interval",        "500" ),
-KAFKA_DLQ_TOPIC_NAME(           "kafka.dlq.topic.name",          "KAFKA.DLQ" ),
-KAFKA_DLQ_RETENTION_HOURS(      "dlq.entry.retention.hours",     "168" ),  // 7 days
-DLQ_PARK_ENTRIES_AFTER_HOURS(   "dlq.park.after.hours",          "150" ),  // 6.25 days
+KAFKA_CONSUMER_POLL_INTERVAL(   "consumer.poll.interval",              "500" ),
+KAFKA_DLQ_TOPIC_NAME(           "kafka.dlq.topic.name",                "KAFKA.DLQ" ),
+KAFKA_DLQ_RETENTION_HOURS(      "dlq.entry.retention.hours",           "168" ),  // 7 days
+DLQ_PARK_ENTRIES_AFTER_HOURS(   "dlq.park.after.hours",                "150" ),  // 6.25 days
+DLQ_PARK_CHECK_INTERVAL_MINS(   "dlq.frequency.mins.to.park.entries",  "120" ),
 
 KAFKA_PARK_TOPIC_NAME(          "kafka.park.topic.name",         "KAFKA.PARK" ),
 KAFKA_PARK_RETENTION_HOURS(     "parked.entry.retention.hours",  "Forever" ),
