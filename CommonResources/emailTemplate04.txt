@@ -6,14 +6,14 @@
 #   {{DLQRecordsAsCSV}}     - Each of the DLQ Entries as individual rows of CSV Data
 #
 #
-Newly Arrived entries into the Smile Dead letter Queue:<p>
-<template01.txt)<p>
+Existing Entries into the Smile Long Term Parking Lot:<p>
+(template04.txt)<p>
 <p>
 # Now string is formatted according to App Config property: timestamp.format
 Report Generated at: <b>{{Now}}</b><p>
 <p>
 <p>
-Detected DLQ New Record Count: <i>{{DLQRecordCount}}</i>
+Detected DLQ Record Count: <i>{{DLQRecordCount}}</i><p>
 <p>
 <pre>
 {{DLQRecordsCSVHeader}}

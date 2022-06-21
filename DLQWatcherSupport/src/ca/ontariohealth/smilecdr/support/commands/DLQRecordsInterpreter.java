@@ -184,11 +184,11 @@ if (rcrd != null)
     rtrn.append( CSV_FLD_SEP ).append( formatField( fldWid, crntVal ) );
     
     fldWid = CSV_HDRS[5].length();
-    Duration timeOnDLQ = Duration.between( ts.asInstant(), reportStartTime.asInstant() );
+    Duration timeInTopic = Duration.between( ts.asInstant(), reportStartTime.asInstant() );
     crntVal = String.format( "%dd %2d:%02d", 
-                             timeOnDLQ.toDays(),
-                             timeOnDLQ.toHoursPart(),
-                             timeOnDLQ.toMinutesPart() );
+                             timeInTopic.toDays(),
+                             timeInTopic.toHoursPart(),
+                             timeInTopic.toMinutesPart() );
     
     rtrn.append( CSV_FLD_SEP ).append( formatField( fldWid, crntVal ) );
     }
@@ -263,7 +263,7 @@ if ((recordCount() > 0) && (dlqDetails != null))
     report = generateCSVReport( dlqDetails );
 
 else
-    report = "<<No Records>>";
+    report = "--No Records--";
     
 return report;
 }

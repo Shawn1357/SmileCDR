@@ -126,6 +126,15 @@ if (newMsg != null)
 return;
 }
 
+
+
+public int  getProcessingMessageCount()
+{
+return processingMessageCount;
+}
+
+
+
 public void addReportEntry( String rprtLine )
 {
 if (rprtLine != null)
@@ -162,6 +171,14 @@ if (dlqEntry != null)
 
 return;
 }
+
+
+
+public int  getReportEntryCount()
+{
+return reportLineCount;
+}
+
 
 
 

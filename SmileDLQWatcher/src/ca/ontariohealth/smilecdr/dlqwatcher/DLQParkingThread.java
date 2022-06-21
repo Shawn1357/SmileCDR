@@ -5,6 +5,7 @@ package ca.ontariohealth.smilecdr.dlqwatcher;
 
 import java.time.Duration;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
@@ -51,6 +52,8 @@ private MyInstant       nextCheckOfDLQTime          = null;
 
 private int             rollingIndex                = 0;
 
+private Long            lastParkedOffset            = null;
+
 private Consumer<String, String>    dlqConsumer     = null;
 private Producer<String, String>    parkProducer    = null;
 
@@ -88,6 +91,7 @@ Properties props = new Properties();
 props.put( "transactional.id", UUID.randomUUID().toString() );
 
 parkProducer = KafkaProducerHelper.createProducer( appConfig(), parkingTopicName, props );
+parkProducer.initTransactions();
 
 logr.debug( "Subcribing to DLQ Topic: {}", dlqTopicName );
 dlqConsumer.subscribe( Collections.singletonList( dlqTopicName ) );
@@ -155,6 +159,7 @@ int     rcrdsFound       = 0;
 
 // Starting at the beginning of all records on the DLQ.
 dlqConsumer.seekToBeginning( dlqConsumer.assignment() );
+dlqConsumer.commitSync();
 
 while (continueChecking)
     {
@@ -164,6 +169,25 @@ while (continueChecking)
     if ((dlqRecords != null) && (dlqRecords.count() > 0)) // Zero or one record
         {
         logr.debug( "Received {} DLQ Record(s).", dlqRecords.count() );
+        
+        
+        ConsumerRecord<String,String> dlqRecord = null;
+        {
+        Iterator<ConsumerRecord<String,String>>   iter = dlqRecords.records(dlqTopicName ).iterator();
+        if (iter.hasNext())
+            dlqRecord = iter.next();
+        
+        
+        Long  rcrdOffset = dlqRecord.offset();
+        if ((lastParkedOffset != null) && (lastParkedOffset >= rcrdOffset))
+            {
+            //logr.debug( "Parkable record has already been parked. Skipping." );
+            continue;
+            }
+        
+        else
+            lastParkedOffset = rcrdOffset;
+        }
         
         DLQRecordsInterpreter dlqInterp  = new DLQRecordsInterpreter( dlqRecords, appConfig() );
         boolean               commitMove = false;
@@ -184,32 +208,29 @@ while (continueChecking)
                      */
                     
                     parkProducer.beginTransaction();
-                    for (ConsumerRecord<String,String> crntDLQ : dlqRecords)
+                    String                        msgID      = generateMsgID( crntTime );
+                    ProducerRecord<String,String> parkedRcrd = new ProducerRecord<>( parkingTopicName,
+                                                                                     msgID,
+                                                                                     dlqRecord.value() );
+                        
+                    try
                         {
-                        String                        msgID      = generateMsgID( crntTime );
-                        ProducerRecord<String,String> parkedRcrd = new ProducerRecord<>( parkingTopicName,
-                                                                                         msgID,
-                                                                                         crntDLQ.value() );
-                        
-                        try
-                            {
-                            RecordMetadata meta = parkProducer.send( parkedRcrd ).get();
-                            commitMove          = true;
-                            }
-                        
-                        catch (InterruptedException e)
-                            {
-                            logr.error("Interupted Exception while sending to Kafka:", e );
-                            commitMove       = false;
-                            continueChecking = false;
-                            } 
+                        RecordMetadata meta = parkProducer.send( parkedRcrd ).get();
+                        commitMove          = true;
+                        }
+                    
+                    catch (InterruptedException e)
+                        {
+                        logr.error("Interupted Exception while sending to Kafka:", e );
+                        commitMove       = false;
+                        continueChecking = false;
+                        } 
 
-                        catch (ExecutionException e)
-                            {
-                            logr.error( "Execution Exception while sending to Kafka:", e );
-                            commitMove       = false;
-                            continueChecking = false;
-                            }
+                    catch (ExecutionException e)
+                        {
+                        logr.error( "Execution Exception while sending to Kafka:", e );
+                        commitMove       = false;
+                        continueChecking = false;
                         }
                         
                     /*
@@ -245,11 +266,22 @@ while (continueChecking)
                 }       
             }
         }
-
     
     rcrdsFound += dlqRecords.count();
     if (continueChecking)
-        continueChecking = ((rcrdsFound > 0) && (dlqRecords.count() == 0));
+        continueChecking = ((!threadIndicatedToStop())  && 
+                            ((rcrdsFound > 0) || (dlqRecords.count() == 0))
+                           );
+    
+    if (continueChecking)
+        try
+            {
+            Thread.sleep( pollingInterval );
+            }
+        catch (InterruptedException e)
+            {
+            // Nothing to do.
+            }
     }
 
 
@@ -292,6 +324,8 @@ props.put( ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,   keyDeserializer );
 props.put( ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, valueDeserializer );
 props.put( ConsumerConfig.MAX_POLL_RECORDS_CONFIG,         "1" );      // Only work one record at a time.
 props.put( ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG,       "false" );  // Force an explicit commit our scan of the DLQ so we can restart our scan if entries have not expired.
+
+props.put( "auto.offset.reset",  "earliest" );
 
 rtrn = new KafkaConsumer<>( props );
 

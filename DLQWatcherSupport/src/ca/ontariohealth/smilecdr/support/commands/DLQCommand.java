@@ -13,8 +13,10 @@ LIST(     "LIST",     "Dump all known DLQWatcher commands to the logging system.
 QUIT(     "QUIT",     "Causes the DLQWatcher to shutdown and exit." ),
 START(    "START",    "Starts the DLQ Polling Thread if not already started." ),
 STOP(     "STOP",     "Stops the DLQ Polling Thread if it is running." ),
-DLQLIST(  "DLQLIST",  "Lists all entries currently on the Dead Letter Queueback to Control App." ),
+DLQLIST(  "DLQLIST",  "Lists all entries currently in the Dead Letter Queue back to the Control App." ),
 DLQEMAIL( "DLQEMAIL", "Lists all entries currently on the Dead Letter Queue in a Support Team Email." ),
+PARKLIST( "PARKLIST", "Lists all entries currently in the Parking Lot Queue back to the Control App." ),
+PARKEMAIL("PARKEMAIL","Lists all entries currently in the Parking Log Queue in a Support Team Email." ),
 HELLO(    "HELLO",    "A no-operation command that can be used to test connectivity." ),
 UNKNOWN(  "UNKNOWN",  "Used when the supplied command is notr recognized." );
 

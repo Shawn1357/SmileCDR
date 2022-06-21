@@ -30,13 +30,7 @@ import ca.ontariohealth.smilecdr.support.commands.DLQCommand;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandContainer;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandParam;
 import ca.ontariohealth.smilecdr.support.commands.DLQResponseContainer;
-import ca.ontariohealth.smilecdr.support.commands.ProcessingMessage;
-import ca.ontariohealth.smilecdr.support.commands.json.CommandParamAdapter;
 import ca.ontariohealth.smilecdr.support.commands.json.JSONApplicationSupport;
-import ca.ontariohealth.smilecdr.support.commands.json.MyInstantAdapter;
-import ca.ontariohealth.smilecdr.support.commands.json.ProcessingMessageAdapter;
-import ca.ontariohealth.smilecdr.support.commands.json.ReportRecordAdapter;
-import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaConsumerHelper;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaProducerHelper;
@@ -102,7 +96,7 @@ else
 
 if (cmdsToSend != null)
     {
-    Long   maxRespWait = appConfig.configLong( ConfigProperty.RESPONSE_WAIT_MILLIS );
+    Long   maxRespWait = appConfig.configLong(  ConfigProperty.RESPONSE_WAIT_MILLIS );
     Long   pauseForResp = appConfig.configLong( ConfigProperty.PAUSE_BEFORE_WAIT_FOR_RESPONSE );
     
 	for (String crntCmd : cmdsToSend)

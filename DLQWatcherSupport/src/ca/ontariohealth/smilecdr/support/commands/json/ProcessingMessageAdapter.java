@@ -13,14 +13,9 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
-import ca.ontariohealth.smilecdr.support.MyInstant;
 import ca.ontariohealth.smilecdr.support.commands.ProcessingMessage;
 import ca.ontariohealth.smilecdr.support.commands.ProcessingMessageCode;
 import ca.ontariohealth.smilecdr.support.commands.ProcessingMessageSeverity;
-import ca.ontariohealth.smilecdr.support.commands.response.CWMDLQRecordEntry;
-import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
-import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
-import ca.ontariohealth.smilecdr.support.commands.response.ReportRecordType;
 
 /**
  * @author adminuser

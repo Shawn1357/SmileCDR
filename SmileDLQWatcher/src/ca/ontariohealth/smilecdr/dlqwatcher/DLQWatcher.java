@@ -4,6 +4,7 @@
 package ca.ontariohealth.smilecdr.dlqwatcher;
 
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -16,24 +17,17 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import ca.ontariohealth.smilecdr.BaseApplication;
-import ca.ontariohealth.smilecdr.support.MyInstant;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommand;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandContainer;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandOutcome;
-import ca.ontariohealth.smilecdr.support.commands.DLQCommandParam;
 import ca.ontariohealth.smilecdr.support.commands.DLQRecordsInterpreter;
 import ca.ontariohealth.smilecdr.support.commands.DLQResponseContainer;
 import ca.ontariohealth.smilecdr.support.commands.EMailNotifier;
 import ca.ontariohealth.smilecdr.support.commands.ProcessingMessage;
 import ca.ontariohealth.smilecdr.support.commands.ProcessingMessageCode;
-import ca.ontariohealth.smilecdr.support.commands.json.CommandParamAdapter;
 import ca.ontariohealth.smilecdr.support.commands.json.JSONApplicationSupport;
-import ca.ontariohealth.smilecdr.support.commands.json.MyInstantAdapter;
-import ca.ontariohealth.smilecdr.support.commands.json.ProcessingMessageAdapter;
-import ca.ontariohealth.smilecdr.support.commands.json.ReportRecordAdapter;
 import ca.ontariohealth.smilecdr.support.commands.response.CWMDLQRecordEntry;
 import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
-import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaAdministration;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaConsumerHelper;
@@ -65,16 +59,17 @@ static private final String                     CLI_INITIAL_CMD_LONG = "initCmd"
 private	Consumer<String, String>		        controlConsumer 	 = null;
 private	boolean							        exitWatcher     	 = false;
 private	DLQPollingThread				        dlqPoller       	 = null;
+private ParkingLotPollingThread                 parkPoller           = null;
 private DLQParkingThread                        dlqParker            = null;         
 
 private GsonBuilder                             jsonBuilder          = new GsonBuilder();
 
 private int                                     rollingRcrdIndex     = 0;
 
-
 private enum ThreadIndicator 
-    { DLQ_POLLING_THREAD( "DLQ Poller" ), 
-      PARKING_THREAD(     "Parker" );
+    { DLQ_POLLING_THREAD(  "DLQ Poller" ),
+      PARK_POLLING_THREAD( "Parking Lot Poller" ),
+      PARKING_THREAD(      "Parker" );
 
     private String threadNm;
     
@@ -106,7 +101,11 @@ logr.debug( "Entering: {}.launch", DLQWatcher.class.getSimpleName() );
 
 System.err.println( appSignature() );
 
-//sendEMail( appConfig.configValue( ConfigProperty.EMAIL_TEMPLATE ) );
+
+/*
+ * Configure the JSON Builder in a standard way.
+ * 
+ */
 
 JSONApplicationSupport.registerGsonTypeAdpaters( jsonBuilder );
 jsonBuilder.setPrettyPrinting();
@@ -389,6 +388,8 @@ if ((initCmd != null) && (initCmd.length() > 0))
             case    STOP:
             case    DLQLIST:
             case    DLQEMAIL:
+            case    PARKLIST:
+            case    PARKEMAIL:
             case    QUIT:
                 cmdLineCmd.setCommandToIssue( newCmdType );
                 break;
@@ -448,8 +449,11 @@ return resp;
 
 protected   DLQResponseContainer    processReceivedCommand( DLQCommandContainer cmd )
 {
-DLQResponseContainer    resp  = null;
-DLQRecordsInterpreter   rcrds = null;
+DLQResponseContainer    resp            = null;
+DLQRecordsInterpreter   rcrds           = null;
+String                  groupNm         = null;
+String                  topicNm         = null;
+String                  emailTemplateNm = null;
 
 if ((cmd != null) && (cmd.getCommandToIssue() != null))
     {
@@ -485,27 +489,53 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
             
         case    DLQLIST:
             logr.info( "Starting process to list DLQ entries." );
+            groupNm = appConfig.configValue( ConfigProperty.KAFKA_DLQ_LISTER_GROUP_ID );
+            topicNm = appConfig.configValue( ConfigProperty.KAFKA_DLQ_TOPIC_NAME );
+
             resp.setOutcome( DLQCommandOutcome.SUCCESS );
             resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
-            rcrds = listDLQEntries( resp );
+            rcrds = listTopicEntries( resp, groupNm, topicNm );
             break;
          
         case    DLQEMAIL:
             logr.info( "Starting process to email DLQ entries." );
+            groupNm = appConfig.configValue( ConfigProperty.KAFKA_DLQ_LISTER_GROUP_ID );
+            topicNm = appConfig.configValue( ConfigProperty.KAFKA_DLQ_TOPIC_NAME );
+    
             resp.setOutcome( DLQCommandOutcome.SUCCESS );
             resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
-            rcrds = listDLQEntries( resp );
+            rcrds = listTopicEntries( resp, groupNm, topicNm );
             break;
-            
+        
+        case    PARKLIST:
+            logr.info( "Starting process to list Parking Lot entries." );
+            groupNm = appConfig.configValue( ConfigProperty.KAFKA_PARK_LISTER_GROUP_ID );
+            topicNm = appConfig.configValue( ConfigProperty.KAFKA_PARK_TOPIC_NAME );
+    
+            resp.setOutcome( DLQCommandOutcome.SUCCESS );
+            resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
+            rcrds = listTopicEntries( resp, groupNm, topicNm );
+            break;
+     
+        case    PARKEMAIL:
+            logr.info( "Starting process to email Parking Lot entries." );
+            groupNm = appConfig.configValue( ConfigProperty.KAFKA_PARK_LISTER_GROUP_ID );
+            topicNm = appConfig.configValue( ConfigProperty.KAFKA_PARK_TOPIC_NAME );
+    
+            resp.setOutcome( DLQCommandOutcome.SUCCESS );
+            resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
+            rcrds = listTopicEntries( resp, groupNm, topicNm);
+            break;
+        
         case    START:
-            logr.info( "Starting the DLQ Poller Thread if it is not already running." );
+            logr.info( "Starting the DLQ Watcher Thread(s) if they are not already running." );
             resp.setOutcome( DLQCommandOutcome.SUCCESS );
             resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
             startThreads( resp );
             break;
                 
         case    STOP:
-            logr.info( "Stopping the DLQ Poller Thread if it is running." );
+            logr.info( "Stopping the DLQ Watcher Thread(s) if they are running." );
             resp.setOutcome( DLQCommandOutcome.SUCCESS );
             resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
             stopThreads( resp );
@@ -536,8 +566,14 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
         case    DLQEMAIL:
             // The response has some number of records to be emailed.
             // Lets do that:
-            String  dlqEmailTemplateNm = appConfig.configValue( ConfigProperty.EMAIL_DLQLIST_TEMPLATE_NAME );
-            EMailNotifier.sendEMail( appConfig, dlqEmailTemplateNm, rcrds );
+            emailTemplateNm = appConfig.configValue( ConfigProperty.EMAIL_DLQLIST_TEMPLATE_NAME );
+            EMailNotifier.sendEMail( appConfig, emailTemplateNm, rcrds );
+            break;
+        
+        case    PARKEMAIL:
+            // The response has some number of records to be emailed.
+            emailTemplateNm = appConfig.configValue( ConfigProperty.EMAIL_PARKLIST_TEMPLATE_NAME );
+            EMailNotifier.sendEMail( appConfig, emailTemplateNm, rcrds );
             break;
             
         default:
@@ -552,21 +588,19 @@ return resp;
 
 
 
-private DLQRecordsInterpreter    listDLQEntries( DLQResponseContainer resp )
+private DLQRecordsInterpreter    listTopicEntries( DLQResponseContainer resp,
+                                                   String               groupNm,
+                                                   String               topicNm )
 {
-DLQRecordsInterpreter interpRcrds = new DLQRecordsInterpreter( appConfig );
-
-Properties  disabledAutoCommit = new Properties();     
-
-String topicNm = appConfig.configValue( ConfigProperty.KAFKA_DLQ_TOPIC_NAME );
-String groupID = appConfig.configValue( ConfigProperty.KAFKA_DLQ_LISTER_GROUP_ID,
-                                        appConfig.getApplicationName().appName() + ".control.group.id" );
+DLQRecordsInterpreter interpRcrds        = new DLQRecordsInterpreter( appConfig );
+Properties            disabledAutoCommit = new Properties();     
+HashSet<String>       resourceIDs        = new HashSet<>();     // We keep a set so that we don't list a resource twice.
 
 disabledAutoCommit.setProperty( "enable.auto.commit", "false" );
 disabledAutoCommit.setProperty( "auto.offset.reset",  "earliest" );
 
 Consumer<String,String> lister = KafkaConsumerHelper.createConsumer( appConfig,
-                                                                     groupID,
+                                                                     groupNm,
                                                                      topicNm,
                                                                      disabledAutoCommit );
 
@@ -603,8 +637,6 @@ if (lister != null)
         
         if ((rcrds != null) && (rcrds.count() > 0))
             {
-            interpRcrds.addDLQRecords( rcrds );
-            
             for (ConsumerRecord<String, String> crnt : rcrds)
                 {
                 if (crnt != null)
@@ -616,8 +648,19 @@ if (lister != null)
                     logr.info( "    Resource Type:   {}", entry.resourceType() );
                     logr.info( "    Resource ID:     {}", entry.resourceID() );
                     
-                    resp.addReportEntry( entry );
+                    if (resourceIDs.contains( entry.resourceID() ))
+                        {
+                        logr.warn( "Resource ID {} appears multiple times in Topic: {}",
+                                   entry.resourceID(),
+                                   topicNm );
+                        }
                     
+                    else
+                        {
+                        resp.addReportEntry( entry );
+                        interpRcrds.addDLQRecord( crnt );
+                        resourceIDs.add( entry.resourceID() );
+                        }
                     }
                 }
             }
@@ -657,6 +700,15 @@ for (ThreadIndicator crntThrdInd : ThreadIndicator.values())
                 dlqPoller = new DLQPollingThread( appConfig );
             
             thrdObjToStart = dlqPoller;
+            
+            break;
+          
+        case    PARK_POLLING_THREAD:
+            cfgStartThread = appConfig.configBool( ConfigProperty.START_POLL_PARK_THREAD );
+            if (cfgStartThread && (parkPoller == null))
+                parkPoller = new ParkingLotPollingThread( appConfig );
+            
+            thrdObjToStart = parkPoller;
             
             break;
             
@@ -785,6 +837,12 @@ for (ThreadIndicator crntThrdInd : ThreadIndicator.values())
             
             break;
             
+        case    PARK_POLLING_THREAD:
+            thrdObjToStop = parkPoller;
+            cfgStopThread = appConfig.configBool( ConfigProperty.START_DLQ_PARK_THREAD );
+            
+            break;
+            
         case    PARKING_THREAD:
             thrdObjToStop = dlqParker;
             cfgStopThread = appConfig.configBool( ConfigProperty.START_POLL_PARK_THREAD );
@@ -802,6 +860,10 @@ for (ThreadIndicator crntThrdInd : ThreadIndicator.values())
         {
         case    DLQ_POLLING_THREAD:
             dlqPoller = null;
+            break;
+            
+        case    PARK_POLLING_THREAD:
+            parkPoller = null;
             break;
             
         case    PARKING_THREAD:
@@ -841,7 +903,10 @@ if ((thrdToStop != null) && (thrdToStop.isAlive()))
         {
         // Thread is running but Configuration indicates it should not be.
         ProcessingMessage procMsg = new ProcessingMessage( ProcessingMessageCode.DLQW_0005, appConfig, thrdInd.threadName() );
-        resp.addProcessingMessage( procMsg );        
+        
+        if (resp != null)
+            resp.addProcessingMessage( procMsg );  
+        
         logr.debug( procMsg.getMsgDesc() );
         
         if (outcome.asPriority() < DLQCommandOutcome.WARNINGS.asPriority())

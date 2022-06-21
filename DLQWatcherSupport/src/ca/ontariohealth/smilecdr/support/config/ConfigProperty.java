@@ -34,7 +34,7 @@ KAFKA_DEFAULT_TOPIC_RETENTION(  "kafka.default.rentention.hours","168" ),
 
 START_DLQ_POLL_THREAD(          "start.cmd.include.dlqpoll.thread",        "true" ),
 START_POLL_PARK_THREAD(         "start.cmd.include.parkpoll.thread",       "true" ),
-START_DLQ_PARK_THREAD(          "start.cmd.include.parkdqlentries.thread", "true" ),
+START_DLQ_PARK_THREAD(          "start.cmd.include.parkdlqentries.thread", "true" ),
 
 STOP_THREAD_MAX_WAIT_MILLIS(    "stop.cmd.max.wait.for.thread.millis",     "10000" ),
 
@@ -49,6 +49,8 @@ KAFKA_DLQ_RETENTION_HOURS(      "dlq.entry.retention.hours",           "168" ), 
 DLQ_PARK_ENTRIES_AFTER_HOURS(   "dlq.park.after.hours",                "150" ),  // 6.25 days
 DLQ_PARK_CHECK_INTERVAL_MINS(   "dlq.frequency.mins.to.park.entries",  "120" ),
 
+KAFKA_PARK_WATCHER_GROUP_ID(    "kafka.park.watcher.group.id"),
+KAFKA_PARK_LISTER_GROUP_ID(     "kafka.park.lister.group.id" ),
 KAFKA_PARK_TOPIC_NAME(          "kafka.park.topic.name",         "KAFKA.PARK" ),
 KAFKA_PARK_RETENTION_HOURS(     "parked.entry.retention.hours",  "Forever" ),
 
@@ -61,7 +63,9 @@ EMAIL_SMPT_PORT(                "email.server.smtp.port",        "25" ),
 EMAIL_CREDENTIALS_FILE(         "email.credentials.file" ),
 
 EMAIL_NEWDLQ_TEMPLATE_NAME(     "email.newdlq.template.nm" ),
+EMAIL_NEWPARK_TEMPLATE_NAME(    "email.newpark.template.nm" ),
 EMAIL_DLQLIST_TEMPLATE_NAME(    "email.dlqlist.template.nm" ),
+EMAIL_PARKLIST_TEMPLATE_NAME(   "email.parklist.template.nm" ),
 
 EMAIL_FROM_ADDR(                "email.from" ),
 EMAIL_TO_ADDRS(                 "email.to" ),
