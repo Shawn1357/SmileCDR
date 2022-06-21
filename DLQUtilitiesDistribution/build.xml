@@ -31,6 +31,15 @@
     <property name="emailTemplate01FileNm"           value="emailTemplate01.txt" />
 	<property name="emailTemplate01SrcFile"          value="${workspaceDir}/${CommonResourcesProj}/${emailTemplate01FileNm}" />
 	
+    <property name="emailTemplate02FileNm"           value="emailTemplate02.txt" />
+    <property name="emailTemplate02SrcFile"          value="${workspaceDir}/${CommonResourcesProj}/${emailTemplate02FileNm}" />
+    
+    <property name="emailTemplate03FileNm"           value="emailTemplate03.txt" />
+    <property name="emailTemplate03SrcFile"          value="${workspaceDir}/${CommonResourcesProj}/${emailTemplate03FileNm}" />
+    
+    <property name="emailTemplate04FileNm"           value="emailTemplate04.txt" />
+    <property name="emailTemplate04SrcFile"          value="${workspaceDir}/${CommonResourcesProj}/${emailTemplate04FileNm}" />
+    
     <property name="dlqWatcherControlLogbackFileNm"  value="DLQWatcherControl-logback.xml" />
 	<property name="dlqWatcherControlLogbackSrcFile" value="${workspaceDir}/${CommonResourcesProj}/${dlqWatcherControlLogbackFileNm}" />
 	
@@ -73,6 +82,9 @@
 		<copy file="${configPropsSrcFile}"                                   todir="${targetDirectory}"/>
 		<copy file="${emailCredentialsSrcFile}"                              todir="${targetDirectory}"/>
         <copy file="${emailTemplate01SrcFile}"                               todir="${targetDirectory}"/>
+        <copy file="${emailTemplate02SrcFile}"                               todir="${targetDirectory}"/>
+        <copy file="${emailTemplate03SrcFile}"                               todir="${targetDirectory}"/>
+        <copy file="${emailTemplate04SrcFile}"                               todir="${targetDirectory}"/>
 		<copy file="${DLQWatcherScriptSrcFile}"                              todir="${targetDirectory}"/>
         <copy file="${DLQWatcherControlScriptSrcFile}"                       todir="${targetDirectory}"/>
 		<copy file="${javabeansActFrmwrkJarSrcFile}"                         todir="${libsDirectory}"/>
