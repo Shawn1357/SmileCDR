@@ -17,6 +17,7 @@ DLQLIST(  "DLQLIST",  "Lists all entries currently in the Dead Letter Queue back
 DLQEMAIL( "DLQEMAIL", "Lists all entries currently on the Dead Letter Queue in a Support Team Email." ),
 PARKLIST( "PARKLIST", "Lists all entries currently in the Parking Lot Queue back to the Control App." ),
 PARKEMAIL("PARKEMAIL","Lists all entries currently in the Parking Log Queue in a Support Team Email." ),
+TOPICLIST("TOPICLIST","Tests basic connectivity to the Kafka Cluster by returning all Kafka Topics." ),
 HELLO(    "HELLO",    "A no-operation command that can be used to test connectivity." ),
 UNKNOWN(  "UNKNOWN",  "Used when the supplied command is notr recognized." );
 

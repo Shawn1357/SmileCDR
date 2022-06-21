@@ -390,6 +390,7 @@ if ((initCmd != null) && (initCmd.length() > 0))
             case    DLQEMAIL:
             case    PARKLIST:
             case    PARKEMAIL:
+            case	TOPICLIST:
             case    QUIT:
                 cmdLineCmd.setCommandToIssue( newCmdType );
                 break;
@@ -487,6 +488,22 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
                 
             break;
             
+        case	TOPICLIST:
+        	logr.info( "Starting process to test connectivity to Kafka." );
+        	resp.setOutcome( DLQCommandOutcome.SUCCESS );
+        	resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );
+        	
+        	Map<String, List<PartitionInfo>> topicList = controlConsumer.listTopics();
+        	logr.debug( "Control Consumer has access to {} topic(s).", topicList.size() );
+
+        	for (String crntTopic : topicList.keySet())
+        		{
+        		logr.debug( "   Topic Name: {}", crntTopic );
+        		resp.addReportEntry( crntTopic );
+        		}
+
+        	break;
+        	
         case    DLQLIST:
             logr.info( "Starting process to list DLQ entries." );
             groupNm = appConfig.configValue( ConfigProperty.KAFKA_DLQ_LISTER_GROUP_ID );
