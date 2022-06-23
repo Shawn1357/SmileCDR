@@ -66,6 +66,7 @@ EMAIL_NEWDLQ_TEMPLATE_NAME(     "email.newdlq.template.nm" ),
 EMAIL_NEWPARK_TEMPLATE_NAME(    "email.newpark.template.nm" ),
 EMAIL_DLQLIST_TEMPLATE_NAME(    "email.dlqlist.template.nm" ),
 EMAIL_PARKLIST_TEMPLATE_NAME(   "email.parklist.template.nm" ),
+EMAIL_TESTEMAIL_TEMPLATE_NAME(  "email.testemail.template.nm" ),
 
 EMAIL_FROM_ADDR(                "email.from" ),
 EMAIL_TO_ADDRS(                 "email.to" ),

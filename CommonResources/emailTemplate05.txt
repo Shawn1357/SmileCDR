@@ -1,0 +1,20 @@
+# Lines beginning with a '#' are not (normally) included in the email.
+# Available Expansion Variables:
+#   {{Now}}                 - Formatted timestamp when the report was generated.
+#   {{DLQRecordCount}}      - Number of new Dead Letter Queue entries being reported.
+#   {{DLQRecordsCSVHeader}} - The column headers for the CSV report.
+#   {{DLQRecordsAsCSV}}     - Each of the DLQ Entries as individual rows of CSV Data
+#   {{EnvironmentName}}     - Environment Name as supplied with the --envName command line.
+#   {{InstanceName}}        - Application Instance Name as supplied with the --instName command line.
+#
+#
+EMail Body used to test Email Functionality:<p>
+(emailTemplate05.txt)<p>
+Environment: {{EnvironmentName}}
+<p>
+# Now string is formatted according to App Config property: timestamp.format
+Email Generated at: <b>{{Now}}</b><p>
+<p>
+<p>
+Yours truly,<p>
+Your Favorite DLQ Watcher Team<p>

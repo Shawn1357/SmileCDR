@@ -391,6 +391,7 @@ if ((initCmd != null) && (initCmd.length() > 0))
             case    PARKLIST:
             case    PARKEMAIL:
             case	TOPICLIST:
+            case    TESTEMAIL:
             case    QUIT:
                 cmdLineCmd.setCommandToIssue( newCmdType );
                 break;
@@ -544,6 +545,12 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
             rcrds = listTopicEntries( resp, groupNm, topicNm);
             break;
         
+        case    TESTEMAIL:
+            logr.info( "Starting process to send a Test EMail." );
+            resp.setOutcome( DLQCommandOutcome.SUCCESS );
+            resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
+            break;
+        
         case    START:
             logr.info( "Starting the DLQ Watcher Thread(s) if they are not already running." );
             resp.setOutcome( DLQCommandOutcome.SUCCESS );
@@ -591,6 +598,12 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
             // The response has some number of records to be emailed.
             emailTemplateNm = appConfig.configValue( ConfigProperty.EMAIL_PARKLIST_TEMPLATE_NAME );
             EMailNotifier.sendEMail( appConfig, emailTemplateNm, rcrds );
+            break;
+
+        case    TESTEMAIL:
+            // Sending the test email.
+            emailTemplateNm = appConfig.configValue( ConfigProperty.EMAIL_TESTEMAIL_TEMPLATE_NAME );
+            EMailNotifier.sendEMail( appConfig, emailTemplateNm, (DLQRecordsInterpreter) null );
             break;
             
         default:

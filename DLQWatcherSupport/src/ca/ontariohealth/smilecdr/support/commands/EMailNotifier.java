@@ -227,10 +227,23 @@ private String      expandVariables( String line, DLQRecordsInterpreter dlqInter
 String  expandedLine = line;
 
 expandedLine = expandedLine.replace( "{{Now}}",                 emailedAt.format( tsFormatter ) );
-expandedLine = expandedLine.replace( "{{DLQRecordCount}}",      Integer.toString( dlqInterp.recordCount() ) );
-expandedLine = expandedLine.replace( "{{DLQRecordsCSVHeader}}", dlqInterp.csvHeaders() );
-expandedLine = expandedLine.replace( "{{DLQRecordsAsCSV}}",     dlqInterp.asCSVReport() );
-        
+expandedLine = expandedLine.replace( "{{EnvironmentName}}",     appConfig.getEnvironmentName().envName() );
+expandedLine = expandedLine.replace( "{{InstanceName}}",        appConfig.getInstanceName().instName() );
+
+if (dlqInterp != null)
+    {
+    expandedLine = expandedLine.replace( "{{DLQRecordCount}}",      Integer.toString( dlqInterp.recordCount() ) );
+    expandedLine = expandedLine.replace( "{{DLQRecordsCSVHeader}}", dlqInterp.csvHeaders() );
+    expandedLine = expandedLine.replace( "{{DLQRecordsAsCSV}}",     dlqInterp.asCSVReport() );
+    }
+
+else
+    {
+    expandedLine = expandedLine.replace( "{{DLQRecordCount}}",      String.valueOf( 0 ) );
+    expandedLine = expandedLine.replace( "{{DLQRecordsCSVHeader}}", "" );
+    expandedLine = expandedLine.replace( "{{DLQRecordsAsCSV}}",     "" );
+    }
+
 return expandedLine;
 }
 
