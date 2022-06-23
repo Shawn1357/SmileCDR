@@ -94,6 +94,10 @@
 		<copy file="${javabeansActFrmwrkJarSrcFile}"                         todir="${libsDirectory}"/>
 		<copy file="${javamailJarSrcFile}"                                   todir="${libsDirectory}"/>
 		
+		<copy todir="${libsDirectory}">
+			<fileset dir="${workspaceDir}/${SmileCDRLibProj}" includes="*.jar" />
+		</copy>
+		
         <copy    file="${dlqWatcherControlLogbackSrcFile}"                   todir="${targetDirectory}"/>
 		<replace file="${targetDirectory}/${dlqWatcherControlLogbackFileNm}" token="${logfolder}" value="${logsSubdirectory}" />
 
