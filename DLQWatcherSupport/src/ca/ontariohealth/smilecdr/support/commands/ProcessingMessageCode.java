@@ -10,7 +10,9 @@ DLQW_0002( ProcessingMessageSeverity.ERROR, "DLQW-0002", "%s Thread did not star
 DLQW_0003( ProcessingMessageSeverity.INFO,  "DLQW-0003", "%s Thread is running." ),
 DLQW_0004( ProcessingMessageSeverity.INFO,  "DLQW-0004", "%s Thread is not running: nothing to do." ),
 DLQW_0005( ProcessingMessageSeverity.WARN,  "DLQW-0005", "%s Thread is running but Configuration indicates it should not be." ),
-DLQW_0006( ProcessingMessageSeverity.WARN,  "DLQW-0006", "%s Thread is still alive after %s milliseconds. Killing it." );
+DLQW_0006( ProcessingMessageSeverity.WARN,  "DLQW-0006", "%s Thread is still alive after %s milliseconds. Killing it." ),
+DLQW_0007( ProcessingMessageSeverity.ERROR, "DLQW-0007", "Unable to send email through SMTP EMail Server: %s" ),
+DLQW_9999( ProcessingMessageSeverity.INFO,  "DLQW-9999", "Additional Info: %s" );
 
 private ProcessingMessageSeverity   defaultSev;
 private String                      msgCode;

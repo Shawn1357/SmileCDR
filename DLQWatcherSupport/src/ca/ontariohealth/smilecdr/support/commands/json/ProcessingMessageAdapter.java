@@ -33,6 +33,7 @@ private static  String          FIELD_DESCR             = "desc";
 @Override
 public void write(JsonWriter writer, ProcessingMessage value) throws IOException
 {
+logr.debug( "Entering {}.write", ProcessingMessageAdapter.class.getSimpleName() );
 if (value != null)
     {
     writer.beginObject();
@@ -52,6 +53,7 @@ if (value != null)
 else
     writer.nullValue();
 
+logr.debug( "Exiting {}.write", ProcessingMessageAdapter.class.getSimpleName() );
 return;
 }
 
@@ -66,6 +68,7 @@ String              sevStr  = null;
 String              msgCd   = null;
 String              descr   = null;
 
+logr.debug( "Entering {}.read", ProcessingMessageAdapter.class.getSimpleName() );
 reader.beginObject();
 while (reader.hasNext())
     {
@@ -111,6 +114,7 @@ if (msgCd != null)
     rtrn.setMsgDesc( descr );
     }
 
+logr.debug( "Exiting {}.read", ProcessingMessageAdapter.class.getSimpleName() );
 return rtrn;
 }
 }

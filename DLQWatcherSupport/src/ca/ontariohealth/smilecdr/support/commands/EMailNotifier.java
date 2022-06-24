@@ -13,6 +13,7 @@ import java.util.Properties;
 
 import javax.mail.Authenticator;
 import javax.mail.Message;
+import javax.mail.MessagingException;
 import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
@@ -58,7 +59,8 @@ private              String                 body        = null;
 
 public static void sendEMail( Configuration         appCfg,
                               String                requestedTemplateNm,
-                              DLQRecordsInterpreter dlqInterp )
+                              DLQRecordsInterpreter dlqInterp ) 
+                   throws MessagingException
 {
 EMailNotifier   email = new EMailNotifier( appCfg, requestedTemplateNm );
 
@@ -71,7 +73,8 @@ return;
 
 public static void sendEMail( Configuration appCfg,
                               String        requestedTemplateNm,
-                              String        emailBody )
+                              String        emailBody ) 
+                   throws MessagingException
 
 {
 EMailNotifier   email = new EMailNotifier( appCfg, requestedTemplateNm );
@@ -132,7 +135,7 @@ return;
 }
 
 
-public void sendEMail()
+public void sendEMail() throws MessagingException
 {
 logr.debug( "Entering: sendEMail" );
 
@@ -167,9 +170,10 @@ try
     logr.info( "EMail Message has been sent." );
     }
 
-catch (Exception e)
+catch (MessagingException e)
     {
     logr.error( "Unable to send email: ", e );
+    throw e;
     }
 
 
@@ -227,8 +231,9 @@ private String      expandVariables( String line, DLQRecordsInterpreter dlqInter
 String  expandedLine = line;
 
 expandedLine = expandedLine.replace( "{{Now}}",                 emailedAt.format( tsFormatter ) );
-expandedLine = expandedLine.replace( "{{EnvironmentName}}",     appConfig.getEnvironmentName().envName() );
-expandedLine = expandedLine.replace( "{{InstanceName}}",        appConfig.getInstanceName().instName() );
+
+expandedLine = expandedLine.replace( "{{EnvironmentName}}",     appConfig.getEnvironmentName() != null ? appConfig.getEnvironmentName().envName() : "" );
+expandedLine = expandedLine.replace( "{{InstanceName}}",        appConfig.getInstanceName()    != null ? appConfig.getInstanceName().instName()   : "" );
 
 if (dlqInterp != null)
     {

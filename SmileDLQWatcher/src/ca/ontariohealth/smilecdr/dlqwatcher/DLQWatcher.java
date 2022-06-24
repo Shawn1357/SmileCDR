@@ -4,13 +4,13 @@
 package ca.ontariohealth.smilecdr.dlqwatcher;
 
 import java.time.Duration;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
+
+import javax.mail.MessagingException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -277,7 +277,8 @@ while (!exitWatcher)
 			}
 		}
 	
-	controlConsumer.commitAsync();
+	if (rcrds.count() > 0)
+		controlConsumer.commitSync();
 	
 	if ((maxTime >= 0) && (!exitWatcher))
 		exitWatcher = ((System.currentTimeMillis() - startTime) > maxTime);
@@ -527,7 +528,6 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
             topicNm = appConfig.configValue( ConfigProperty.KAFKA_DLQ_TOPIC_NAME );
             classNm = appConfig.configValue( ConfigProperty.DLQ_PARSER_FQCN_CLASS );
     
-            resp.setOutcome( DLQCommandOutcome.SUCCESS );
             resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
             rcrds = listTopicEntries( resp, groupNm, topicNm, classNm );
             break;
@@ -538,7 +538,6 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
             topicNm = appConfig.configValue( ConfigProperty.KAFKA_PARK_TOPIC_NAME );
             classNm = appConfig.configValue( ConfigProperty.DLQ_PARSER_FQCN_CLASS );
     
-            resp.setOutcome( DLQCommandOutcome.SUCCESS );
             resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
             rcrds = listTopicEntries( resp, groupNm, topicNm, classNm );
             break;
@@ -549,14 +548,12 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
             topicNm = appConfig.configValue( ConfigProperty.KAFKA_PARK_TOPIC_NAME );
             classNm = appConfig.configValue( ConfigProperty.DLQ_PARSER_FQCN_CLASS );
     
-            resp.setOutcome( DLQCommandOutcome.SUCCESS );
             resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
             rcrds = listTopicEntries( resp, groupNm, topicNm, classNm );
             break;
         
         case    TESTEMAIL:
             logr.info( "Starting process to send a Test EMail." );
-            resp.setOutcome( DLQCommandOutcome.SUCCESS );
             resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
             break;
         
@@ -600,19 +597,19 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
             // The response has some number of records to be emailed.
             // Lets do that:
             emailTemplateNm = appConfig.configValue( ConfigProperty.EMAIL_DLQLIST_TEMPLATE_NAME );
-            EMailNotifier.sendEMail( appConfig, emailTemplateNm, rcrds );
+            sendEMail( resp, emailTemplateNm, rcrds );
             break;
         
         case    PARKEMAIL:
             // The response has some number of records to be emailed.
             emailTemplateNm = appConfig.configValue( ConfigProperty.EMAIL_PARKLIST_TEMPLATE_NAME );
-            EMailNotifier.sendEMail( appConfig, emailTemplateNm, rcrds );
+            sendEMail( resp, emailTemplateNm, rcrds );
             break;
 
         case    TESTEMAIL:
             // Sending the test email.
             emailTemplateNm = appConfig.configValue( ConfigProperty.EMAIL_TESTEMAIL_TEMPLATE_NAME );
-            EMailNotifier.sendEMail( appConfig, emailTemplateNm, (DLQRecordsInterpreter) null );
+            sendEMail( resp, emailTemplateNm, null );
             break;
             
         default:
@@ -624,6 +621,40 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
 
 return resp;
 }
+
+
+
+private void sendEMail( DLQResponseContainer	resp,
+						String					emailTemplateNm,
+						DLQRecordsInterpreter	rcrds )
+
+{
+try
+	{
+	EMailNotifier.sendEMail( appConfig, emailTemplateNm, rcrds );
+	if (resp != null)
+		resp.setOutcome( DLQCommandOutcome.SUCCESS );
+	}
+
+catch (MessagingException e) 
+	{
+	logr.error( "Unable to send email:", e );
+	if (resp != null)
+		{
+		String msg = e.getMessage();
+		
+		resp.setOutcome( DLQCommandOutcome.ERROR );
+		resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0007, appConfig, appConfig.configValue( ConfigProperty.EMAIL_SERVER ) ) );
+		resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_9999, appConfig, e.getClass().getSimpleName() ));
+		if ((msg != null) && (msg.strip().length() > 0))
+			resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_9999, appConfig, msg.strip() ) );
+		}
+	}
+
+return;	
+}
+
+
 
 
 
