@@ -116,7 +116,24 @@ if (parsedJSON != null)
         bundleID = payload.getString( "payloadId" );
     
     if ((bundleID != null) && (bundleID.length() > 0))
-        rsrcID = bundleID.strip();
+    	{
+    	String[] bundleIDParts = bundleID.strip().split("/");
+    	
+    	switch (bundleIDParts.length)
+    		{
+    		case 0:
+    			rsrcID = bundleID;
+    			break;
+    			
+    		case 1:
+    			rsrcID = bundleIDParts[0];
+    			break;
+    			
+    		default:
+    			rsrcID = bundleIDParts[1];
+    			break;
+    		}
+    	}
     }
 
 return;
@@ -138,7 +155,7 @@ return;
 //@Override
 public  String      subscriptionID()
 {
-return "";
+return "n/a";
 }
 
 

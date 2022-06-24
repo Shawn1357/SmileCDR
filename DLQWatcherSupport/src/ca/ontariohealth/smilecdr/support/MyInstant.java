@@ -6,6 +6,7 @@ package ca.ontariohealth.smilecdr.support;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 /**
  * @author adminuser
@@ -77,6 +78,25 @@ LocalDateTime   rtrn = LocalDateTime.ofInstant( this.asInstant(), ZoneId.systemD
 return rtrn;
 }
 
+
+
+public String		toString( String dtTmFormatPattern )
+{
+String	rtrn = null;
+
+if ((dtTmFormatPattern != null) && (dtTmFormatPattern.length() > 0))
+	{
+	DateTimeFormatter frmtr = DateTimeFormatter.ofPattern( dtTmFormatPattern )
+			                                   .withZone( ZoneId.systemDefault() );
+	
+	rtrn = frmtr.format( asInstant() );
+	}
+
+else
+	rtrn = String.valueOf( getEpochMillis() );
+
+return rtrn;
+}
 
 
 

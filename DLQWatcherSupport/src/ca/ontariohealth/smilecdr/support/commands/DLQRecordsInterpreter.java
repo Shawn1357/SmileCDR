@@ -11,8 +11,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ca.ontariohealth.smilecdr.support.MyInstant;
-import ca.ontariohealth.smilecdr.support.commands.response.CWMDLQRecordEntry;
+import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaTopicRecordParser;
 
@@ -22,17 +21,18 @@ import ca.ontariohealth.smilecdr.support.kafka.KafkaTopicRecordParser;
  */
 public class DLQRecordsInterpreter
 {
-private static final	Logger				            logr		= LoggerFactory.getLogger(DLQRecordsInterpreter.class);
+private static final	Logger				            logr			= LoggerFactory.getLogger(DLQRecordsInterpreter.class);
 
-private	Configuration						            appConfig	= null;
-private	ArrayList<ConsumerRecord<String, String>>       dlqRecords	= new ArrayList<>();
-private ArrayList<KafkaTopicRecordParser>               dlqDetails  = new ArrayList<>();
+private	Configuration						            appConfig		= null;
+private	ArrayList<ConsumerRecord<String, String>>       dlqRecords		= new ArrayList<>();
+private ArrayList<KafkaTopicRecordParser>               dlqDetails  	= new ArrayList<>();
+private	String											parserClassNm	= null;
 
 private static final String      CSV_FLD_SEP = ", ";
 private              String[]    csv_hdrs    = null;
 
 
-private MyInstant   reportStartTime = MyInstant.now();
+// private MyInstant   reportStartTime = MyInstant.now();
 
 
 public  DLQRecordsInterpreter( Configuration appCfg )
@@ -43,6 +43,7 @@ if (appCfg == null)
     throw new IllegalArgumentException( "appCfg parameter must not be null." );
 
 appConfig  = appCfg;
+parserClassNm = appConfig.configValue( ConfigProperty.DLQ_PARSER_FQCN_CLASS );
 
 return;
 }
@@ -84,7 +85,7 @@ public void     addDLQRecord( ConsumerRecord<String,String> kafkaRcrd )
 if (kafkaRcrd != null)
     {
     dlqRecords.add( kafkaRcrd );
-    extractOneRecordDetails( dlqDetails, kafkaRcrd );
+    extractOneRecordDetails( dlqDetails, kafkaRcrd, parserClassNm );
     }
 }
 
@@ -110,7 +111,7 @@ if (dlqRcrds != null)
 		if (crnt != null)
 		    {
 		    dlqRecords.add( crnt );
-			extractOneRecordDetails( targetList, crnt );
+			extractOneRecordDetails( targetList, crnt, parserClassNm );
 		    }
 		}
 	}
@@ -180,13 +181,14 @@ return frmtdFld;
 
 
 private void	extractOneRecordDetails( List<KafkaTopicRecordParser>   targetList,
-                                         ConsumerRecord<String, String> rcrd )
+                                         ConsumerRecord<String, String> rcrd,
+                                         String							parserClassName )
 {
 logr.debug( "Entering: extractOneRecordDetails" );
 
 if (rcrd != null)
     {
-    KafkaTopicRecordParser  crntRcrd = new CWMDLQRecordEntry( rcrd, appConfig );
+    KafkaTopicRecordParser	crntRcrd = KafkaTopicRecordParser.fromKafkaRecord( rcrd, appConfig, parserClassName );
 
     if (crntRcrd != null)
         {

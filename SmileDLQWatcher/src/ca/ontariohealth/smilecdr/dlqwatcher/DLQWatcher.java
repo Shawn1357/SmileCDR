@@ -4,6 +4,8 @@
 package ca.ontariohealth.smilecdr.dlqwatcher;
 
 import java.time.Duration;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +19,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import ca.ontariohealth.smilecdr.BaseApplication;
+import ca.ontariohealth.smilecdr.support.MyInstant;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommand;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandContainer;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandOutcome;
@@ -670,7 +673,7 @@ if (lister != null)
     do
         {
         ConsumerRecords<String,String> rcrds = lister.poll( interval );
-        logr.debug( "Received {} {} Event(s).", rcrds.count(), topicNm );
+        logr.info( "Received {} {} Event(s).", rcrds.count(), topicNm );
         
         if ((rcrds != null) && (rcrds.count() > 0))
             {
@@ -678,10 +681,12 @@ if (lister != null)
                 {
                 if (crnt != null)
                     {
-                    KafkaTopicRecordParser  entry = KafkaTopicRecordParser.fromKafkaRecord( crnt, appConfig, kafkaParserClassName );
+                    KafkaTopicRecordParser  entry 	  = KafkaTopicRecordParser.fromKafkaRecord( crnt, appConfig, kafkaParserClassName );
+                    String					dtTmFmt	  = appConfig.configValue( ConfigProperty.TIMESTAMP_FORMAT ); 
+                    MyInstant				entryTime = entry.dlqEntryTimestamp(); 
                     
                     logr.info( "{} Entry:", topicNm );
-                    logr.info( "    Timestamp:       {}", entry.dlqEntryTimestamp().getEpochMillis() );
+                    logr.info( "    Timestamp:       {} (Epoch Millis: {})", entryTime.toString( dtTmFmt ), entryTime.getEpochMillis() );
                     logr.info( "    Subscription ID: {}", entry.subscriptionID() );
                     logr.info( "    Resource Type:   {}", entry.resourceType() );
                     logr.info( "    Resource ID:     {}", entry.resourceID() );
