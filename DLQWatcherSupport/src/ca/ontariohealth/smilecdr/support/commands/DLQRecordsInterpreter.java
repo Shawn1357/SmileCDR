@@ -3,9 +3,6 @@
  */
 package ca.ontariohealth.smilecdr.support.commands;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,8 +13,8 @@ import org.slf4j.LoggerFactory;
 
 import ca.ontariohealth.smilecdr.support.MyInstant;
 import ca.ontariohealth.smilecdr.support.commands.response.CWMDLQRecordEntry;
-import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
+import ca.ontariohealth.smilecdr.support.kafka.KafkaTopicRecordParser;
 
 /**
  * @author adminuser
@@ -25,20 +22,14 @@ import ca.ontariohealth.smilecdr.support.config.Configuration;
  */
 public class DLQRecordsInterpreter
 {
-private static final	Logger				        logr		= LoggerFactory.getLogger(DLQRecordsInterpreter.class);
+private static final	Logger				            logr		= LoggerFactory.getLogger(DLQRecordsInterpreter.class);
 
-private	Configuration						        appConfig	= null;
-private	ArrayList<ConsumerRecord<String, String>>   dlqRecords	= new ArrayList<>();
-private ArrayList<CWMDLQRecordEntry>		        dlqDetails  = new ArrayList<>();
-
-private static final String[]    CSV_HDRS    = { "SubscriptionID",
-                                                 "ResourceType",
-                                                 "ResourceID",
-                                                 "DLQEntryEpochMillis",
-                                                 "DLQEntryLocalTimeStamp",
-                                                 "DurationOnDLQ" };
+private	Configuration						            appConfig	= null;
+private	ArrayList<ConsumerRecord<String, String>>       dlqRecords	= new ArrayList<>();
+private ArrayList<KafkaTopicRecordParser>               dlqDetails  = new ArrayList<>();
 
 private static final String      CSV_FLD_SEP = ", ";
+private              String[]    csv_hdrs    = null;
 
 
 private MyInstant   reportStartTime = MyInstant.now();
@@ -99,14 +90,14 @@ if (kafkaRcrd != null)
 
 
 
-public List<CWMDLQRecordEntry>  getInterpretations()
+public List<KafkaTopicRecordParser>  getInterpretations()
 {
 return dlqDetails;
 }
 
 
 
-private void extractDetailsList( List<CWMDLQRecordEntry>         targetList,
+private void extractDetailsList( List<KafkaTopicRecordParser>    targetList,
                                  ConsumerRecords<String, String> dlqRcrds )
 {
 logr.debug( "Entering: extractDetailsList" );
@@ -131,11 +122,11 @@ return;
 
 
 
-private String generateCSVReport( List<CWMDLQRecordEntry> dlqEntries )
+private String generateCSVReport( List<KafkaTopicRecordParser> dlqEntries )
 {
 StringBuffer  rtrn = new StringBuffer();
 
-for (CWMDLQRecordEntry crnt : dlqEntries)
+for (KafkaTopicRecordParser crnt : dlqEntries)
     if (crnt != null)
         rtrn.append( asCSV( crnt ) ).append( System.lineSeparator() );
 
@@ -143,54 +134,26 @@ return rtrn.toString();
 }
 
 
-private String  asCSV( CWMDLQRecordEntry rcrd )
+
+private String  asCSV( KafkaTopicRecordParser rcrd )
 {
-StringBuffer        rtrn  = new StringBuffer();
+StringBuffer        rtrn    = new StringBuffer();
 
 if (rcrd != null)
     {
-    int                 fldWid  = CSV_HDRS[0].length();
-    String              crntVal = rcrd.subscriptionID();
-    DateTimeFormatter   frmtr   = DateTimeFormatter.ofPattern( appConfig.configValue( ConfigProperty.TIMESTAMP_FORMAT ) );
+    String[]            csvHdrs = rcrd.csvColumnHeaders();
+    String[]            csvVals = rcrd.csvColumnValues();
     
-    rtrn.append( formatField( fldWid, crntVal ) );
-    
-    fldWid = CSV_HDRS[1].length();
-    crntVal = rcrd.resourceType();
-    rtrn.append( CSV_FLD_SEP ).append( formatField( fldWid, crntVal ) );
-    
-    fldWid = CSV_HDRS[2].length();
-    crntVal = rcrd.resourceID();
-    rtrn.append( CSV_FLD_SEP ).append( formatField( fldWid, crntVal ) );
-    
-    MyInstant ts = rcrd.dlqEntryTimestamp();
-    if (ts != null)
-        crntVal = rcrd.dlqEntryTimestamp().getEpochMillis().toString();
-    
-    else
-        crntVal = "";
-    
-    fldWid = CSV_HDRS[3].length();
-    rtrn.append( CSV_FLD_SEP ).append( formatField( fldWid, crntVal ) );
-    
-    LocalDateTime lclTS = (ts != null) ? ts.asLocalDateTime() : null;
-    if (lclTS != null)
-        crntVal = lclTS.format( frmtr );
-    
-    else
-        crntVal = "";
-    
-    fldWid = CSV_HDRS[4].length();
-    rtrn.append( CSV_FLD_SEP ).append( formatField( fldWid, crntVal ) );
-    
-    fldWid = CSV_HDRS[5].length();
-    Duration timeInTopic = Duration.between( ts.asInstant(), reportStartTime.asInstant() );
-    crntVal = String.format( "%dd %2d:%02d", 
-                             timeInTopic.toDays(),
-                             timeInTopic.toHoursPart(),
-                             timeInTopic.toMinutesPart() );
-    
-    rtrn.append( CSV_FLD_SEP ).append( formatField( fldWid, crntVal ) );
+    for (int crntNdx = 0; (crntNdx < csvHdrs.length) && (crntNdx < csvVals.length); crntNdx++)
+        {
+        int     fldWid  = csvHdrs[crntNdx].length();
+        String  crntVal = csvVals[crntNdx];
+        
+        if (crntNdx > 0)
+            rtrn.append( CSV_FLD_SEP );
+        
+        rtrn.append( formatField( fldWid, crntVal ) );
+        }
     }
 
 
@@ -216,17 +179,22 @@ return frmtdFld;
 }
 
 
-private void	extractOneRecordDetails( List<CWMDLQRecordEntry>        targetList,
+private void	extractOneRecordDetails( List<KafkaTopicRecordParser>   targetList,
                                          ConsumerRecord<String, String> rcrd )
 {
 logr.debug( "Entering: extractOneRecordDetails" );
 
 if (rcrd != null)
     {
-    CWMDLQRecordEntry  crntRcrd = new CWMDLQRecordEntry( rcrd, appConfig );
+    KafkaTopicRecordParser  crntRcrd = new CWMDLQRecordEntry( rcrd, appConfig );
 
     if (crntRcrd != null)
+        {
+        if (csv_hdrs == null)
+            csv_hdrs = crntRcrd.csvColumnHeaders();
+        
         targetList.add( crntRcrd );
+        }
     }
 
 
@@ -249,7 +217,12 @@ return rtrn;
 
 public  final String  csvHeaders()
 {
-return String.join( CSV_FLD_SEP, CSV_HDRS );
+String  rtrn = "";
+
+if (csv_hdrs != null)
+    rtrn = String.join( CSV_FLD_SEP, csv_hdrs );
+
+return rtrn;
 }
 
 

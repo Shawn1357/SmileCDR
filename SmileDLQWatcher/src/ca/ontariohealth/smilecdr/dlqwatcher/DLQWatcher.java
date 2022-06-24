@@ -26,12 +26,12 @@ import ca.ontariohealth.smilecdr.support.commands.EMailNotifier;
 import ca.ontariohealth.smilecdr.support.commands.ProcessingMessage;
 import ca.ontariohealth.smilecdr.support.commands.ProcessingMessageCode;
 import ca.ontariohealth.smilecdr.support.commands.json.JSONApplicationSupport;
-import ca.ontariohealth.smilecdr.support.commands.response.CWMDLQRecordEntry;
 import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaAdministration;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaConsumerHelper;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaProducerHelper;
+import ca.ontariohealth.smilecdr.support.kafka.KafkaTopicRecordParser;
 
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -456,6 +456,7 @@ DLQResponseContainer    resp            = null;
 DLQRecordsInterpreter   rcrds           = null;
 String                  groupNm         = null;
 String                  topicNm         = null;
+String                  classNm         = null;
 String                  emailTemplateNm = null;
 
 if ((cmd != null) && (cmd.getCommandToIssue() != null))
@@ -510,40 +511,44 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
             logr.info( "Starting process to list DLQ entries." );
             groupNm = appConfig.configValue( ConfigProperty.KAFKA_DLQ_LISTER_GROUP_ID );
             topicNm = appConfig.configValue( ConfigProperty.KAFKA_DLQ_TOPIC_NAME );
+            classNm = appConfig.configValue( ConfigProperty.DLQ_PARSER_FQCN_CLASS );
 
             resp.setOutcome( DLQCommandOutcome.SUCCESS );
             resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
-            rcrds = listTopicEntries( resp, groupNm, topicNm );
+            rcrds = listTopicEntries( resp, groupNm, topicNm, classNm );
             break;
          
         case    DLQEMAIL:
             logr.info( "Starting process to email DLQ entries." );
             groupNm = appConfig.configValue( ConfigProperty.KAFKA_DLQ_LISTER_GROUP_ID );
             topicNm = appConfig.configValue( ConfigProperty.KAFKA_DLQ_TOPIC_NAME );
+            classNm = appConfig.configValue( ConfigProperty.DLQ_PARSER_FQCN_CLASS );
     
             resp.setOutcome( DLQCommandOutcome.SUCCESS );
             resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
-            rcrds = listTopicEntries( resp, groupNm, topicNm );
+            rcrds = listTopicEntries( resp, groupNm, topicNm, classNm );
             break;
         
         case    PARKLIST:
             logr.info( "Starting process to list Parking Lot entries." );
             groupNm = appConfig.configValue( ConfigProperty.KAFKA_PARK_LISTER_GROUP_ID );
             topicNm = appConfig.configValue( ConfigProperty.KAFKA_PARK_TOPIC_NAME );
+            classNm = appConfig.configValue( ConfigProperty.DLQ_PARSER_FQCN_CLASS );
     
             resp.setOutcome( DLQCommandOutcome.SUCCESS );
             resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
-            rcrds = listTopicEntries( resp, groupNm, topicNm );
+            rcrds = listTopicEntries( resp, groupNm, topicNm, classNm );
             break;
      
         case    PARKEMAIL:
             logr.info( "Starting process to email Parking Lot entries." );
             groupNm = appConfig.configValue( ConfigProperty.KAFKA_PARK_LISTER_GROUP_ID );
             topicNm = appConfig.configValue( ConfigProperty.KAFKA_PARK_TOPIC_NAME );
+            classNm = appConfig.configValue( ConfigProperty.DLQ_PARSER_FQCN_CLASS );
     
             resp.setOutcome( DLQCommandOutcome.SUCCESS );
             resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
-            rcrds = listTopicEntries( resp, groupNm, topicNm);
+            rcrds = listTopicEntries( resp, groupNm, topicNm, classNm );
             break;
         
         case    TESTEMAIL:
@@ -621,7 +626,8 @@ return resp;
 
 private DLQRecordsInterpreter    listTopicEntries( DLQResponseContainer resp,
                                                    String               groupNm,
-                                                   String               topicNm )
+                                                   String               topicNm,
+                                                   String               kafkaParserClassName )
 {
 DLQRecordsInterpreter interpRcrds        = new DLQRecordsInterpreter( appConfig );
 Properties            disabledAutoCommit = new Properties();     
@@ -664,16 +670,17 @@ if (lister != null)
     do
         {
         ConsumerRecords<String,String> rcrds = lister.poll( interval );
-        logr.debug( "Received {} KAFKA.DLQ Event(s).", rcrds.count() );
+        logr.debug( "Received {} {} Event(s).", rcrds.count(), topicNm );
         
         if ((rcrds != null) && (rcrds.count() > 0))
             {
             for (ConsumerRecord<String, String> crnt : rcrds)
                 {
                 if (crnt != null)
-                    {                    
-                    CWMDLQRecordEntry  entry = new CWMDLQRecordEntry( crnt, appConfig );
-                    logr.info( "DLQ Entry:" );
+                    {
+                    KafkaTopicRecordParser  entry = KafkaTopicRecordParser.fromKafkaRecord( crnt, appConfig, kafkaParserClassName );
+                    
+                    logr.info( "{} Entry:", topicNm );
                     logr.info( "    Timestamp:       {}", entry.dlqEntryTimestamp().getEpochMillis() );
                     logr.info( "    Subscription ID: {}", entry.subscriptionID() );
                     logr.info( "    Resource Type:   {}", entry.resourceType() );

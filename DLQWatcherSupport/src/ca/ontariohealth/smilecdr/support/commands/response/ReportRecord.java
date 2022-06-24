@@ -3,16 +3,18 @@
  */
 package ca.ontariohealth.smilecdr.support.commands.response;
 
+import ca.ontariohealth.smilecdr.support.kafka.KafkaTopicRecordParser;
+
 /**
  * @author adminuser
  *
  */
 public class ReportRecord
 {
-private ReportRecordType    rcrdType        = null;
-private String              rcrdString      = null;
-private KeyValue            rcrdKeyValue    = null;
-private CWMDLQRecordEntry   rcrdDLQEntry    = null;
+private ReportRecordType        rcrdType        = null;
+private String                  rcrdString      = null;
+private KeyValue                rcrdKeyValue    = null;
+private KafkaTopicRecordParser  rcrdDLQEntry    = null;
 
 
 
@@ -32,7 +34,7 @@ return;
 
 
 
-public ReportRecord( CWMDLQRecordEntry rcdDLQEntry )
+public ReportRecord( KafkaTopicRecordParser rcdDLQEntry )
 {
 setRcrdDLQEntry( rcdDLQEntry );
 return;
@@ -90,14 +92,14 @@ return;
 
 
 
-public CWMDLQRecordEntry getRcrdDLQEntry()
+public KafkaTopicRecordParser getRcrdDLQEntry()
 {
 return rcrdDLQEntry;
 }
 
 
 
-public void setRcrdDLQEntry( CWMDLQRecordEntry rcrdDLQEntry )
+public void setRcrdDLQEntry( KafkaTopicRecordParser rcrdDLQEntry )
 {
 setRcrdType( ReportRecordType.DLQ_ENTRY_SPEC );
 this.rcrdString   = null;

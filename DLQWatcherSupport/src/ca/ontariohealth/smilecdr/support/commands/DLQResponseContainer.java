@@ -10,9 +10,9 @@ import java.util.UUID;
 import com.google.gson.Gson;
 
 import ca.ontariohealth.smilecdr.support.MyInstant;
-import ca.ontariohealth.smilecdr.support.commands.response.CWMDLQRecordEntry;
 import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
 import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
+import ca.ontariohealth.smilecdr.support.kafka.KafkaTopicRecordParser;
 
 /**
  * @author adminuser
@@ -161,7 +161,7 @@ return;
 
 
 
-public void addReportEntry( CWMDLQRecordEntry dlqEntry )
+public void addReportEntry( KafkaTopicRecordParser dlqEntry )
 {
 if (dlqEntry != null)
     {

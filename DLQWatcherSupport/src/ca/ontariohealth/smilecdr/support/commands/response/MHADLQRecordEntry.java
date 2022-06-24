@@ -18,12 +18,9 @@ import ca.ontariohealth.smilecdr.support.kafka.KafkaTopicRecordParser;
  * @author adminuser
  *
  */
-public class CWMDLQRecordEntry extends KafkaTopicRecordParser
+public class MHADLQRecordEntry extends KafkaTopicRecordParser
 {
-String  subscrID    = null;
-
-private static String[]     CSV_HEADERS = { "SubscriptionID",
-                                            "ResourceType",
+private static String[]     CSV_HEADERS = { "ResourceType",
                                             "ResourceID",
                                             "DLQEntryEpochMillis",
                                             "DLQEntryLocalTimeStamp",
@@ -31,7 +28,8 @@ private static String[]     CSV_HEADERS = { "SubscriptionID",
                                           };
 
 
-public CWMDLQRecordEntry( ConsumerRecord<String,String> dlqRcrd, Configuration appCfg )
+public MHADLQRecordEntry( ConsumerRecord<String,String> dlqRcrd, 
+                          Configuration                 appCfg )
 {
 super( dlqRcrd, appCfg );
 fromDLQRecord( dlqRcrd, appCfg );
@@ -41,15 +39,12 @@ return;
 
 
 
-public CWMDLQRecordEntry( MyInstant dlqEntryTS,
-                          String    subscriptionID,
+public MHADLQRecordEntry( MyInstant dlqEntryTS,
                           String    resourceType,
                           String    resourceID )
 
 {
 super( dlqEntryTS, resourceType, resourceID );
-subscrID = subscriptionID;
-
 return;
 }
 
@@ -57,9 +52,6 @@ return;
 protected void  fromDLQRecord( ConsumerRecord<String,String> dlqRcrd, Configuration appCfg )
 {
 super.fromDLQRecord( dlqRcrd, appCfg );
-
-extractSubscriptionID();
-
 return;
 }
 
@@ -132,48 +124,21 @@ return;
 
 
 
-
-
 @Override
-protected void      extractSubscriptionID()
+protected void extractSubscriptionID()
 {
-subscrID = null;
-if (parsedJSON != null)
-    {
-    JSONObject payload      = parsedJSON.getJSONObject( "payload" );
-    JSONObject subscr       = null;
-    String     subscrRsrc   = null;
-    
-    if (payload != null)
-        subscr = payload.getJSONObject( "canonicalSubscription" );
-    
-    if (subscr != null)
-        subscrRsrc = subscr.getString( "id" );
-    
-    if ((subscrRsrc != null) && (subscrRsrc.length() > 0))
-        {
-        String[] rsrcIDParts = subscrRsrc.split( "/" );
-        
-        if (rsrcIDParts.length > 1)
-            subscrID = rsrcIDParts[1];
-        
-        else if (rsrcIDParts.length == 1)
-            subscrID = rsrcIDParts[0];
-        
-        else
-            subscrID = subscrRsrc;
-        }
-    }
-
+// Nothing to do. MHA does not have a Subscription ID.
 return;
 }
+
+
 
 
 
 //@Override
 public  String      subscriptionID()
 {
-return subscrID;
+return "";
 }
 
 
@@ -225,8 +190,7 @@ String              dtTmFmt         = appConfig.configValue( ConfigProperty.TIME
 DateTimeFormatter   frmtr           = DateTimeFormatter.ofPattern( dtTmFmt ).withZone( ZoneId.systemDefault() );
 String              lclTimeStamp    = frmtr.format( dlqEntryTimestamp().asInstant() );
 
-String[]            values          = new String[] { subscriptionID(),
-                                                     resourceType(),
+String[]            values          = new String[] { resourceType(),
                                                      resourceID(),
                                                      String.valueOf( dlqEntryTimestamp().getEpochMillis() ),
                                                      lclTimeStamp,
@@ -235,5 +199,4 @@ String[]            values          = new String[] { subscriptionID(),
 
 return values;
 }
-
 }

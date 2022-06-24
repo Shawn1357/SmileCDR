@@ -5,6 +5,7 @@ package ca.ontariohealth.smilecdr.support.kafka;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.time.Duration;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.json.JSONObject;
@@ -36,7 +37,8 @@ protected String                              rsrcID        = null;
 
 
 public static   KafkaTopicRecordParser fromKafkaRecord( ConsumerRecord<String,String> srcKafkaRcrd, 
-                                                        Configuration                 appCfg )
+                                                        Configuration                 appCfg,
+                                                        String                        parserClassName )
                                                                 
 {
 KafkaTopicRecordParser  rtrn = null;
@@ -45,10 +47,7 @@ logr.debug( "Entering: KafkaTopicRecordParser.fromKafkaRecord" );
 
 if ((srcKafkaRcrd != null) && (appCfg != null))
     {
-    String  parserClassName = appCfg.configValue( ConfigProperty.DLQ_PARSER_FQCN_CLASS, "" );
-    
-    logr.debug("About to create an instance of class: {}", parserClassName );
-    
+    logr.debug("About to create an instance of class: {}", parserClassName );   
     
     if ((parserClassName != null) && (parserClassName.length() > 0))
         {
@@ -170,6 +169,27 @@ return;
 
 
 
+public  String      elapsedTimeInTopic()
+{
+String      elapsedTime    = null;
+MyInstant   crntTime       = MyInstant.now();
+MyInstant   topicEntryTime = topicEntryTimestamp();
+
+if ((topicEntryTime != null) && (crntTime != null))
+    {
+    Duration dur = Duration.between( topicEntryTime.asInstant(), crntTime.asInstant() );
+    
+    elapsedTime = String.format( "%dd %d:%02d", dur.toDays(), dur.toHoursPart(), dur.toMinutesPart() );
+    }
+
+return elapsedTime;
+}
+
+
+
+
+
+
 public  ConsumerRecord<String,String>   originalKafkaRecord()
 {
 return origRecord;
@@ -217,8 +237,6 @@ public abstract String         subscriptionID();
 
 
 
-
-
 protected void  extractTopicEntryTimestamp()
 {
 topicEntryTS = null;
@@ -233,8 +251,11 @@ else
 return;
 }
 
+
 protected abstract void        extractDLQEntryTimestamp();
 protected abstract void        extractSubscriptionID();
 protected abstract void        extractResourceType();
 protected abstract void        extractResourceID();
+public    abstract String[]    csvColumnHeaders();
+public    abstract String[]    csvColumnValues();
 }

@@ -24,10 +24,10 @@ import org.slf4j.LoggerFactory;
 
 import ca.ontariohealth.smilecdr.support.MyInstant;
 import ca.ontariohealth.smilecdr.support.commands.DLQRecordsInterpreter;
-import ca.ontariohealth.smilecdr.support.commands.response.CWMDLQRecordEntry;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaProducerHelper;
+import ca.ontariohealth.smilecdr.support.kafka.KafkaTopicRecordParser;
 
 /**
  * @author adminuser
@@ -194,8 +194,8 @@ while (continueChecking)
         
         if (dlqInterp.recordCount() > 0)
             {
-            List<CWMDLQRecordEntry> interps = dlqInterp.getInterpretations();
-            for (CWMDLQRecordEntry crntInterp : interps)  // There should be exactly one entry because we set max poll records to one when creating the consumer.
+            List<KafkaTopicRecordParser> interps = dlqInterp.getInterpretations();
+            for (KafkaTopicRecordParser crntInterp : interps)  // There should be exactly one entry because we set max poll records to one when creating the consumer.
                 {
                 MyInstant   dlqEntryTime = crntInterp.dlqEntryTimestamp();
                 if (dlqEntryTime.compareTo( expiryTime ) <= 0)

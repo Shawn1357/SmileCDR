@@ -16,8 +16,10 @@ import com.google.gson.stream.JsonWriter;
 import ca.ontariohealth.smilecdr.support.MyInstant;
 import ca.ontariohealth.smilecdr.support.commands.response.CWMDLQRecordEntry;
 import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
+import ca.ontariohealth.smilecdr.support.commands.response.MHADLQRecordEntry;
 import ca.ontariohealth.smilecdr.support.commands.response.ReportRecord;
 import ca.ontariohealth.smilecdr.support.commands.response.ReportRecordType;
+import ca.ontariohealth.smilecdr.support.kafka.KafkaTopicRecordParser;
 
 /**
  * @author adminuser
@@ -25,18 +27,18 @@ import ca.ontariohealth.smilecdr.support.commands.response.ReportRecordType;
  */
 public class ReportRecordAdapter extends TypeAdapter<ReportRecord>
 {
-private static  Logger          logr                    = LoggerFactory.getLogger( ReportRecordAdapter.class );
+private static  Logger          logr                     = LoggerFactory.getLogger( ReportRecordAdapter.class );
 
-private static  String          FIELD_STRING_LINE       = "text";
-private static  String          FIELD_KEY               = "key";
-private static  String          FIELD_VALUE             = "value";
-private static  String          FIELD_ENTRY_TS          = "entryTimestamp";
-private static  String          FIELD_SUBSCRIPTION_ID   = "subscriptionID";
-private static  String          FIELD_RESOURCE_TYPE     = "resourceType";
-private static  String          FIELD_RESOURCE_ID       = "resourceID";
-private static  String          FIELD_ELAPSED_DLQ_TIME  = "elapsedTimeOnDLQ";
+private static  String          FIELD_STRING_LINE        = "text";
+private static  String          FIELD_KEY                = "key";
+private static  String          FIELD_VALUE              = "value";
+private static  String          FIELD_ENTRY_TS           = "entryTimestamp";
+private static  String          FIELD_SUBSCRIPTION_ID    = "subscriptionID";
+private static  String          FIELD_RESOURCE_TYPE      = "resourceType";
+private static  String          FIELD_RESOURCE_ID        = "resourceID";
+private static  String          FIELD_ELAPSED_TOPIC_TIME = "elapsedTimeInTopic";
 
-private static  MyInstantAdapter  instantAdapter        = new MyInstantAdapter();
+private static  MyInstantAdapter  instantAdapter         = new MyInstantAdapter();
 
 
 @Override
@@ -70,8 +72,8 @@ if (value != null)
             
             
         case    DLQ_ENTRY_SPEC:
-            CWMDLQRecordEntry  dlqEntry    = value.getRcrdDLQEntry();
-            MyInstant          dlqTS       = dlqEntry.dlqEntryTimestamp();
+            KafkaTopicRecordParser  dlqEntry    = value.getRcrdDLQEntry();
+            MyInstant               dlqTS       = dlqEntry.dlqEntryTimestamp();
             
             writer.name( FIELD_ENTRY_TS );
             instantAdapter.write( writer, dlqTS );
@@ -85,8 +87,8 @@ if (value != null)
             writer.name( FIELD_RESOURCE_ID );
             writer.value( dlqEntry.resourceID() );
             
-            writer.name( FIELD_ELAPSED_DLQ_TIME );
-            writer.value( dlqEntry.elapsedTimeOnDLQ() );
+            writer.name( FIELD_ELAPSED_TOPIC_TIME );
+            writer.value( dlqEntry.elapsedTimeInTopic() );
             
             break;
         
@@ -209,10 +211,19 @@ if (rprtRcrdType != null)
             break;
             
         case    DLQ_ENTRY_SPEC:
-            CWMDLQRecordEntry  dlqEntry = new CWMDLQRecordEntry( rprtDLQEntryTS, 
-                                                                 rprtDLQSubID, 
-                                                                 rprtDLQRsrcType, 
-                                                                 rprtDLQRsrcID );
+            KafkaTopicRecordParser  dlqEntry = null;
+            
+            if (rprtDLQSubID != null)
+                dlqEntry = new CWMDLQRecordEntry( rprtDLQEntryTS, 
+                                                  rprtDLQSubID, 
+                                                  rprtDLQRsrcType, 
+                                                  rprtDLQRsrcID );
+            
+            else
+                dlqEntry = new MHADLQRecordEntry( rprtDLQEntryTS, 
+                                                  rprtDLQRsrcType, 
+                                                  rprtDLQRsrcID );
+                
             rtrn = new ReportRecord( dlqEntry );
             break;
             
