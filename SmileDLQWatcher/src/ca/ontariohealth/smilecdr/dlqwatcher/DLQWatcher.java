@@ -99,7 +99,8 @@ protected	void launch()
 {
 logr.debug( "Entering: {}.launch", DLQWatcher.class.getSimpleName() );
 
-System.err.println( appSignature() );
+if (!cliOpts.hasLongOption( CLI_SLNT_NM_LONG ))
+	System.err.println( appSignature() );
 
 
 /*

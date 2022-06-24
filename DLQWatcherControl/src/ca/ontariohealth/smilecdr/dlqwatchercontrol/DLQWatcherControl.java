@@ -73,7 +73,8 @@ protected void launch()
 {
 logr.debug("Entering: DLQWatcherControl.launch" );
 
-System.err.println( appSignature() );
+if (!cliOpts.hasLongOption( CLI_SLNT_NM_LONG ))
+	System.err.println( appSignature() );
 
 JSONApplicationSupport.registerGsonTypeAdpaters( jsonBuilder );
 jsonBuilder.setPrettyPrinting();

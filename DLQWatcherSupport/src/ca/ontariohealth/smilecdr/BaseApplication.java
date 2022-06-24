@@ -34,6 +34,8 @@ protected static final	String 				CLI_HLP_NM_SHRT  = "h";
 protected static final	String 				CLI_HLP_NM_LONG  = "help";
 protected static final  String              CLI_INST_NM_SHRT = "n";
 protected static final  String              CLI_INST_NM_LONG = "instName";
+protected static final  String              CLI_SLNT_NM_SHRT = "q";
+protected static final  String              CLI_SLNT_NM_LONG = "quiet";
 
 protected               Instant             appStartTime     = Instant.now();
 
@@ -327,7 +329,7 @@ createCLIOptions( cliOpts );
  * Before anything else, parse the command line in a throw-away fashion
  * only checking for the display usage option.  We need to do this because
  * if the client application defines 'required' parameters an exception gets
- * thrown and we miss the opportunity to dispay usage.
+ * thrown and we miss the opportunity to display usage.
  * 
  */
 
@@ -443,6 +445,7 @@ cmdLineOpts.addOption( CLI_CFG_NM_SHRT,  CLI_CFG_NM_LONG,  true,  "Configuration
 cmdLineOpts.addOption( CLI_APP_NM_SHRT,  CLI_APP_NM_LONG,  true,  "Set the name of the application");
 cmdLineOpts.addOption( CLI_ENV_NM_SHRT,  CLI_ENV_NM_LONG,  true,  "Set Operating Environment Name (DEV, tst01, ...)" );
 cmdLineOpts.addOption( CLI_INST_NM_SHRT, CLI_INST_NM_LONG, true,  "Set the instance name of multiple instance of an app." );
+cmdLineOpts.addOption( CLI_SLNT_NM_SHRT, CLI_SLNT_NM_SHRT, false, "Start the instance with no banner information." );
 cmdLineOpts.addOption( CLI_HLP_NM_SHRT,  CLI_HLP_NM_LONG,  false, "Display Command Line Usage information.");
 
 return;
