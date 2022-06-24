@@ -30,7 +30,7 @@ DATE_FORMAT(                    "date.format",                   "yyyy-MM-dd" ),
 TIMESTAMP_FORMAT(               "timestamp.format",              "yyyy-MM-dd HH:mm:ss" ),
 
 BOOTSTRAP_SERVERS(              "bootstrap.servers" ),
-KAFKA_DEFAULT_TOPIC_RETENTION(  "kafka.default.rentention.hours","168" ),
+KAFKA_DEFAULT_TOPIC_RETENTION(  "kafka.default.retention.hours", "168" ),
 
 START_DLQ_POLL_THREAD(          "start.cmd.include.dlqpoll.thread",        "true" ),
 START_POLL_PARK_THREAD(         "start.cmd.include.parkpoll.thread",       "true" ),

@@ -125,6 +125,10 @@ if (cmdsToSend != null)
 			    }
 			
 			cmdResp = waitForResponse( cmdToSend, maxRespWait );
+			if (cmdResp == null)
+				{
+				// Not an error.
+				}
 		    }
 	    }
     }

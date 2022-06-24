@@ -217,6 +217,11 @@ while (continueChecking)
                         {
                         RecordMetadata meta = parkProducer.send( parkedRcrd ).get();
                         commitMove          = true;
+                        
+                        if (meta == null)
+                        	{
+                        	// Not an error.
+                        	}
                         }
                     
                     catch (InterruptedException e)
