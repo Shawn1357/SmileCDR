@@ -7,6 +7,8 @@
 #
 #
 Existing Entries into the Smile Dead Letter Queue:<p>
+(template02)<p>
+Environment: {{EnvironmentName}}
 <p>
 # Now string is formatted according to App Config property: timestamp.format
 Report Generated at: <b>{{Now}}</b><p>
@@ -17,6 +19,7 @@ Detected DLQ Record Count: <i>{{DLQRecordCount}}</i><p>
 <pre>
 {{DLQRecordsCSVHeader}}
 {{DLQRecordsAsCSV}}
+
 </pre>
 <p>
 Yours truly,<p>
