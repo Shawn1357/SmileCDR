@@ -19,11 +19,11 @@ import org.slf4j.LoggerFactory;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandOutcome;
 import ca.ontariohealth.smilecdr.support.commands.DLQRecordsInterpreter;
 import ca.ontariohealth.smilecdr.support.commands.DLQResponseContainer;
-import ca.ontariohealth.smilecdr.support.commands.EMailNotifier;
 import ca.ontariohealth.smilecdr.support.commands.ProcessingMessage;
 import ca.ontariohealth.smilecdr.support.commands.ProcessingMessageCode;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
+import ca.ontariohealth.smilecdr.support.email.BasicEMailNotifier;
 
 /**
  * @author adminuser
@@ -107,7 +107,7 @@ private void sendEMail( DLQResponseContainer	resp,
 {
 try
 	{
-	EMailNotifier.sendEMail( appConfig(), emailTemplateNm, rcrds );
+	BasicEMailNotifier.sendEMail( appConfig(), emailTemplateNm, rcrds );
 	}
 
 catch (MessagingException e) 

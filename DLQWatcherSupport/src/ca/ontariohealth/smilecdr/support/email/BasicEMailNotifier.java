@@ -1,7 +1,7 @@
 /**
  * 
  */
-package ca.ontariohealth.smilecdr.support.commands;
+package ca.ontariohealth.smilecdr.support.email;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -23,6 +23,11 @@ import javax.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ca.ontariohealth.smilecdr.support.commands.DLQCommandOutcome;
+import ca.ontariohealth.smilecdr.support.commands.DLQRecordsInterpreter;
+import ca.ontariohealth.smilecdr.support.commands.DLQResponseContainer;
+import ca.ontariohealth.smilecdr.support.commands.ProcessingMessage;
+import ca.ontariohealth.smilecdr.support.commands.ProcessingMessageCode;
 import ca.ontariohealth.smilecdr.support.config.BasicAuthCredentials;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
@@ -32,9 +37,9 @@ import ca.ontariohealth.smilecdr.support.config.FileBasedCredentials;
  * @author adminuser
  *
  */
-public class EMailNotifier
+public class BasicEMailNotifier extends EMailNotifier
 {
-private static final Logger                 logr        = LoggerFactory.getLogger( EMailNotifier.class );
+private static final Logger                 logr        = LoggerFactory.getLogger( BasicEMailNotifier.class );
 
 private              Configuration          appConfig   = null;
 private              DateTimeFormatter      tsFormatter = null;
@@ -42,6 +47,7 @@ private              LocalDateTime          emailedAt   = null;
 
 private              String                 emailSrvr   = null;
 private              String                 emailPort   = null;
+private				 Boolean				requiresSSL = Boolean.TRUE;
 private              String                 emailCreds  = null;
 private              BasicAuthCredentials   creds       = null;
 
@@ -57,12 +63,48 @@ private              String                 body        = null;
 
 
 
+public 	void	sendEMail( DLQResponseContainer		resp,
+						
+						   String					emailTemplateNm,
+						   DLQRecordsInterpreter	rcrds )
+
+{
+try
+{
+BasicEMailNotifier.sendEMail( appConfig, emailTemplateNm, rcrds );
+if (resp != null)
+resp.setOutcome( DLQCommandOutcome.SUCCESS );
+}
+
+catch (MessagingException e) 
+{
+logr.error( "Unable to send email:", e );
+if (resp != null)
+{
+String msg = e.getMessage();
+
+resp.setOutcome( DLQCommandOutcome.ERROR );
+resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0007, appConfig, appConfig.configValue( ConfigProperty.EMAIL_SERVER ) ) );
+resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_9999, appConfig, e.getClass().getSimpleName() ));
+if ((msg != null) && (msg.strip().length() > 0))
+resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_9999, appConfig, msg.strip() ) );
+}
+}
+
+return;	
+}
+
+
+
+
+
+
 public static void sendEMail( Configuration         appCfg,
                               String                requestedTemplateNm,
                               DLQRecordsInterpreter dlqInterp ) 
                    throws MessagingException
 {
-EMailNotifier   email = new EMailNotifier( appCfg, requestedTemplateNm );
+BasicEMailNotifier   email = new BasicEMailNotifier( appCfg, requestedTemplateNm );
 
 email.body = email.loadFileIntoString( email.bodyFileNm, email.templateNm, dlqInterp );
 email.sendEMail();
@@ -71,13 +113,14 @@ return;
 }
 
 
+
 public static void sendEMail( Configuration appCfg,
                               String        requestedTemplateNm,
                               String        emailBody ) 
                    throws MessagingException
 
 {
-EMailNotifier   email = new EMailNotifier( appCfg, requestedTemplateNm );
+BasicEMailNotifier   email = new BasicEMailNotifier( appCfg, requestedTemplateNm );
 
 email.body = emailBody;
 email.sendEMail();
@@ -87,7 +130,7 @@ return;
         
 
 
-public EMailNotifier( Configuration appCfg )
+public BasicEMailNotifier( Configuration appCfg )
 {
 appConfig = appCfg;
 loadTemplateItems( null );
@@ -97,7 +140,7 @@ return;
 
 
 
-public EMailNotifier( Configuration appCfg, String requestedTemplateNm )
+public BasicEMailNotifier( Configuration appCfg, String requestedTemplateNm )
 {
 appConfig  = appCfg;
 loadTemplateItems( requestedTemplateNm );
@@ -118,6 +161,7 @@ tsFormatter = DateTimeFormatter.ofPattern( appConfig.configValue( ConfigProperty
 emailSrvr   = appConfig.configValue( ConfigProperty.EMAIL_SERVER );
 emailPort   = appConfig.configValue( ConfigProperty.EMAIL_SMPT_PORT );
 emailCreds  = appConfig.configValue( ConfigProperty.EMAIL_CREDENTIALS_FILE );
+requiresSSL = appConfig.configBool(  ConfigProperty.EMAIL_REQUIRE_SSL_CONNECTION );     
 
 creds = new FileBasedCredentials( emailCreds );
 
@@ -143,6 +187,11 @@ Properties  emailProps = new Properties();
 emailProps.put( "mail.smtp.auth", "true" );
 emailProps.put( "mail.smtp.host", emailSrvr );
 emailProps.put( "mail.smtp.port", emailPort );
+
+if (requiresSSL)
+	{
+	emailProps.put( "mail.smtp.starttls.enable", "true" );
+	}
 
 try
     {

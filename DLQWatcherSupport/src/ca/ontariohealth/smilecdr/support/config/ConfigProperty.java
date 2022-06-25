@@ -58,9 +58,11 @@ QUIT_AFTER_MILLIS(              "quit.after.millis" ),
 PAUSE_BEFORE_WAIT_FOR_RESPONSE( "pause.before.response",         "0" ),
 RESPONSE_WAIT_MILLIS(           "response.wait.millis",          "30000" ),
 
+EMAIL_NOTIFIER_CLASS_NAME(      "email.notifier.class" ),
 EMAIL_SERVER(                   "email.server.smtp" ),
 EMAIL_SMPT_PORT(                "email.server.smtp.port",        "25" ),
 EMAIL_CREDENTIALS_FILE(         "email.credentials.file" ),
+EMAIL_REQUIRE_SSL_CONNECTION(   "email.ssl.connection",          "true" ),
 
 EMAIL_NEWDLQ_TEMPLATE_NAME(     "email.newdlq.template.nm" ),
 EMAIL_NEWPARK_TEMPLATE_NAME(    "email.newpark.template.nm" ),

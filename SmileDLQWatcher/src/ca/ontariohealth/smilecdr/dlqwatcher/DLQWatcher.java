@@ -25,12 +25,12 @@ import ca.ontariohealth.smilecdr.support.commands.DLQCommandContainer;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandOutcome;
 import ca.ontariohealth.smilecdr.support.commands.DLQRecordsInterpreter;
 import ca.ontariohealth.smilecdr.support.commands.DLQResponseContainer;
-import ca.ontariohealth.smilecdr.support.commands.EMailNotifier;
 import ca.ontariohealth.smilecdr.support.commands.ProcessingMessage;
 import ca.ontariohealth.smilecdr.support.commands.ProcessingMessageCode;
 import ca.ontariohealth.smilecdr.support.commands.json.JSONApplicationSupport;
 import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
+import ca.ontariohealth.smilecdr.support.email.BasicEMailNotifier;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaAdministration;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaConsumerHelper;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaProducerHelper;
@@ -621,40 +621,6 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
 
 return resp;
 }
-
-
-
-private void sendEMail( DLQResponseContainer	resp,
-						String					emailTemplateNm,
-						DLQRecordsInterpreter	rcrds )
-
-{
-try
-	{
-	EMailNotifier.sendEMail( appConfig, emailTemplateNm, rcrds );
-	if (resp != null)
-		resp.setOutcome( DLQCommandOutcome.SUCCESS );
-	}
-
-catch (MessagingException e) 
-	{
-	logr.error( "Unable to send email:", e );
-	if (resp != null)
-		{
-		String msg = e.getMessage();
-		
-		resp.setOutcome( DLQCommandOutcome.ERROR );
-		resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0007, appConfig, appConfig.configValue( ConfigProperty.EMAIL_SERVER ) ) );
-		resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_9999, appConfig, e.getClass().getSimpleName() ));
-		if ((msg != null) && (msg.strip().length() > 0))
-			resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_9999, appConfig, msg.strip() ) );
-		}
-	}
-
-return;	
-}
-
-
 
 
 
