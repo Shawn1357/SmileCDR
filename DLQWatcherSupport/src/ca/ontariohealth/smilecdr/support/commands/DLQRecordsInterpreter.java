@@ -42,7 +42,7 @@ logr.debug( "Entering: DLQRecordsInterpreter(ConsumerRecords)" );
 if (appCfg == null)
     throw new IllegalArgumentException( "appCfg parameter must not be null." );
 
-appConfig  = appCfg;
+appConfig     = appCfg;
 parserClassNm = appConfig.configValue( ConfigProperty.DLQ_PARSER_FQCN_CLASS );
 
 return;
@@ -60,7 +60,8 @@ if (kafkaRcrds == null)
 if (appCfg == null)
 	throw new IllegalArgumentException( "appCfg parameter must not be null." );
 
-appConfig  = appCfg;
+appConfig     = appCfg;
+parserClassNm = appConfig.configValue( ConfigProperty.DLQ_PARSER_FQCN_CLASS );
 
 extractDetailsList( dlqDetails, kafkaRcrds );
 

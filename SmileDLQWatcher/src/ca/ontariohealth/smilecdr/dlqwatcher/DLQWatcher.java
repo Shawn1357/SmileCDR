@@ -635,15 +635,18 @@ if (lister != null)
     {
     Long        loopStartedAt = System.currentTimeMillis();
     Long        pollInterval  = appConfig.configLong( ConfigProperty.KAFKA_CONSUMER_POLL_INTERVAL, Long.valueOf( 250L ) );
-    Long        maxWait       = appConfig.configLong( ConfigProperty.RESPONSE_WAIT_MILLIS, Long.valueOf( 10000L ) );
+    Long        maxWaitSecs   = appConfig.configLong( ConfigProperty.RESPONSE_WAIT_SECONDS, Long.valueOf( 10000L ) );
+    Long        maxWaitMillis = maxWaitSecs * 1000L;
     Duration    interval      = Duration.ofMillis( pollInterval );
     int         totalRcvd     = 0;
     boolean     loopAgain     = true;
     
+    logr.info( "Waiting for a max of {} seconds for Kafka to report {} entries...", maxWaitSecs, topicNm );
+    
     do
         {
         ConsumerRecords<String,String> rcrds = lister.poll( interval );
-        logr.info( "Received {} {} Event(s).", rcrds.count(), topicNm );
+        logr.debug( "Received {} {} Event(s).", rcrds.count(), topicNm );
         
         if ((rcrds != null) && (rcrds.count() > 0))
             {
@@ -680,7 +683,7 @@ if (lister != null)
         
         totalRcvd += rcrds.count();
         
-        loopAgain = ((System.currentTimeMillis() <= loopStartedAt + maxWait) &&
+        loopAgain = ((System.currentTimeMillis() <= loopStartedAt + maxWaitMillis) &&
                      ((totalRcvd == 0) || (rcrds.count() == 0)));
         }
     

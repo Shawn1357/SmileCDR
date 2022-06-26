@@ -97,7 +97,7 @@ else
 
 if (cmdsToSend != null)
     {
-    Long   maxRespWait = appConfig.configLong(  ConfigProperty.RESPONSE_WAIT_MILLIS );
+    Long   maxRespWait = appConfig.configLong(  ConfigProperty.RESPONSE_WAIT_SECONDS );
     Long   pauseForResp = appConfig.configLong( ConfigProperty.PAUSE_BEFORE_WAIT_FOR_RESPONSE );
     
 	for (String crntCmd : cmdsToSend)
@@ -140,14 +140,15 @@ return;
 
 
 
-private DLQResponseContainer    waitForResponse( DLQCommandContainer cmdSent, Long maxWaitMillis )
+private DLQResponseContainer    waitForResponse( DLQCommandContainer cmdSent, Long maxWaitSeconds )
 {
 logr.debug( "Entering: waitForResponse" );
-logr.debug( "Maximum wait for a response: {}", maxWaitMillis );
+logr.debug( "Maximum wait for a response: {} secs", maxWaitSeconds );
 
-DLQResponseContainer    resp         = null;
-String                  respChannel  = (cmdSent != null) ? cmdSent.getResponseChannelName() : null;
-Properties              maxPollRcrds = new Properties();
+DLQResponseContainer    resp          = null;
+String                  respChannel   = (cmdSent != null) ? cmdSent.getResponseChannelName() : null;
+Properties              maxPollRcrds  = new Properties();
+Long                    maxWaitMillis = maxWaitSeconds * 1000L;
 
 maxPollRcrds.put( "max.poll.records", "1" );
 
@@ -161,14 +162,14 @@ if ((cmdSent != null) && (respChannel != null) && (respChannel.length() > 0))
     Consumer<String,String> consumer     = KafkaConsumerHelper.createConsumer( appConfig, groupNm, respChannel, maxPollRcrds );
     UUID                    cmdID        = cmdSent.getCommandUUID();
    
-    
+    logr.info( "Waiting for a max of {} seconds for a response from the DLQ Watcher: ", maxWaitSeconds );
     do
         {
         ConsumerRecords<String,String>  rcrds = consumer.poll( pollInterval );
         
         if ((rcrds != null) && (rcrds.count() > 0))
             {
-            // Look for the specific repsonse pertaining to the command that
+            // Look for the specific response pertaining to the command that
             // was sent.
             logr.debug( "Received {} record(s) from Kafka.", rcrds.count() );
             for (ConsumerRecord<String,String> crnt : rcrds)

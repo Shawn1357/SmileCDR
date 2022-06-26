@@ -56,7 +56,7 @@ KAFKA_PARK_RETENTION_HOURS(     "parked.entry.retention.hours",  "Forever" ),
 
 QUIT_AFTER_MILLIS(              "quit.after.millis" ),
 PAUSE_BEFORE_WAIT_FOR_RESPONSE( "pause.before.response",         "0" ),
-RESPONSE_WAIT_MILLIS(           "response.wait.millis",          "30000" ),
+RESPONSE_WAIT_SECONDS(          "response.wait.seconds",         "30" ),
 
 EMAIL_NOTIFIER_CLASS_NAME(      "email.notifier.class" ),
 EMAIL_SERVER(                   "email.server.smtp" ),
