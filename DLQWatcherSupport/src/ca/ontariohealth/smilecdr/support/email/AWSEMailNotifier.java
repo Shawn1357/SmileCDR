@@ -54,12 +54,15 @@ public 	void	sendEMail( DLQResponseContainer		resp,
 						   DLQRecordsInterpreter	rcrds )
 
 {
-logr.debug( "Entering: sendEMail" );
+logr.debug( "Entering: {}.sendEMail", AWSEMailNotifier.class.getSimpleName() );
 
 Properties  emailProps = new Properties();
-emailProps.put( "mail.smtp.auth", "true" );
-emailProps.put( "mail.smtp.host", emailConnectionDetails().smtpServerName() );
-emailProps.put( "mail.smtp.port", emailConnectionDetails().smtpPortNumber().toString() );
+emailProps.put( "mail.transport.protocol",   "smtp" );
+emailProps.put( "mail.smtp.host",            emailConnectionDetails().smtpServerName() );
+emailProps.put( "mail.smtp.port",            emailConnectionDetails().smtpPortNumber() );
+emailProps.put( "mail.smtp.starttls.enable", appConfig.configBool( ConfigProperty.EMAIL_REQUIRE_SSL_CONNECTION ).toString() );
+emailProps.put( "mail.smtp.auth",            "true" );
+	
 
 Authenticator auth    = new SMTPAuthenticator( creds );
 String        msgBody = loadFileIntoString( rcrds );
@@ -87,7 +90,7 @@ try
     message.setSubject( expandVariables( emailTemplateDetails().subjectLine() ) );
     message.setContent( msgBody, "text/html" );
 
-    Transport.send(message);
+    Transport.send( message );
 
     if (resp != null)
         resp.setOutcome( DLQCommandOutcome.SUCCESS );
@@ -110,7 +113,7 @@ catch (MessagingException e)
         }
     }
 
-logr.debug( "Exiting: sendEMail" );
+logr.debug( "Entering: {}.sendEMail", AWSEMailNotifier.class.getSimpleName() );
 return;	
 }
 
