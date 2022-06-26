@@ -9,7 +9,6 @@
 #
 #
 EMail Body used to test Email Functionality:<p>
-(emailTemplate05.txt)<p>
 Environment: {{EnvironmentName}}
 <p>
 # Now string is formatted according to App Config property: timestamp.format

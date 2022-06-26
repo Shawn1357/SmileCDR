@@ -8,6 +8,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
+import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
+import ca.ontariohealth.smilecdr.support.config.Configuration;
+
 /**
  * @author adminuser
  *
@@ -97,6 +100,25 @@ else
 
 return rtrn;
 }
+
+
+
+public String       toString( Configuration appConfig, ConfigProperty tsFmtProperty )
+{
+String  tsFmtPattern = appConfig.configValue( tsFmtProperty );
+return toString( tsFmtPattern );
+}
+
+
+
+
+public String       toString( Configuration appConfig, String customTSFmtProperty )
+{
+String  tsFmtPattern = appConfig.configValue( customTSFmtProperty );
+return toString( tsFmtPattern );
+}
+
+
 
 
 

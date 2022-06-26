@@ -7,7 +7,6 @@
 #
 #
 Newly Arrived entries into the Smile Dead letter Queue:<p>
-<template01.txt)<p>
 <p>
 # Now string is formatted according to App Config property: timestamp.format
 Report Generated at: <b>{{Now}}</b><p>

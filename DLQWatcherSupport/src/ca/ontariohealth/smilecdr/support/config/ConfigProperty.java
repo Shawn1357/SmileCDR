@@ -60,7 +60,7 @@ RESPONSE_WAIT_MILLIS(           "response.wait.millis",          "30000" ),
 
 EMAIL_NOTIFIER_CLASS_NAME(      "email.notifier.class" ),
 EMAIL_SERVER(                   "email.server.smtp" ),
-EMAIL_SMPT_PORT(                "email.server.smtp.port",        "25" ),
+EMAIL_SMTP_PORT(                "email.server.smtp.port",        "25" ),
 EMAIL_CREDENTIALS_FILE(         "email.credentials.file" ),
 EMAIL_REQUIRE_SSL_CONNECTION(   "email.ssl.connection",          "true" ),
 

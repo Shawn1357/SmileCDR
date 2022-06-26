@@ -7,7 +7,6 @@
 #
 #
 Existing Entries into the Smile Long Term Parking Lot:<p>
-(template04.txt)<p>
 <p>
 # Now string is formatted according to App Config property: timestamp.format
 Report Generated at: <b>{{Now}}</b><p>

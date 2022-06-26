@@ -7,8 +7,6 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
 
-import javax.mail.MessagingException;
-
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -16,14 +14,12 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ca.ontariohealth.smilecdr.support.commands.DLQCommandOutcome;
 import ca.ontariohealth.smilecdr.support.commands.DLQRecordsInterpreter;
 import ca.ontariohealth.smilecdr.support.commands.DLQResponseContainer;
-import ca.ontariohealth.smilecdr.support.commands.ProcessingMessage;
-import ca.ontariohealth.smilecdr.support.commands.ProcessingMessageCode;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
-import ca.ontariohealth.smilecdr.support.email.BasicEMailNotifier;
+import ca.ontariohealth.smilecdr.support.email.EMailNotificationType;
+import ca.ontariohealth.smilecdr.support.email.EMailNotifier;
 
 /**
  * @author adminuser
@@ -86,7 +82,7 @@ while (!threadIndicatedToStop())
             logr.debug( "Received {} DLQ Record(s).", dlqRecords.count() );
             
             dlqInterp = new DLQRecordsInterpreter( dlqRecords, appConfig() );
-            sendEMail( null, notificationEmailTempateName(), dlqInterp );
+            sendEMail( null, dlqInterp );
             }
         
         dlqConsumer.commitAsync();
@@ -101,10 +97,12 @@ return;
 
 
 private void sendEMail( DLQResponseContainer	resp,
-						String					emailTemplateNm,
 						DLQRecordsInterpreter	rcrds )
 
 {
+EMailNotifier.sendEMail( appConfig(), emailTypeToSend(), resp, rcrds );
+
+/*
 try
 	{
 	BasicEMailNotifier.sendEMail( appConfig(), emailTemplateNm, rcrds );
@@ -124,6 +122,7 @@ catch (MessagingException e)
 			resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_9999, appConfig(), msg.strip() ) );
 		}
 	}
+*/
 
 return;	
 }
@@ -188,7 +187,7 @@ return rtrn;
 }
 
 
-public abstract String  kafkaTopicToWatch();
-public abstract String  kafkaConsumerGroupName();
-public abstract String  notificationEmailTempateName();
+public abstract String                  kafkaTopicToWatch();
+public abstract EMailNotificationType   emailTypeToSend();
+public abstract String                  kafkaConsumerGroupName();
 }

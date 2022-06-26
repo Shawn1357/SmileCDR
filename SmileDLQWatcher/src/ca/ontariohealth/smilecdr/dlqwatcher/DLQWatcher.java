@@ -10,8 +10,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
-import javax.mail.MessagingException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +28,8 @@ import ca.ontariohealth.smilecdr.support.commands.ProcessingMessageCode;
 import ca.ontariohealth.smilecdr.support.commands.json.JSONApplicationSupport;
 import ca.ontariohealth.smilecdr.support.commands.response.KeyValue;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
-import ca.ontariohealth.smilecdr.support.email.BasicEMailNotifier;
+import ca.ontariohealth.smilecdr.support.email.EMailNotificationType;
+import ca.ontariohealth.smilecdr.support.email.EMailNotifier;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaAdministration;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaConsumerHelper;
 import ca.ontariohealth.smilecdr.support.kafka.KafkaProducerHelper;
@@ -461,7 +460,7 @@ DLQRecordsInterpreter   rcrds           = null;
 String                  groupNm         = null;
 String                  topicNm         = null;
 String                  classNm         = null;
-String                  emailTemplateNm = null;
+EMailNotificationType   emailType       = null;
 
 if ((cmd != null) && (cmd.getCommandToIssue() != null))
     {
@@ -524,12 +523,13 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
          
         case    DLQEMAIL:
             logr.info( "Starting process to email DLQ entries." );
-            groupNm = appConfig.configValue( ConfigProperty.KAFKA_DLQ_LISTER_GROUP_ID );
-            topicNm = appConfig.configValue( ConfigProperty.KAFKA_DLQ_TOPIC_NAME );
-            classNm = appConfig.configValue( ConfigProperty.DLQ_PARSER_FQCN_CLASS );
-    
-            resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
+            groupNm   = appConfig.configValue( ConfigProperty.KAFKA_DLQ_LISTER_GROUP_ID );
+            topicNm   = appConfig.configValue( ConfigProperty.KAFKA_DLQ_TOPIC_NAME );
+            classNm   = appConfig.configValue( ConfigProperty.DLQ_PARSER_FQCN_CLASS );
+            emailType = EMailNotificationType.ALL_DLQ_ENTRIES;
+
             rcrds = listTopicEntries( resp, groupNm, topicNm, classNm );
+            EMailNotifier.sendEMail( appConfig, emailType, resp, rcrds );
             break;
         
         case    PARKLIST:
@@ -544,17 +544,21 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
      
         case    PARKEMAIL:
             logr.info( "Starting process to email Parking Lot entries." );
-            groupNm = appConfig.configValue( ConfigProperty.KAFKA_PARK_LISTER_GROUP_ID );
-            topicNm = appConfig.configValue( ConfigProperty.KAFKA_PARK_TOPIC_NAME );
-            classNm = appConfig.configValue( ConfigProperty.DLQ_PARSER_FQCN_CLASS );
-    
-            resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
+            groupNm   = appConfig.configValue( ConfigProperty.KAFKA_PARK_LISTER_GROUP_ID );
+            topicNm   = appConfig.configValue( ConfigProperty.KAFKA_PARK_TOPIC_NAME );
+            classNm   = appConfig.configValue( ConfigProperty.DLQ_PARSER_FQCN_CLASS );
+            emailType = EMailNotificationType.ALL_PARK_ENTRIES;
+   
             rcrds = listTopicEntries( resp, groupNm, topicNm, classNm );
+            EMailNotifier.sendEMail( appConfig, emailType, resp, rcrds );
             break;
         
         case    TESTEMAIL:
             logr.info( "Starting process to send a Test EMail." );
-            resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
+            emailType = EMailNotificationType.TEST_EMAIL;
+            
+            rcrds = null;
+            EMailNotifier.sendEMail( appConfig, emailType, resp, rcrds );
             break;
         
         case    START:
@@ -585,37 +589,6 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
         }
     
     resp.recordCompleteTimestamp();
-    
-    /*
-     * Process further if the request is email the response.
-     * 
-     */
-    
-    switch (cmd.getCommandToIssue())
-        {
-        case    DLQEMAIL:
-            // The response has some number of records to be emailed.
-            // Lets do that:
-            emailTemplateNm = appConfig.configValue( ConfigProperty.EMAIL_DLQLIST_TEMPLATE_NAME );
-            sendEMail( resp, emailTemplateNm, rcrds );
-            break;
-        
-        case    PARKEMAIL:
-            // The response has some number of records to be emailed.
-            emailTemplateNm = appConfig.configValue( ConfigProperty.EMAIL_PARKLIST_TEMPLATE_NAME );
-            sendEMail( resp, emailTemplateNm, rcrds );
-            break;
-
-        case    TESTEMAIL:
-            // Sending the test email.
-            emailTemplateNm = appConfig.configValue( ConfigProperty.EMAIL_TESTEMAIL_TEMPLATE_NAME );
-            sendEMail( resp, emailTemplateNm, null );
-            break;
-            
-        default:
-            // Nothing to do... we can skip this part.
-            break;
-        }
     }
 
 

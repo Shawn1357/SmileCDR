@@ -7,7 +7,6 @@
 #
 #
 Existing Entries into the Smile Dead Letter Queue:<p>
-(template02)<p>
 Environment: {{EnvironmentName}}
 <p>
 # Now string is formatted according to App Config property: timestamp.format

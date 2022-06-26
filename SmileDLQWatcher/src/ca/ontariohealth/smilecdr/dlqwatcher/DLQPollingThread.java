@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
+import ca.ontariohealth.smilecdr.support.email.EMailNotificationType;
 
 
 /**
@@ -49,13 +50,11 @@ return consumerGroup;
 
 
 @Override
-public String notificationEmailTempateName()
+public EMailNotificationType emailTypeToSend()
 {
-String  emailTemplate = appConfig().configValue( ConfigProperty.EMAIL_NEWDLQ_TEMPLATE_NAME );
-
-
-logr.debug( "EMail Template for New Entries: {}", emailTemplate );
-return emailTemplate;
+return EMailNotificationType.NEW_DLQ_ENTRIES;
 }
+
+
 
 }
