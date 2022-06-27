@@ -222,6 +222,10 @@ expandedLine = expandedLine.replace( "{{Now}}",                 emailedAt.asLoca
 
 expandedLine = expandedLine.replace( "{{EnvironmentName}}",     appConfig.getEnvironmentName() != null ? appConfig.getEnvironmentName().envName() : "" );
 expandedLine = expandedLine.replace( "{{InstanceName}}",        appConfig.getInstanceName()    != null ? appConfig.getInstanceName().instName()   : "" );
+expandedLine = expandedLine.replace( "{{AllowedTimeOnDLQ}}",    appConfig.configValue( ConfigProperty.DLQ_PARK_ENTRIES_AFTER_HOURS, "unknown" ));
+expandedLine = expandedLine.replace( "{{DLQPurgeTime}}",        appConfig.configValue( ConfigProperty.KAFKA_DLQ_RETENTION_HOURS, "unknown" ) );
+expandedLine = expandedLine.replace( "{{ParkingLotTopicName}}", appConfig.configValue( ConfigProperty.KAFKA_PARK_TOPIC_NAME, "unknown" ) );
+expandedLine = expandedLine.replace( "{{ParkingLotPurgeTime}}", appConfig.configValue( ConfigProperty.KAFKA_PARK_RETENTION_HOURS, "unknown" ) );
 
 if (dlqInterp != null)
     {
