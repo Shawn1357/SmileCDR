@@ -3,7 +3,9 @@
  */
 package ca.ontariohealth.smilecdr.support.commands;
 
+import java.awt.Container;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,6 +33,80 @@ private String                              issueChannelName    = null;
 private String                              responseChannelName = null;
 private DLQCommand                          commandToIssue      = null;
 private List<DLQCommandParam>               params              = new ArrayList<>();
+
+
+
+/**
+ * Constructs a Command Container from the supplied command line specifier.
+ * The format of the command line specifier is:<p>
+ * <pre>
+ *     command:param1=value1,param2=value2....
+ * </pre>
+ * Of these, only the <code>command</code> is required.
+ * <p>
+ * @param cmdLineStr
+ * @return
+ */
+public static DLQCommandContainer   fromCommandLine( String     issueChannelNm,
+                                                     String     responseChannelNm,
+                                                     String     cmdLineStr )
+{
+DLQCommandContainer cmdContainer = fromCommandLine( cmdLineStr );
+
+cmdContainer.setIssueChannelName( issueChannelNm );
+cmdContainer.setResponseChannelName( responseChannelNm );
+
+return cmdContainer;
+}
+
+
+
+
+/**
+ * Constructs a Command Container from the supplied command line specifier.
+ * The format of the command line specifier is:<p>
+ * <pre>
+ *     command:param1=value1,param2=value2....
+ * </pre>
+ * Of these, only the <code>command</code> is required.
+ * <p>
+ * @param cmdLineStr
+ * @return
+ */
+public static DLQCommandContainer   fromCommandLine( String     cmdLineStr )
+{
+DLQCommandContainer cmdContainer = new DLQCommandContainer();
+
+if ((cmdLineStr != null) && (cmdLineStr.length() > 0))
+    {
+    String[]                cmdStrs   = cmdLineStr.split( ":", 2 );
+    String                  cmdStr    = null;
+    List<DLQCommandParam>   cmdParms  = null;
+    
+    if (cmdStrs.length >= 1)
+        cmdStr = cmdStrs[0];
+    
+    if (cmdStrs.length >= 2)
+        cmdParms = DLQCommandParam.fromCommandLine( cmdStrs[1].strip() );
+    
+    else
+        cmdParms = DLQCommandParam.fromCommandLine( null );
+    
+    DLQCommand  cmd = DLQCommand.valueOf( cmdStr );
+    
+    cmdContainer.setCommandToIssue( cmd );
+    cmdContainer.setCommandParams( cmdParms );
+    }
+
+else
+    {
+    cmdContainer.setCommandToIssue( DLQCommand.UNKNOWN );
+    cmdContainer.setCommandParams( Collections.emptyList() );
+    }
+    
+return cmdContainer;
+}
+
 
 
 

@@ -4,8 +4,6 @@
 package ca.ontariohealth.smilecdr.dlqwatchercontrol;
 
 import java.time.Duration;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -26,9 +24,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 
 import ca.ontariohealth.smilecdr.BaseApplication;
 import ca.ontariohealth.smilecdr.support.MyInstant;
-import ca.ontariohealth.smilecdr.support.commands.DLQCommand;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandContainer;
-import ca.ontariohealth.smilecdr.support.commands.DLQCommandParam;
 import ca.ontariohealth.smilecdr.support.commands.DLQResponseContainer;
 import ca.ontariohealth.smilecdr.support.commands.json.JSONApplicationSupport;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
@@ -310,30 +306,8 @@ if ((cmdLine != null) && (cmdLine.length() > 0))
     {
     String                  issueChannel = appConfig.configValue( ConfigProperty.CONTROL_TOPIC_NAME_COMMAND );
     String                  respChannel  = appConfig.configValue( ConfigProperty.CONTROL_TOPIC_NAME_RESPONSE );
-    String[]                args         = cmdLine.split( " " );
-    DLQCommand              cmd          = null;
-    List<DLQCommandParam>   parms        = new LinkedList<>();
-    int                     ndx          = 0;
-    
-    for (String crnt : args)
-        {
-        if (ndx++ == 0)
-            cmd = DLQCommand.valueOf( crnt );
-        
-        else
-            {
-            DLQCommandParam newParm = new DLQCommandParam( crnt );
-            parms.add( newParm );
-            }
-        }
-    
-    if ((cmd != null) && (cmd != DLQCommand.UNKNOWN))
-        {
-        rtrn = new DLQCommandContainer( issueChannel,
-                                        respChannel,
-                                        cmd,
-                                        parms );
-        }
+
+    rtrn = DLQCommandContainer.fromCommandLine( issueChannel, respChannel, cmdLine );
     }
 
 return rtrn;

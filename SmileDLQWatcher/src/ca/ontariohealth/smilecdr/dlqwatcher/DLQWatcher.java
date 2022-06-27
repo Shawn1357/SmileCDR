@@ -378,39 +378,12 @@ DLQCommandContainer cmdLineCmd = null;
 
 if ((initCmd != null) && (initCmd.length() > 0))
     {
-    DLQCommand  newCmdType = DLQCommand.valueOf( initCmd );
+    cmdLineCmd = DLQCommandContainer.fromCommandLine( initCmd );
     
-    if (newCmdType != null)
-        {
-        cmdLineCmd = new DLQCommandContainer();
-        
-        switch (newCmdType)
-            {
-            case    HELLO:
-            case    LIST:
-            case    START:
-            case    STOP:
-            case    DLQLIST:
-            case    DLQEMAIL:
-            case    PARKLIST:
-            case    PARKEMAIL:
-            case	TOPICLIST:
-            case    TESTEMAIL:
-            case    QUIT:
-                cmdLineCmd.setCommandToIssue( newCmdType );
-                break;
-                
-            case    UNKNOWN:
-                logr.error( "Unrecognized Command Line Initial Command: '{}' - Ignoring...", initCmd );
-                break;
-                
-            default:
-                logr.error( "Unexpected Command Line Initial Command: '{}' - Ignoring...", initCmd );
-                newCmdType = null;
-                break;
-            }
-        }
+    if (cmdLineCmd.getCommandToIssue() == DLQCommand.UNKNOWN)
+        logr.error( "Unrecognized Command Line Initial Command: '{}' - Ignoring...", initCmd );
     }
+
 return cmdLineCmd;
 }
 
