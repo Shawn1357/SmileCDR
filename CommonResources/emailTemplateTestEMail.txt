@@ -21,8 +21,7 @@ Email Generated at: <b>{{Now}}</b><p>
 <li>Allowed Hours on DLQ: {{AllowedTimeOnDLQ}}
 <li>Hours before Bundles will be purged from DLQ: {{DLQPurgeTime}}
 <li>Parked Entries Kafka Topic: {{ParkingLotTopicName}}
-<li>Hours allowed on the Parking Lot Topic: {{ParkingLotPurgeTime}}
+<li>Hours Allowed on the Parking Lot Topic: {{ParkingLotPurgeTime}}
 </ul>
 <p>
-Yours truly,<br>
-Your Favorite DLQ Watcher Team<p>
+This is an automated email, <b>DO NOT REPLY<b><p>

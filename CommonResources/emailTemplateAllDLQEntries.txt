@@ -21,5 +21,4 @@ Detected DLQ Record Count: <i>{{DLQRecordCount}}</i><p>
 
 </pre>
 <p>
-Yours truly,<p>
-Your Favorite DLQ Watcher Team<p>
+This is an automated email, <b>DO NOT REPLY<b><p>

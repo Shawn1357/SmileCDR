@@ -168,7 +168,7 @@ while (continueChecking)
     
     if ((dlqRecords != null) && (dlqRecords.count() > 0)) // Zero or one record
         {
-        logr.debug( "Received {} DLQ Record(s).", dlqRecords.count() );
+        logr.debug( "Received {} DLQ Record(s) by Parking Thread.", dlqRecords.count() );
         
         
         ConsumerRecord<String,String> dlqRecord = null;
@@ -181,7 +181,7 @@ while (continueChecking)
         Long  rcrdOffset = dlqRecord.offset();
         if ((lastParkedOffset != null) && (lastParkedOffset >= rcrdOffset))
             {
-            //logr.debug( "Parkable record has already been parked. Skipping." );
+            logr.debug( "Parkable record has already been parked. Skipping." );
             continue;
             }
         
@@ -215,6 +215,7 @@ while (continueChecking)
                         
                     try
                         {
+                    	logr.debug( "Sending Bundle ID {} to the Park Topic.", crntInterp.resourceID() );
                         RecordMetadata meta = parkProducer.send( parkedRcrd ).get();
                         commitMove          = true;
                         
@@ -248,12 +249,16 @@ while (continueChecking)
                     
                     if (commitMove)
                         {
+                    	logr.debug( "Committing move to Park topic." );
                         parkProducer.commitTransaction();
                         dlqConsumer.commitSync();
                         }
                     
                     else
+                    	{
+                    	logr.debug( "Aborting move to Park topic." );
                         parkProducer.abortTransaction();
+                    	}
                     }
                 
                 else
