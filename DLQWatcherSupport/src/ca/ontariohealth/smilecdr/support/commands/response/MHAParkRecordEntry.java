@@ -14,6 +14,14 @@ import ca.ontariohealth.smilecdr.support.config.Configuration;
  */
 public class MHAParkRecordEntry extends MHADLQRecordEntry
 {
+private static String[]     CSV_HEADERS = { "ResourceType",
+                                            "ResourceID",
+                                            "ParkingLotEntryEpochMillis",
+                                            "ParkingLotEntryLocalTimeStamp",
+                                            "DurationOnParkingLot"
+                                          };
+
+
 public MHAParkRecordEntry( ConsumerRecord<String,String> dlqRcrd, Configuration appCfg )
 {
 super( dlqRcrd, appCfg );
@@ -30,6 +38,14 @@ public MHAParkRecordEntry( MyInstant dlqEntryTS,
 super( dlqEntryTS, resourceType, resourceID );
 return;
 }
+
+
+@Override
+public String[] csvColumnHeaders()
+{
+return MHAParkRecordEntry.CSV_HEADERS;
+}
+
 
 
 }

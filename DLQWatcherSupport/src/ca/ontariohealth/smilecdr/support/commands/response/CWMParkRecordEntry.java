@@ -14,6 +14,15 @@ import ca.ontariohealth.smilecdr.support.config.Configuration;
  */
 public class CWMParkRecordEntry extends CWMDLQRecordEntry
 {
+private static String[]     CSV_HEADERS = { "SubscriptionID",
+        "ResourceType",
+        "ResourceID",
+        "ParkingLotEntryEpochMillis",
+        "ParkingLotEntryLocalTimeStamp",
+        "DurationOnParkingLot"
+      };
+
+
 public CWMParkRecordEntry( ConsumerRecord<String,String> dlqRcrd, Configuration appCfg )
 {
 super( dlqRcrd, appCfg );
@@ -31,6 +40,14 @@ public CWMParkRecordEntry( MyInstant dlqEntryTS,
 super( dlqEntryTS, subscriptionID, resourceType, resourceID );
 return;
 }
+
+
+@Override
+public String[] csvColumnHeaders()
+{
+return CWMParkRecordEntry.CSV_HEADERS;
+}
+
 
 
 }

@@ -195,7 +195,7 @@ return;
 @Override
 public String[] csvColumnHeaders()
 {
-return CSV_HEADERS;
+return MHADLQRecordEntry.CSV_HEADERS;
 }
 
 
