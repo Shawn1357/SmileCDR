@@ -602,7 +602,7 @@ private DLQRecordsInterpreter    listTopicEntries( DLQResponseContainer resp,
                                                    String               topicNm,
                                                    String               kafkaParserClassName )
 {
-DLQRecordsInterpreter interpRcrds        = new DLQRecordsInterpreter( appConfig );
+DLQRecordsInterpreter interpRcrds        = new DLQRecordsInterpreter( appConfig, kafkaParserClassName );
 Properties            disabledAutoCommit = new Properties();     
 HashSet<String>       resourceIDs        = new HashSet<>();     // We keep a set so that we don't list a resource twice.
 

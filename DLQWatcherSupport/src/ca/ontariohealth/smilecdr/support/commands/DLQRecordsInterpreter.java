@@ -35,15 +35,18 @@ private static final String      CSV_FLD_SEP = ", ";
 // private MyInstant   reportStartTime = MyInstant.now();
 
 
-public  DLQRecordsInterpreter( Configuration appCfg )
+public  DLQRecordsInterpreter( Configuration appCfg, String parserClassName )
 {
 logr.debug( "Entering: DLQRecordsInterpreter(ConsumerRecords)" );
 
 if (appCfg == null)
     throw new IllegalArgumentException( "appCfg parameter must not be null." );
 
+else if ((parserClassName == null) || (parserClassName.strip().length() == 0))
+	throw new IllegalArgumentException( "parserClassName must not be null or zero-length." );
+
 appConfig     = appCfg;
-parserClassNm = appConfig.configValue( ConfigProperty.DLQ_PARSER_FQCN_CLASS );
+parserClassNm = parserClassName;
 
 return;
 }
