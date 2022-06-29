@@ -22,20 +22,22 @@ import ca.ontariohealth.smilecdr.support.config.InstanceName;
 
 public abstract class BaseApplication 
 {
-static final Logger 						logr      		 = LoggerFactory.getLogger(BaseApplication.class);
+static final Logger 						logr      		  = LoggerFactory.getLogger(BaseApplication.class);
 
-protected static final	String 				CLI_APP_NM_SHRT  = "a";
-protected static final	String 				CLI_APP_NM_LONG  = "appName";
-protected static final	String 				CLI_CFG_NM_SHRT  = "c";
-protected static final	String 				CLI_CFG_NM_LONG  = "cfgFile";
-protected static final	String 				CLI_ENV_NM_SHRT  = "e";
-protected static final	String 				CLI_ENV_NM_LONG  = "envName";
-protected static final	String 				CLI_HLP_NM_SHRT  = "h";
-protected static final	String 				CLI_HLP_NM_LONG  = "help";
-protected static final  String              CLI_INST_NM_SHRT = "n";
-protected static final  String              CLI_INST_NM_LONG = "instName";
-protected static final  String              CLI_SLNT_NM_SHRT = "q";
-protected static final  String              CLI_SLNT_NM_LONG = "quiet";
+protected static final	String 				CLI_APP_NM_SHRT   = "a";
+protected static final	String 				CLI_APP_NM_LONG   = "appName";
+protected static final	String 				CLI_CFG_NM_SHRT   = "c";
+protected static final	String 				CLI_CFG_NM_LONG   = "cfgFile";
+protected static final  String              CLI_STRT_DEL_SHRT = "d";
+protected static final  String				CLI_STRT_DEL_LONG = "startup-delay";
+protected static final	String 				CLI_ENV_NM_SHRT   = "e";
+protected static final	String 				CLI_ENV_NM_LONG   = "envName";
+protected static final	String 				CLI_HLP_NM_SHRT   = "h";
+protected static final	String 				CLI_HLP_NM_LONG   = "help";
+protected static final  String              CLI_INST_NM_SHRT  = "n";
+protected static final  String              CLI_INST_NM_LONG  = "instName";
+protected static final  String              CLI_SLNT_NM_SHRT  = "q";
+protected static final  String              CLI_SLNT_NM_LONG  = "quiet";
 
 protected               Instant             appStartTime     = Instant.now();
 
@@ -406,6 +408,41 @@ if (startProcessing)
 	appConfig.loadConfiguration( appName, envName, instName, cliCfgFile );
 	}
 
+/*
+ * Check if we should delay processing start.
+ * 
+ */
+
+Integer	startDelay = appConfig.configInt( ConfigProperty.STARTUP_DELAY_SECS );
+if (cmdLine.hasOption( CLI_STRT_DEL_LONG ))
+	startDelay = Integer.parseInt( cmdLine.getOptionValue( CLI_STRT_DEL_LONG ) );
+
+if (startDelay != null)
+	{
+	if (startDelay < 0)
+		startDelay = 0;
+	
+	if (startDelay > 0)
+		{
+		logr.debug( "An application startup delay has been specified for {} second(s)...", startDelay );
+		try 
+			{
+			Thread.sleep( startDelay * 1000 );
+			} 
+		catch (InterruptedException e)
+			{
+			// Nothing to do... ignore the fact we didn't finish the delay.
+			logr.warn( "The startup delay was interrupted because: {}", e.getMessage() );
+			}
+		logr.debug( "Startup delay is complete. Application startup is continuing." );
+		}
+	}
+
+/*
+ * Start the application for real...
+ * 
+ */
+
 if (startProcessing)
 	this.launch();
 
@@ -441,12 +478,13 @@ return parsedCmdLine;
 
 protected void	createCLIOptions( Options cmdLineOpts )
 {
-cmdLineOpts.addOption( CLI_CFG_NM_SHRT,  CLI_CFG_NM_LONG,  true,  "Configuration Properties file name");
-cmdLineOpts.addOption( CLI_APP_NM_SHRT,  CLI_APP_NM_LONG,  true,  "Set the name of the application");
-cmdLineOpts.addOption( CLI_ENV_NM_SHRT,  CLI_ENV_NM_LONG,  true,  "Set Operating Environment Name (DEV, tst01, ...)" );
-cmdLineOpts.addOption( CLI_INST_NM_SHRT, CLI_INST_NM_LONG, true,  "Set the instance name of multiple instance of an app." );
-cmdLineOpts.addOption( CLI_SLNT_NM_SHRT, CLI_SLNT_NM_SHRT, false, "Start the instance with no banner information." );
-cmdLineOpts.addOption( CLI_HLP_NM_SHRT,  CLI_HLP_NM_LONG,  false, "Display Command Line Usage information.");
+cmdLineOpts.addOption( CLI_CFG_NM_SHRT,   CLI_CFG_NM_LONG,   true,  "Configuration Properties file name");
+cmdLineOpts.addOption( CLI_STRT_DEL_SHRT, CLI_STRT_DEL_LONG, true,  "Specify (in seconds) a delay in processing on start up." ); 
+cmdLineOpts.addOption( CLI_APP_NM_SHRT,   CLI_APP_NM_LONG,   true,  "Set the name of the application");
+cmdLineOpts.addOption( CLI_ENV_NM_SHRT,   CLI_ENV_NM_LONG,   true,  "Set Operating Environment Name (DEV, tst01, ...)" );
+cmdLineOpts.addOption( CLI_INST_NM_SHRT,  CLI_INST_NM_LONG,  true,  "Set the instance name of multiple instance of an app." );
+cmdLineOpts.addOption( CLI_SLNT_NM_SHRT,  CLI_SLNT_NM_SHRT,  false, "Start the instance with no banner information." );
+cmdLineOpts.addOption( CLI_HLP_NM_SHRT,   CLI_HLP_NM_LONG,   false, "Display Command Line Usage information.");
 
 return;
 }

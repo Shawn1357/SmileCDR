@@ -24,6 +24,8 @@ COPYRIGHT_HOLDER(               "copyright.holder",              "Accenture, Inc
 COPYRIGHT_YEAR_START(           "copyright.year.start",          String.valueOf( LocalDate.now().getYear() ) ),
 COPYRIGHT_YEAR_END(             "copyright.year.end" ),
 
+STARTUP_DELAY_SECS(             "startup.delay.secs",            "0" ),
+
 DLQ_PARSER_FQCN_CLASS(          "dlq.parser.class.name" ),
 PARK_PARSER_FQCN_CLASS(         "park.parser.class.name" ),
 
