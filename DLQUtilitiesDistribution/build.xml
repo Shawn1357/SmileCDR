@@ -25,22 +25,25 @@
 	<property name="configPropsFileNm"               value="DLQWatcher.properties" />
 	<property name="configPropsSrcFile"              value="${workspaceDir}/${CommonResourcesProj}/${configPropsFileNm}" />
 	
-    <property name="emailCredentialsFileNm"          value="emailcredentials.cred" />
-	<property name="emailCredentialsSrcFile"         value="${workspaceDir}/${CommonResourcesProj}/${emailCredentialsFileNm}" />
+    <property name="emailAWSCredentialsFileNm"       value="emailcredentials-oh-aws.cred" />
+	<property name="emailAWSCredentialsSrcFile"      value="${workspaceDir}/${CommonResourcesProj}/${emailAWSCredentialsFileNm}" />
 	
-    <property name="emailTemplate01FileNm"           value="emailTemplate01.txt" />
+    <property name="emailLCLCredentialsFileNm"       value="emailcredentials-lcl-dev.cred" />
+    <property name="emailLCLCredentialsSrcFile"      value="${workspaceDir}/${CommonResourcesProj}/${emailAWSCredentialsFileNm}" />
+    
+    <property name="emailTemplate01FileNm"           value="emailTemplateAllDLQEntries.txt" />
 	<property name="emailTemplate01SrcFile"          value="${workspaceDir}/${CommonResourcesProj}/${emailTemplate01FileNm}" />
 	
-    <property name="emailTemplate02FileNm"           value="emailTemplate02.txt" />
+    <property name="emailTemplate02FileNm"           value="emailTemplateAllParkEntries.txt" />
     <property name="emailTemplate02SrcFile"          value="${workspaceDir}/${CommonResourcesProj}/${emailTemplate02FileNm}" />
     
-    <property name="emailTemplate03FileNm"           value="emailTemplate03.txt" />
+    <property name="emailTemplate03FileNm"           value="emailTemplateNewDLQEntries.txt" />
     <property name="emailTemplate03SrcFile"          value="${workspaceDir}/${CommonResourcesProj}/${emailTemplate03FileNm}" />
     
-    <property name="emailTemplate04FileNm"           value="emailTemplate04.txt" />
+    <property name="emailTemplate04FileNm"           value="emailTemplateNewParkEntries.txt" />
     <property name="emailTemplate04SrcFile"          value="${workspaceDir}/${CommonResourcesProj}/${emailTemplate04FileNm}" />
     
-    <property name="emailTemplate05FileNm"           value="emailTemplate05.txt" />
+    <property name="emailTemplate05FileNm"           value="emailTemplateTestEMail.txt" />
     <property name="emailTemplate05SrcFile"          value="${workspaceDir}/${CommonResourcesProj}/${emailTemplate05FileNm}" />
     
     <property name="dlqWatcherControlLogbackFileNm"  value="DLQWatcherControl-logback.xml" />
@@ -53,7 +56,7 @@
     <property name="genericLogbackSrcFile"           value="${workspaceDir}/${CommonResourcesProj}/${genericLogbackFileNm}" />
 
 	<property name="javabeansActFrmwrkJarNm"         value="activation.jar" />
-	<property name="javabeansActFrmwrkJarSrcFile"    value="${workspaceDir}/${ThirdPartyProj}/JavaBeansActivationFramework/jaf-1_1_1/${javabeansActFrmwrkJarNm}" />
+	<property name="javabeansActFrmwrkJarSrcFile"    value="${workspaceDir}/${ThirdPartyProj}/JavaBeansActivationFramework/jaf-1.1.1/${javabeansActFrmwrkJarNm}" />
 	
 	<property name="javamailJarNm"                   value="javax.mail-1.6.2.jar" />
 	<property name="javamailJarSrcFile"              value="${workspaceDir}/${ThirdPartyProj}/JavaMail/${javamailJarNm}" />
@@ -83,7 +86,8 @@
 	
 	<target name="assembleResources">
 		<copy file="${configPropsSrcFile}"                                   todir="${targetDirectory}"/>
-		<copy file="${emailCredentialsSrcFile}"                              todir="${targetDirectory}"/>
+		<copy file="${emailAWSCredentialsSrcFile}"                           todir="${targetDirectory}"/>
+        <copy file="${emailLCLCredentialsSrcFile}"                           todir="${targetDirectory}"/>
         <copy file="${emailTemplate01SrcFile}"                               todir="${targetDirectory}"/>
         <copy file="${emailTemplate02SrcFile}"                               todir="${targetDirectory}"/>
         <copy file="${emailTemplate03SrcFile}"                               todir="${targetDirectory}"/>

@@ -413,30 +413,34 @@ if (startProcessing)
  * 
  */
 
-Integer	startDelay = appConfig.configInt( ConfigProperty.STARTUP_DELAY_SECS );
-if (cmdLine.hasOption( CLI_STRT_DEL_LONG ))
-	startDelay = Integer.parseInt( cmdLine.getOptionValue( CLI_STRT_DEL_LONG ) );
-
-if (startDelay != null)
+if (!displayUsage)
 	{
-	if (startDelay < 0)
-		startDelay = 0;
+	Integer	startDelay = appConfig.configInt( ConfigProperty.STARTUP_DELAY_SECS );
+	if (cmdLine.hasOption( CLI_STRT_DEL_LONG ))
+		startDelay = Integer.parseInt( cmdLine.getOptionValue( CLI_STRT_DEL_LONG ) );
 	
-	if (startDelay > 0)
+	if (startDelay != null)
 		{
-		logr.debug( "An application startup delay has been specified for {} second(s)...", startDelay );
-		try 
+		if (startDelay < 0)
+			startDelay = 0;
+		
+		if (startDelay > 0)
 			{
-			Thread.sleep( startDelay * 1000 );
-			} 
-		catch (InterruptedException e)
-			{
-			// Nothing to do... ignore the fact we didn't finish the delay.
-			logr.warn( "The startup delay was interrupted because: {}", e.getMessage() );
+			logr.debug( "An application startup delay has been specified for {} second(s)...", startDelay );
+			try 
+				{
+				Thread.sleep( startDelay * 1000 );
+				} 
+			catch (InterruptedException e)
+				{
+				// Nothing to do... ignore the fact we didn't finish the delay.
+				logr.warn( "The startup delay was interrupted because: {}", e.getMessage() );
+				}
+			logr.debug( "Startup delay is complete. Application startup is continuing." );
 			}
-		logr.debug( "Startup delay is complete. Application startup is continuing." );
 		}
 	}
+
 
 /*
  * Start the application for real...
