@@ -536,7 +536,7 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
             logr.info( "Starting process to list Parking Lot entries." );
             groupNm = appConfig.configValue( ConfigProperty.KAFKA_PARK_LISTER_GROUP_ID );
             topicNm = appConfig.configValue( ConfigProperty.KAFKA_PARK_TOPIC_NAME );
-            classNm = appConfig.configValue( ConfigProperty.DLQ_PARSER_FQCN_CLASS );
+            classNm = appConfig.configValue( ConfigProperty.PARK_PARSER_FQCN_CLASS );
     
             resp.addProcessingMessage( new ProcessingMessage( ProcessingMessageCode.DLQW_0000, appConfig ) );            
             rcrds = listTopicEntries( resp, groupNm, topicNm, classNm );
@@ -546,7 +546,7 @@ if ((cmd != null) && (cmd.getCommandToIssue() != null))
             logr.info( "Starting process to email Parking Lot entries." );
             groupNm   = appConfig.configValue( ConfigProperty.KAFKA_PARK_LISTER_GROUP_ID );
             topicNm   = appConfig.configValue( ConfigProperty.KAFKA_PARK_TOPIC_NAME );
-            classNm   = appConfig.configValue( ConfigProperty.DLQ_PARSER_FQCN_CLASS );
+            classNm   = appConfig.configValue( ConfigProperty.PARK_PARSER_FQCN_CLASS );
             emailType = EMailNotificationType.ALL_PARK_ENTRIES;
    
             rcrds = listTopicEntries( resp, groupNm, topicNm, classNm );

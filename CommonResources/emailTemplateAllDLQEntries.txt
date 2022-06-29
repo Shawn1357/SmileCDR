@@ -1,9 +1,15 @@
 # Lines beginning with a '#' are not (normally) included in the email.
 # Available Expansion Variables:
-#   {{Now}}                 - Formatted timestamp when the report was generated.
-#   {{DLQRecordCount}}      - Number of new Dead Letter Queue entries being reported.
-#   {{DLQRecordsCSVHeader}} - The column headers for the CSV report.
-#   {{DLQRecordsAsCSV}}     - Each of the DLQ Entries as individual rows of CSV Data
+#   {{Now}}                 - Formatted timestamp (see 'timestamp.format' config item) when the report was generated.
+#   {{RecordCount}}         - Number of new Dead Letter Queue entries being reported.
+#   {{RecordsCSVHeader}}    - The column headers for the CSV report.
+#   {{RecordsAsCSV}}        - Each of the records as individual rows of CSV Data
+#   {{EnvironmentName}}     - Environment Name as supplied with the --envName command line.
+#   {{InstanceName}}        - Application Instance Name as supplied with the --instName command line.
+#   {{AllowedTimeOnDLQ}}    - The maximum number of hours a bundle may reside on the DLQ before being Parked.
+#   {{DLQPurgeTime}}        - The number of hours after which bundles still on the DLQ will be purged.
+#   {{ParkingLotTopicName}} - The name of the Kafka Topic to receive Parking Lot Entries.
+#   {{ParkingLotPurgeTime}} - The number of hours bundles may reside on the Parking Lot before being purged.
 #
 #
 Existing Entries into the Smile Dead Letter Queue:<p>
@@ -13,11 +19,11 @@ Environment: {{EnvironmentName}}
 Report Generated at: <b>{{Now}}</b><p>
 <p>
 <p>
-Detected DLQ Record Count: <i>{{DLQRecordCount}}</i><p>
+Detected DLQ Record Count: <i>{{RecordCount}}</i><p>
 <p>
 <pre>
-{{DLQRecordsCSVHeader}}
-{{DLQRecordsAsCSV}}
+{{RecordsCSVHeader}}
+{{RecordsAsCSV}}
 
 </pre>
 <p>

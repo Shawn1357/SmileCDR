@@ -1,9 +1,9 @@
 # Lines beginning with a '#' are not (normally) included in the email.
 # Available Expansion Variables:
 #   {{Now}}                 - Formatted timestamp (see 'timestamp.format' config item) when the report was generated.
-#   {{DLQRecordCount}}      - Number of new Dead Letter Queue entries being reported.
-#   {{DLQRecordsCSVHeader}} - The column headers for the CSV report.
-#   {{DLQRecordsAsCSV}}     - Each of the DLQ Entries as individual rows of CSV Data
+#   {{RecordCount}}         - Number of new Dead Letter Queue entries being reported.
+#   {{RecordsCSVHeader}}    - The column headers for the CSV report.
+#   {{RecordsAsCSV}}        - Each of the records as individual rows of CSV Data
 #   {{EnvironmentName}}     - Environment Name as supplied with the --envName command line.
 #   {{InstanceName}}        - Application Instance Name as supplied with the --instName command line.
 #   {{AllowedTimeOnDLQ}}    - The maximum number of hours a bundle may reside on the DLQ before being Parked.

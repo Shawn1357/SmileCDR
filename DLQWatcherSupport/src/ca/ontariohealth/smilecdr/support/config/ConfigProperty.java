@@ -25,6 +25,7 @@ COPYRIGHT_YEAR_START(           "copyright.year.start",          String.valueOf(
 COPYRIGHT_YEAR_END(             "copyright.year.end" ),
 
 DLQ_PARSER_FQCN_CLASS(          "dlq.parser.class.name" ),
+PARK_PARSER_FQCN_CLASS(         "park.parser.class.name" ),
 
 DATE_FORMAT(                    "date.format",                   "yyyy-MM-dd" ),
 TIMESTAMP_FORMAT(               "timestamp.format",              "yyyy-MM-dd HH:mm:ss" ),
