@@ -229,16 +229,16 @@ expandedLine = expandedLine.replace( "{{ParkingLotPurgeTime}}", appConfig.config
 
 if (dlqInterp != null)
     {
-    expandedLine = expandedLine.replace( "{{DLQRecordCount}}",      Integer.toString( dlqInterp.recordCount() ) );
-    expandedLine = expandedLine.replace( "{{DLQRecordsCSVHeader}}", dlqInterp.csvHeaders() );
-    expandedLine = expandedLine.replace( "{{DLQRecordsAsCSV}}",     dlqInterp.asCSVReport() );
+    expandedLine = expandedLine.replace( "{{RecordCount}}",      Integer.toString( dlqInterp.recordCount() ) );
+    expandedLine = expandedLine.replace( "{{RecordsCSVHeader}}", dlqInterp.csvHeaders() );
+    expandedLine = expandedLine.replace( "{{RecordsAsCSV}}",     dlqInterp.asCSVReport() );
     }
 
 else
     {
-    expandedLine = expandedLine.replace( "{{DLQRecordCount}}",      String.valueOf( 0 ) );
-    expandedLine = expandedLine.replace( "{{DLQRecordsCSVHeader}}", "" );
-    expandedLine = expandedLine.replace( "{{DLQRecordsAsCSV}}",     "" );
+    expandedLine = expandedLine.replace( "{{RecordCount}}",      String.valueOf( 0 ) );
+    expandedLine = expandedLine.replace( "{{RecordsCSVHeader}}", "" );
+    expandedLine = expandedLine.replace( "{{RecordsAsCSV}}",     "" );
     }
 
 return expandedLine;

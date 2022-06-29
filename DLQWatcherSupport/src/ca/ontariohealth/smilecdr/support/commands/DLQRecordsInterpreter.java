@@ -27,9 +27,9 @@ private	Configuration						            appConfig		= null;
 private	ArrayList<ConsumerRecord<String, String>>       dlqRecords		= new ArrayList<>();
 private ArrayList<KafkaTopicRecordParser>               dlqDetails  	= new ArrayList<>();
 private	String											parserClassNm	= null;
+private String[]										csvHdrs         = null;
 
 private static final String      CSV_FLD_SEP = ", ";
-private              String[]    csv_hdrs    = null;
 
 
 // private MyInstant   reportStartTime = MyInstant.now();
@@ -143,8 +143,10 @@ StringBuffer        rtrn    = new StringBuffer();
 
 if (rcrd != null)
     {
-    String[]            csvHdrs = rcrd.csvColumnHeaders();
     String[]            csvVals = rcrd.csvColumnValues();
+
+    if (csvHdrs == null)
+    	csvHdrs = rcrd.csvColumnHeaders();
     
     for (int crntNdx = 0; (crntNdx < csvHdrs.length) && (crntNdx < csvVals.length); crntNdx++)
         {
@@ -193,8 +195,8 @@ if (rcrd != null)
 
     if (crntRcrd != null)
         {
-        if (csv_hdrs == null)
-            csv_hdrs = crntRcrd.csvColumnHeaders();
+        if (csvHdrs == null)
+            csvHdrs = crntRcrd.csvColumnHeaders();
         
         targetList.add( crntRcrd );
         }
@@ -222,8 +224,8 @@ public  final String  csvHeaders()
 {
 String  rtrn = "";
 
-if (csv_hdrs != null)
-    rtrn = String.join( CSV_FLD_SEP, csv_hdrs );
+if (csvHdrs != null)
+    rtrn = String.join( CSV_FLD_SEP, csvHdrs );
 
 return rtrn;
 }
