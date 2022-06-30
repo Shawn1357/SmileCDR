@@ -16,11 +16,17 @@
 	
 	<property name="LaunchersDir"                    value="${workspaceDir}/${DLQUtilitiesDistributionProj}/launchers" />
 	
-	<property name="DLQWatcherScriptFileNm"          value="DLQWatcher.sh" />
-	<property name="DLQWatcherScriptSrcFile"         value="${LaunchersDir}/${DLQWatcherScriptFileNm}" />
+	<property name="DLQWatcherSHFileNm"              value="DLQWatcher.sh" />
+	<property name="DLQWatcherCMDFileNm"             value="DLQWatcher.cmd" />
 	
-    <property name="DLQWatcherControlScriptFileNm"   value="DLQWatcherControl.sh" />
-    <property name="DLQWatcherControlScriptSrcFile"  value="${LaunchersDir}/${DLQWatcherControlScriptFileNm}" />
+	<property name="DLQWatcherSHSrcFile"             value="${LaunchersDir}/${DLQWatcherSHFileNm}" />
+	<property name="DLQWatcherCMDSrcFile"            value="${LaunchersDir}/${DLQWatcherCMDFileNm}" />
+	
+    <property name="DLQWatcherControlSHFileNm"       value="DLQWatcherControl.sh" />
+    <property name="DLQWatcherControlCMDFileNm"      value="DLQWatcherControl.cmd" />
+
+	<property name="DLQWatcherControlSHSrcFile"      value="${LaunchersDir}/${DLQWatcherControlSHFileNm}" />
+    <property name="DLQWatcherControlCMDSrcFile"     value="${LaunchersDir}/${DLQWatcherControlCMDFileNm}" />
     
 	<property name="configPropsFileNm"               value="DLQWatcher.properties" />
 	<property name="configPropsSrcFile"              value="${workspaceDir}/${CommonResourcesProj}/${configPropsFileNm}" />
@@ -93,8 +99,11 @@
         <copy file="${emailTemplate03SrcFile}"                               todir="${targetDirectory}"/>
         <copy file="${emailTemplate04SrcFile}"                               todir="${targetDirectory}"/>
         <copy file="${emailTemplate05SrcFile}"                               todir="${targetDirectory}"/>
-		<copy file="${DLQWatcherScriptSrcFile}"                              todir="${targetDirectory}"/>
-        <copy file="${DLQWatcherControlScriptSrcFile}"                       todir="${targetDirectory}"/>
+		<copy file="${DLQWatcherSHSrcFile}"                                  todir="${targetDirectory}"/>
+        <copy file="${DLQWatcherCMDSrcFile}"                                 todir="${targetDirectory}"/>
+        <copy file="${DLQWatcherControlSHSrcFile}"                           todir="${targetDirectory}"/>
+        <copy file="${DLQWatcherControlCMDSrcFile}"                          todir="${targetDirectory}"/>
+		
 		<copy file="${javabeansActFrmwrkJarSrcFile}"                         todir="${libsDirectory}"/>
 		<copy file="${javamailJarSrcFile}"                                   todir="${libsDirectory}"/>
 		

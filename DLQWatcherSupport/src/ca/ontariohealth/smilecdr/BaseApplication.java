@@ -300,7 +300,7 @@ return holder;
 
 protected void launch( String[] args )
 {
-logr.debug("Enmtering: launch");
+logr.debug("Entering: launch");
 
 String	 clsPath    	 = System.getProperty("java.class.path");
 String[] pathElems		 = clsPath.split(File.pathSeparator);
