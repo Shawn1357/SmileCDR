@@ -13,6 +13,7 @@
     </encoder>
   </appender>
 
+  <!--
   <appender name='FILE' class="ch.qos.logback.core.FileAppender">
     <file>${logfolder}/DLQWatcher.log</file>
     <append>false</append>
@@ -21,6 +22,23 @@
       <pattern>%d{HH:mm:ss.SSS} %-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
     </encoder>
   </appender>
+  -->
+
+  	<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${logfolder}/DLQWatcher.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<fileNamePattern>${logfolder}/${LOG_FILE_NAME}-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+			<!-- each archived file's size will be max 10MB -->
+			<maxFileSize>10MB</maxFileSize>    
+			<!-- 30 days to keep -->
+			<maxHistory>366</maxHistory>
+			<!-- total size of all archive files, if total size > 100GB, it will delete old archived file -->
+			<totalSizeCap>100GB</totalSizeCap>
+		</rollingPolicy>
+		<encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5relative [%thread] %-5level %logger{35} - %msg%n</pattern>
+		</encoder>
+	</appender>
 
   <root level="debug">
     <appender-ref ref="STDOUT"/>
