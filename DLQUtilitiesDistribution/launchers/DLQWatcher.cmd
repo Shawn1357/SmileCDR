@@ -71,7 +71,7 @@ if not "%MISSING_FILE%" == "" goto :FileNotFound
 
 rem echo ClassPath %CP%
 set CMD_LINE="%JAVA_EXE%" -classpath "%CP%" %JVM_ARGS% "-Dlogback.configurationFile=%LOGBACK_FILE_DIR%\%LOGBACK_FILE_NAME%" %STARTUP_CLASS_NAME% %*
-echo Command Line: %CMD_LINE%
+rem echo Command Line: %CMD_LINE%
 %CMD_LINE%
 
 goto :AllDone
@@ -108,6 +108,7 @@ if "%~2" == "" goto :EOF
 
 if exist "%THIS_DIR%\..\lib\%~2"       call :FullyQualify %~1 "%THIS_DIR%\..\lib"
 if exist "%THIS_DIR%\..\dist\lib\%~2"  call :FullyQualify %~1 "%THIS_DIR%\..\dist\lib"
+if exist "%THIS_DIR%\lib\%~2"          call :FullyQualify %~1 "%THIS_DIR%\lib"
 if exist "%THIS_DIR%\dist\lib\%~2"     call :FullyQualify %~1 "%THIS_DIR%\dist\lib"
 if exist "%THIS_DIR%\dist\%~2"         call :FullyQualify %~1 "%THIS_DIR%\dist"
 if exist "%THIS_DIR%\..\dist\%~2"      call :FullyQualify %~1 "%THIS_DIR%\..\dist"

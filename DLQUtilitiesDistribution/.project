@@ -3,6 +3,9 @@
 	<name>DLQUtilitiesDistribution</name>
 	<comment></comment>
 	<projects>
+		<project>DLQWatcherControl</project>
+		<project>DLQWatcherSupport</project>
+		<project>SmileDLQWatcher</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

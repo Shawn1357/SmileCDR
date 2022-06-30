@@ -16,12 +16,12 @@ EMail Body used to test Email Functionality:<br>
 Email Generated at: <b>{{Now}}</b><p>
 <p>
 <ul>
-<li>Environment: {{EnvironmentName}}</li>
-<li>Instance Name: {{InstanceName}}</li>
-<li>Allowed Hours on DLQ: {{AllowedTimeOnDLQ}}
-<li>Hours before Bundles will be purged from DLQ: {{DLQPurgeTime}}
-<li>Parked Entries Kafka Topic: {{ParkingLotTopicName}}
-<li>Hours Allowed on the Parking Lot Topic: {{ParkingLotPurgeTime}}
+<li>Environment: <b>{{EnvironmentName}}</b></li>
+<li>Instance Name: <b>{{InstanceName}}</b></li>
+<li>Allowed Hours on DLQ: <b>{{AllowedTimeOnDLQ}}</b>
+<li>Hours before Bundles will be purged from DLQ: <b>{{DLQPurgeTime}}</b>
+<li>Parked Entries Kafka Topic: <b>{{ParkingLotTopicName}}</b>
+<li>Hours Allowed on the Parking Lot Topic: <b>{{ParkingLotPurgeTime}}</b>
 </ul>
 <p>
 This is an automated email, <b>DO NOT REPLY<b><p>
