@@ -18,6 +18,7 @@ import com.google.gson.GsonBuilder;
 
 import ca.ontariohealth.smilecdr.BaseApplication;
 import ca.ontariohealth.smilecdr.support.MyInstant;
+import ca.ontariohealth.smilecdr.support.MyThread;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommand;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandContainer;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandOutcome;
@@ -62,7 +63,7 @@ private	Consumer<String, String>		        controlConsumer 	 = null;
 private	boolean							        exitWatcher     	 = false;
 private	DLQPollingThread				        dlqPoller       	 = null;
 private ParkingLotPollingThread                 parkPoller           = null;
-private DLQParkingThread                        dlqParker            = null;         
+private DLQParkingThread                        dlqParker            = null;
 
 private GsonBuilder                             jsonBuilder          = new GsonBuilder();
 

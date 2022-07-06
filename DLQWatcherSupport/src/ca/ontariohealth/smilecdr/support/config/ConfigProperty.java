@@ -38,8 +38,12 @@ KAFKA_DEFAULT_TOPIC_RETENTION(  "kafka.default.retention.hours", "168" ),
 START_DLQ_POLL_THREAD(          "start.cmd.include.dlqpoll.thread",        "true" ),
 START_POLL_PARK_THREAD(         "start.cmd.include.parkpoll.thread",       "true" ),
 START_DLQ_PARK_THREAD(          "start.cmd.include.parkdlqentries.thread", "true" ),
+START_MEMORY_MONITOR(           "start.memory.monitor.thread",             "true" ),
 
 STOP_THREAD_MAX_WAIT_MILLIS(    "stop.cmd.max.wait.for.thread.millis",     "10000" ),
+
+MAX_NUM_MEMORY_SAMPLES(         "max.num.mem.samples",                     "48" ),
+MEMORY_SAMPLE_INTERVAL_MINS(    "mem.poll.interval.minutes",               "30" ),
 
 KAFKA_CONTROL_GROUP_ID(         "control.group.id" ),
 KAFKA_DLQ_GROUP_ID(             "dlq.group.id" ),

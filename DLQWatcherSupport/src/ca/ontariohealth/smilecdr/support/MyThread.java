@@ -1,12 +1,11 @@
 /**
  * 
  */
-package ca.ontariohealth.smilecdr.dlqwatcher;
+package ca.ontariohealth.smilecdr.support;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ca.ontariohealth.smilecdr.support.MyInstant;
 import ca.ontariohealth.smilecdr.support.commands.DLQCommandOutcome;
 import ca.ontariohealth.smilecdr.support.commands.DLQResponseContainer;
 import ca.ontariohealth.smilecdr.support.commands.ProcessingMessage;
@@ -32,7 +31,7 @@ private   MyInstant         endTime                     = null;
 
 @SuppressWarnings("deprecation")
 public static   DLQCommandOutcome        stopThread( DLQResponseContainer resp,
-                                                     Configuration       appConfig,
+                                                     Configuration        appConfig,
                                                      MyThread             threadToStop, 
                                                      String               threadName )
 {

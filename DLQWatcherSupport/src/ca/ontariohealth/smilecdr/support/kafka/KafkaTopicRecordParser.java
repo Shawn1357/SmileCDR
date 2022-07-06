@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.ontariohealth.smilecdr.support.MyInstant;
+import ca.ontariohealth.smilecdr.support.commands.response.CSVTableGenerator;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
 
@@ -21,7 +22,7 @@ import ca.ontariohealth.smilecdr.support.config.Configuration;
  * @author adminuser
  *
  */
-public abstract class KafkaTopicRecordParser
+public abstract class KafkaTopicRecordParser implements CSVTableGenerator
 {
 private   static    Logger                    logr          = LoggerFactory.getLogger(KafkaTopicRecordParser.class);
 
@@ -256,6 +257,4 @@ protected abstract void        extractDLQEntryTimestamp();
 protected abstract void        extractSubscriptionID();
 protected abstract void        extractResourceType();
 protected abstract void        extractResourceID();
-public    abstract String[]    csvColumnHeaders();
-public    abstract String[]    csvColumnValues();
 }

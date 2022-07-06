@@ -14,6 +14,7 @@ import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ca.ontariohealth.smilecdr.support.MyThread;
 import ca.ontariohealth.smilecdr.support.config.ApplicationName;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
@@ -51,6 +52,7 @@ protected				Configuration		appConfig 		 = new Configuration();
 protected				ApplicationName		appName			 = null;
 protected				EnvironmentName		envName			 = null;
 
+private					MemoryMonitorThread	memMonitor       = null;
 
 public BaseApplication() 
 {
@@ -443,12 +445,47 @@ if (!displayUsage)
 
 
 /*
+ * Possibly launch the memory monitor thread.
+ * 
+ */
+
+if (appConfig.configBool( ConfigProperty.START_MEMORY_MONITOR ))
+	{
+	logr.debug( "Launching the Memory Monitor thread." );
+	memMonitor = new MemoryMonitorThread( appConfig, null, null );
+	memMonitor.start();
+	
+	if (!memMonitor.isAlive())
+		{
+		logr.error( "Unable to start the Memory Monitor Thread." );
+		memMonitor = null;
+		}
+	}
+
+
+
+/*
  * Start the application for real...
  * 
  */
 
 if (startProcessing)
 	this.launch();
+
+
+/*
+ * We're all done.
+ * Clean up: make sure the Memory Monitor thread is stopped.
+ * 
+ */
+
+if (memMonitor != null)
+	{
+	if (memMonitor.isAlive())
+		MyThread.stopThread( null, appConfig, memMonitor, "Memory Monitor" );
+	
+	memMonitor = null;
+	}
 
 
 logr.debug("Exiting: launch");
