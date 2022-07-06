@@ -215,8 +215,9 @@ public String     copyrightNotice()
 String              copyright = "";
 StringBuilder       bldr      = new StringBuilder();
 
-bldr.appendCodePoint( 169 );  // Copyright symbol.
-bldr.append( " " );
+//bldr.appendCodePoint( 169 );  // Copyright symbol.
+//bldr.append( " " );
+bldr.append( "(c) ");
 
 Integer fromYear = copyrightYearStart();
 Integer toYear   = copyrightYearEnd();
@@ -524,7 +525,7 @@ cmdLineOpts.addOption( CLI_STRT_DEL_SHRT, CLI_STRT_DEL_LONG, true,  "Specify (in
 cmdLineOpts.addOption( CLI_APP_NM_SHRT,   CLI_APP_NM_LONG,   true,  "Set the name of the application");
 cmdLineOpts.addOption( CLI_ENV_NM_SHRT,   CLI_ENV_NM_LONG,   true,  "Set Operating Environment Name (DEV, tst01, ...)" );
 cmdLineOpts.addOption( CLI_INST_NM_SHRT,  CLI_INST_NM_LONG,  true,  "Set the instance name of multiple instance of an app." );
-cmdLineOpts.addOption( CLI_SLNT_NM_SHRT,  CLI_SLNT_NM_SHRT,  false, "Start the instance with no banner information." );
+cmdLineOpts.addOption( CLI_SLNT_NM_SHRT,  CLI_SLNT_NM_LONG,  false, "Start the instance with no banner information." );
 cmdLineOpts.addOption( CLI_HLP_NM_SHRT,   CLI_HLP_NM_LONG,   false, "Display Command Line Usage information.");
 
 return;
