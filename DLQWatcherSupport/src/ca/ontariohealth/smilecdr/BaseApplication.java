@@ -213,8 +213,9 @@ public String     copyrightNotice()
 String              copyright = "";
 StringBuilder       bldr      = new StringBuilder();
 
-bldr.appendCodePoint( 169 );  // Copyright symbol.
-bldr.append( " " );
+//bldr.appendCodePoint( 169 );  // Copyright symbol.
+//bldr.append( " " );
+bldr.append( "(c) ");
 
 Integer fromYear = copyrightYearStart();
 Integer toYear   = copyrightYearEnd();
