@@ -21,6 +21,7 @@ import ca.ontariohealth.smilecdr.support.commands.DLQRecordsInterpreter;
 import ca.ontariohealth.smilecdr.support.commands.DLQResponseContainer;
 import ca.ontariohealth.smilecdr.support.config.ConfigProperty;
 import ca.ontariohealth.smilecdr.support.config.Configuration;
+import ca.ontariohealth.smilecdr.support.config.StandardExpansionVariable;
 
 /**
  * @author windowsadmin
@@ -218,28 +219,62 @@ protected String      expandVariables( String line, DLQRecordsInterpreter dlqInt
 {
 String  expandedLine = line;
 
-expandedLine = expandedLine.replace( "{{Now}}",                 emailedAt.asLocalDateTime().format( tsFormatter ) );
+for (StandardExpansionVariable crnt : StandardExpansionVariable.values())
+	{
+	if (expandedLine.contains( crnt.expansionVariable() ))
+		{
+		switch (crnt)
+			{
+			case	NOW:
+				expandedLine = expandedLine.replace( crnt.expansionVariable(), emailedAt.asLocalDateTime().format( tsFormatter ) );
+				break;
 
-expandedLine = expandedLine.replace( "{{EnvironmentName}}",     appConfig.getEnvironmentName() != null ? appConfig.getEnvironmentName().envName() : "" );
-expandedLine = expandedLine.replace( "{{InstanceName}}",        appConfig.getInstanceName()    != null ? appConfig.getInstanceName().instName()   : "" );
-expandedLine = expandedLine.replace( "{{AllowedTimeOnDLQ}}",    appConfig.configValue( ConfigProperty.DLQ_PARK_ENTRIES_AFTER_HOURS, "unknown" ));
-expandedLine = expandedLine.replace( "{{DLQPurgeTime}}",        appConfig.configValue( ConfigProperty.KAFKA_DLQ_RETENTION_HOURS, "unknown" ) );
-expandedLine = expandedLine.replace( "{{ParkingLotTopicName}}", appConfig.configValue( ConfigProperty.KAFKA_PARK_TOPIC_NAME, "unknown" ) );
-expandedLine = expandedLine.replace( "{{ParkingLotPurgeTime}}", appConfig.configValue( ConfigProperty.KAFKA_PARK_RETENTION_HOURS, "unknown" ) );
+			case	ENV_NAME_VAR:
+				expandedLine = expandedLine.replace( crnt.expansionVariable(), appConfig.getEnvironmentName() != null ? appConfig.getEnvironmentName().envName() : "" );
+				break;
 
-if (dlqInterp != null)
-    {
-    expandedLine = expandedLine.replace( "{{RecordCount}}",      Integer.toString( dlqInterp.recordCount() ) );
-    expandedLine = expandedLine.replace( "{{RecordsCSVHeader}}", dlqInterp.csvHeaders() );
-    expandedLine = expandedLine.replace( "{{RecordsAsCSV}}",     dlqInterp.asCSVReport() );
-    }
+			case	INST_NAME_VAR:
+				expandedLine = expandedLine.replace( crnt.expansionVariable(), appConfig.getInstanceName()    != null ? appConfig.getInstanceName().instName()   : "" );
+				break;
 
-else
-    {
-    expandedLine = expandedLine.replace( "{{RecordCount}}",      String.valueOf( 0 ) );
-    expandedLine = expandedLine.replace( "{{RecordsCSVHeader}}", "" );
-    expandedLine = expandedLine.replace( "{{RecordsAsCSV}}",     "" );
-    }
+			case	DLQ_TOPIC:
+				expandedLine = expandedLine.replace( crnt.expansionVariable(), appConfig.configValue( ConfigProperty.KAFKA_DLQ_TOPIC_NAME, "unknown" ) );
+				break;
+
+			case	DLQ_MAX_TIME:
+				expandedLine = expandedLine.replace( crnt.expansionVariable(), appConfig.configValue( ConfigProperty.DLQ_PARK_ENTRIES_AFTER_HOURS, "unknown" ));
+				break;
+				
+			case	DLQ_PURGE_TIME:
+				expandedLine = expandedLine.replace( crnt.expansionVariable(), appConfig.configValue( ConfigProperty.KAFKA_DLQ_RETENTION_HOURS, "unknown" ) );
+				break;
+
+			case	PARKING_LOT_TOPIC:
+				expandedLine = expandedLine.replace( crnt.expansionVariable(), appConfig.configValue( ConfigProperty.KAFKA_PARK_TOPIC_NAME, "unknown" ));
+				break;
+
+			case	PARKING_LOT_PURGE_TIME:
+				expandedLine = expandedLine.replace( crnt.expansionVariable(), appConfig.configValue( ConfigProperty.KAFKA_PARK_RETENTION_HOURS, "unknown" ));
+				break;
+
+			case	RECORD_COUNT:
+				expandedLine = expandedLine.replace( crnt.expansionVariable(), dlqInterp != null ? Integer.toString( dlqInterp.recordCount() ) : "" );
+				break;
+					
+			case	RECORDS_CSV_HEADER:
+				expandedLine = expandedLine.replace( crnt.expansionVariable(), dlqInterp != null ? dlqInterp.csvHeaders() : "" );
+				break;
+					
+			case	RECORDS_AS_CSV:
+				expandedLine = expandedLine.replace( crnt.expansionVariable(), dlqInterp != null ? dlqInterp.asCSVReport() : "" );
+				break;
+					
+			default:
+				// Unhandled expansion variable. Leave it as is.
+				break;
+			}
+		}
+	}
 
 return expandedLine;
 }

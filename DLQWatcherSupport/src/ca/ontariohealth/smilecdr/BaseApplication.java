@@ -47,12 +47,21 @@ protected				CommandLineParser	parser			 = new DefaultParser();
 protected 				CommandLine			cmdLine			 = null;
 protected				String[]			origCmdLine		 = null;
 
-protected				Configuration		appConfig 		 = new Configuration();
+protected static		Configuration		appConfig 		 = new Configuration();
 
 protected				ApplicationName		appName			 = null;
 protected				EnvironmentName		envName			 = null;
 
 private					MemoryMonitorThread	memMonitor       = null;
+
+
+
+public static	Configuration config()
+{
+return appConfig;	
+}
+
+
 
 public BaseApplication() 
 {
