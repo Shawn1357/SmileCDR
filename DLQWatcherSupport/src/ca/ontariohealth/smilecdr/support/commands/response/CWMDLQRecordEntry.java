@@ -22,7 +22,8 @@ public class CWMDLQRecordEntry extends KafkaTopicRecordParser
 {
 String  subscrID    = null;
 
-private static String[]     CSV_HEADERS = { "SubscriptionID",
+private static String[]     CSV_HEADERS = { "KafkaOffset",
+                                            "SubscriptionID",
                                             "ResourceType",
                                             "ResourceID",
                                             "DLQEntryEpochMillis",
@@ -210,10 +211,18 @@ return;
 
 
 
+
+public static   String[]    csvColHeaders()
+{
+return CWMDLQRecordEntry.CSV_HEADERS;
+}
+
+
+
 @Override
 public String[] csvColumnHeaders()
 {
-return CWMDLQRecordEntry.CSV_HEADERS;
+return CWMDLQRecordEntry.csvColHeaders();
 }
 
 
@@ -225,7 +234,8 @@ String              dtTmFmt         = appConfig.configValue( ConfigProperty.TIME
 DateTimeFormatter   frmtr           = DateTimeFormatter.ofPattern( dtTmFmt ).withZone( ZoneId.systemDefault() );
 String              lclTimeStamp    = frmtr.format( dlqEntryTimestamp().asInstant() );
 
-String[]            values          = new String[] { subscriptionID(),
+String[]            values          = new String[] { String.valueOf( kafkaTopicOffsetID() ), 
+                                                     subscriptionID(),
                                                      resourceType(),
                                                      resourceID(),
                                                      String.valueOf( dlqEntryTimestamp().getEpochMillis() ),

@@ -197,6 +197,12 @@ return origRecord;
 
 
 
+public long   kafkaTopicOffsetID()
+{
+return origRecord != null ? origRecord.offset() : -1L;
+}
+
+
 
 public  MyInstant   topicEntryTimestamp()
 {

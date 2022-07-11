@@ -14,7 +14,8 @@ import ca.ontariohealth.smilecdr.support.config.Configuration;
  */
 public class CWMParkRecordEntry extends CWMDLQRecordEntry
 {
-private static String[]     CSV_HEADERS = { "SubscriptionID",
+private static String[]     CSV_HEADERS = { "KafkaOffset",
+                                            "SubscriptionID",
                                             "ResourceType",
                                             "ResourceID",
                                             "ParkingLotEntryEpochMillis",
@@ -42,10 +43,19 @@ return;
 }
 
 
+
+
+public static String[]  csvColHeaders()
+{
+return CWMParkRecordEntry.CSV_HEADERS;
+}
+
+
+
 @Override
 public String[] csvColumnHeaders()
 {
-return CWMParkRecordEntry.CSV_HEADERS;
+return CWMParkRecordEntry.csvColHeaders();
 }
 
 

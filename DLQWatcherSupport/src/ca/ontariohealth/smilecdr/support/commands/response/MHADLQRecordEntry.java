@@ -20,7 +20,8 @@ import ca.ontariohealth.smilecdr.support.kafka.KafkaTopicRecordParser;
  */
 public class MHADLQRecordEntry extends KafkaTopicRecordParser
 {
-private static String[]     CSV_HEADERS = { "ResourceType",
+private static String[]     CSV_HEADERS = { "KafkaOffset",
+                                            "ResourceType",
                                             "ResourceID",
                                             "DLQEntryEpochMillis",
                                             "DLQEntryLocalTimeStamp",
@@ -192,10 +193,17 @@ return;
 
 
 
+public static String[] csvColHeaders()
+{
+return MHADLQRecordEntry.CSV_HEADERS;
+}
+
+
+
 @Override
 public String[] csvColumnHeaders()
 {
-return MHADLQRecordEntry.CSV_HEADERS;
+return MHADLQRecordEntry.csvColHeaders();
 }
 
 
@@ -207,7 +215,8 @@ String              dtTmFmt         = appConfig.configValue( ConfigProperty.TIME
 DateTimeFormatter   frmtr           = DateTimeFormatter.ofPattern( dtTmFmt ).withZone( ZoneId.systemDefault() );
 String              lclTimeStamp    = frmtr.format( dlqEntryTimestamp().asInstant() );
 
-String[]            values          = new String[] { resourceType(),
+String[]            values          = new String[] { String.valueOf( kafkaTopicOffsetID() ),
+                                                     resourceType(),
                                                      resourceID(),
                                                      String.valueOf( dlqEntryTimestamp().getEpochMillis() ),
                                                      lclTimeStamp,

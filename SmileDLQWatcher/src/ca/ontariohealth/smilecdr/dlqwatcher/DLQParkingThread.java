@@ -88,10 +88,10 @@ nextCheckOfDLQTime = getThreadStartTime();
 dlqConsumer  = createConsumer();
 
 Properties props = new Properties();
-//props.put( "transactional.id", UUID.randomUUID().toString() );
+props.put( "transactional.id", UUID.randomUUID().toString() );
 
 parkProducer = KafkaProducerHelper.createProducer( appConfig(), parkingTopicName, props );
-//parkProducer.initTransactions();
+parkProducer.initTransactions();
 
 logr.debug( "Subcribing to DLQ Topic: {}", dlqTopicName );
 dlqConsumer.subscribe( Collections.singletonList( dlqTopicName ) );
@@ -103,12 +103,16 @@ do
     
     if (nextCheckOfDLQTime.compareTo( crntTime ) <= 0)
         {
-        // Scan through the DLQ Entries looking for entries that can be moved
-        // to the Parking Lot Queue
+        /*
+         * Scan through the DLQ Entries looking for entries that can be moved
+         * to the Parking Lot Queue
+         *
+         */
+        
         MyInstant   expiryTime = new MyInstant( crntTime.getEpochMillis() - maxTimeOnDLQMillis );
         parkExpiringDLQEntries( crntTime, expiryTime );
         
-        // Done checking, now compute when we are going to check again.
+        /* Done checking, now compute when we are going to check again. */
         nextCheckOfDLQTime = new MyInstant( crntTime.getEpochMillis() + parkingCheckIntervalMillis );
         }
     
@@ -207,7 +211,7 @@ while (continueChecking)
                      * 
                      */
                     
-//                    parkProducer.beginTransaction();
+                    parkProducer.beginTransaction();
                     String                        msgID      = generateMsgID( crntTime );
                     ProducerRecord<String,String> parkedRcrd = new ProducerRecord<>( parkingTopicName,
                                                                                      msgID,
@@ -250,14 +254,14 @@ while (continueChecking)
                     if (commitMove)
                         {
                     	logr.debug( "Committing move to Park topic." );
-//                        parkProducer.commitTransaction();
+                        parkProducer.commitTransaction();
                         dlqConsumer.commitSync();
                         }
                     
                     else
                     	{
                     	logr.debug( "Aborting move to Park topic." );
-//                        parkProducer.abortTransaction();
+                        parkProducer.abortTransaction();
                     	}
                     }
                 
