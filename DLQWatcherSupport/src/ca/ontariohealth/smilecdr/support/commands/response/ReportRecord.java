@@ -42,6 +42,15 @@ return;
 
 
 
+
+public long getKafkaOffset()
+{
+return getKafkaOffset();
+}
+
+
+
+
 public ReportRecordType getRcrdType()
 {
 return rcrdType;

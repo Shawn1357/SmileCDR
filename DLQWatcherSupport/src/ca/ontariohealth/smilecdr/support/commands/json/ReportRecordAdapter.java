@@ -32,6 +32,7 @@ private static  Logger          logr                     = LoggerFactory.getLogg
 private static  String          FIELD_STRING_LINE        = "text";
 private static  String          FIELD_KEY                = "key";
 private static  String          FIELD_VALUE              = "value";
+private static  String          FIELD_KAFKA_OFFSET       = "kafkaTopicOffset";
 private static  String          FIELD_ENTRY_TS           = "entryTimestamp";
 private static  String          FIELD_SUBSCRIPTION_ID    = "subscriptionID";
 private static  String          FIELD_RESOURCE_TYPE      = "resourceType";
@@ -74,6 +75,9 @@ if (value != null)
         case    DLQ_ENTRY_SPEC:
             KafkaTopicRecordParser  dlqEntry    = value.getRcrdDLQEntry();
             MyInstant               dlqTS       = dlqEntry.dlqEntryTimestamp();
+            
+            writer.name( FIELD_KAFKA_OFFSET );
+            writer.value( dlqEntry.kafkaTopicOffsetID() );
             
             writer.name( FIELD_ENTRY_TS );
             instantAdapter.write( writer, dlqTS );

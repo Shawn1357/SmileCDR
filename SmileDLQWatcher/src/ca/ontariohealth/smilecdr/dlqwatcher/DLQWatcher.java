@@ -659,6 +659,7 @@ if (lister != null)
                     MyInstant				entryTime = entry.dlqEntryTimestamp(); 
                     
                     logr.info( "{} Entry:", topicNm );
+                    logr.info( "    Kafka Offset:    {}", entry.kafkaTopicOffsetID() );
                     logr.info( "    Timestamp:       {} (Epoch Millis: {})", entryTime.toString( dtTmFmt ), entryTime.getEpochMillis() );
                     logr.info( "    Subscription ID: {}", entry.subscriptionID() );
                     logr.info( "    Resource Type:   {}", entry.resourceType() );
