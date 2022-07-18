@@ -54,8 +54,11 @@ private int             rollingIndex                = 0;
 
 private Long            lastParkedOffset            = null;
 
+private boolean         useKafkaTransactions        = true;
+
 private Consumer<String, String>    dlqConsumer     = null;
 private Producer<String, String>    parkProducer    = null;
+
 
 
 public  DLQParkingThread( Configuration appCfg )
@@ -70,6 +73,8 @@ pollingDuration           = Duration.ofMillis( pollingInterval );
 
 dlqTopicName              = appConfig().configValue( ConfigProperty.KAFKA_DLQ_TOPIC_NAME );
 parkingTopicName          = appConfig().configValue( ConfigProperty.KAFKA_PARK_TOPIC_NAME );
+
+useKafkaTransactions      = appConfig().configBool( ConfigProperty.USE_KAFKA_TRANSACTIONS );
 
 return;
 }
@@ -87,8 +92,14 @@ nextCheckOfDLQTime = getThreadStartTime();
 
 dlqConsumer  = createConsumer();
 
-Properties props = new Properties();
-props.put( "transactional.id", UUID.randomUUID().toString() );
+Properties props = null;
+
+if (useKafkaTransactions)
+    {
+    props = new Properties();
+
+    props.put( "transactional.id", UUID.randomUUID().toString() );
+    }
 
 parkProducer = KafkaProducerHelper.createProducer( appConfig(), parkingTopicName, props );
 parkProducer.initTransactions();
@@ -211,7 +222,9 @@ while (continueChecking)
                      * 
                      */
                     
-                    parkProducer.beginTransaction();
+                    if (useKafkaTransactions)
+                        parkProducer.beginTransaction();
+                    
                     String                        msgID      = generateMsgID( crntTime );
                     ProducerRecord<String,String> parkedRcrd = new ProducerRecord<>( parkingTopicName,
                                                                                      msgID,
@@ -254,14 +267,18 @@ while (continueChecking)
                     if (commitMove)
                         {
                     	logr.debug( "Committing move to Park topic." );
-                        parkProducer.commitTransaction();
+                    	if (useKafkaTransactions)
+                    	    parkProducer.commitTransaction();
+                    	
                         dlqConsumer.commitSync();
                         }
                     
                     else
                     	{
                     	logr.debug( "Aborting move to Park topic." );
-                        parkProducer.abortTransaction();
+                    	
+                    	if (useKafkaTransactions)
+                    	    parkProducer.abortTransaction();
                     	}
                     }
                 

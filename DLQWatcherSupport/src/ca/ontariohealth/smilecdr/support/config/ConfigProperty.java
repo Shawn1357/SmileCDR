@@ -51,6 +51,7 @@ KAFKA_DLQ_TOPIC_NAME(           "kafka.dlq.topic.name",                "KAFKA.DL
 KAFKA_DLQ_RETENTION_HOURS(      "dlq.entry.retention.hours",           "168" ),  // 7 days
 DLQ_PARK_ENTRIES_AFTER_HOURS(   "dlq.park.after.hours",                "150" ),  // 6.25 days
 DLQ_PARK_CHECK_INTERVAL_MINS(   "dlq.frequency.mins.to.park.entries",  "120" ),
+USE_KAFKA_TRANSACTIONS(         "use.kafka.transactions",              "true" ),
 
 KAFKA_PARK_WATCHER_GROUP_ID(    "kafka.park.watcher.group.id"),
 KAFKA_PARK_LISTER_GROUP_ID(     "kafka.park.lister.group.id" ),
