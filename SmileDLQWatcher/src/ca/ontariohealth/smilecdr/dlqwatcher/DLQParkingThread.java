@@ -64,7 +64,8 @@ private Producer<String, String>    parkProducer    = null;
 public  DLQParkingThread( Configuration appCfg )
 {
 super( appCfg );
-    
+
+logr.debug( "Entering: Constructor for: {}", DLQParkingThread.class.getSimpleName() );
 setParkingCheckIntervalMins( appConfig().configInt( ConfigProperty.DLQ_PARK_CHECK_INTERVAL_MINS ) );
 setMaxHoursOnDLQ(            appConfig().configInt( ConfigProperty.DLQ_PARK_ENTRIES_AFTER_HOURS ) );
                                         
@@ -75,7 +76,9 @@ dlqTopicName              = appConfig().configValue( ConfigProperty.KAFKA_DLQ_TO
 parkingTopicName          = appConfig().configValue( ConfigProperty.KAFKA_PARK_TOPIC_NAME );
 
 useKafkaTransactions      = appConfig().configBool( ConfigProperty.USE_KAFKA_TRANSACTIONS );
+logr.debug( "Kafka Transactions Enabled: {}", useKafkaTransactions ? "Yes" : "No" );
 
+logr.debug( "Exiting: Constructor for: {}", DLQParkingThread.class.getSimpleName() );
 return;
 }
 
@@ -98,13 +101,19 @@ if (useKafkaTransactions)
     {
     props = new Properties();
 
-    props.put( "transactional.id", UUID.randomUUID().toString() );
+    String	transID = UUID.randomUUID().toString();
+    
+    props.put( "transactional.id", transID );
+	logr.debug( "Generated a Transaction ID for Kafka Transactions: ", transID );
     }
 
 parkProducer = KafkaProducerHelper.createProducer( appConfig(), parkingTopicName, props );
 
 if (useKafkaTransactions)
+	{
+	logr.debug( "Initializing Kafka Transactions for the new Producer." );
 	parkProducer.initTransactions();
+	}
 
 logr.debug( "Subcribing to DLQ Topic: {}", dlqTopicName );
 dlqConsumer.subscribe( Collections.singletonList( dlqTopicName ) );
@@ -225,7 +234,10 @@ while (continueChecking)
                      */
                     
                     if (useKafkaTransactions)
+                    	{
+                    	logr.debug( "Beginning a new Kafka Transaction." );
                         parkProducer.beginTransaction();
+                    	}
                     
                     String                        msgID      = generateMsgID( crntTime );
                     ProducerRecord<String,String> parkedRcrd = new ProducerRecord<>( parkingTopicName,
