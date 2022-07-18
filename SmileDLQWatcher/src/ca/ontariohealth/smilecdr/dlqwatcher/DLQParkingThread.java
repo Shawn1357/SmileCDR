@@ -102,7 +102,9 @@ if (useKafkaTransactions)
     }
 
 parkProducer = KafkaProducerHelper.createProducer( appConfig(), parkingTopicName, props );
-parkProducer.initTransactions();
+
+if (useKafkaTransactions)
+	parkProducer.initTransactions();
 
 logr.debug( "Subcribing to DLQ Topic: {}", dlqTopicName );
 dlqConsumer.subscribe( Collections.singletonList( dlqTopicName ) );
