@@ -131,7 +131,14 @@ do
          *
          */
         
-        MyInstant   expiryTime = new MyInstant( crntTime.getEpochMillis() - maxTimeOnDLQMillis );
+        MyInstant   expiryTime = null;
+        
+        if ((crntTime != null) && (maxTimeOnDLQMillis != null))
+        	expiryTime = new MyInstant( crntTime.getEpochMillis() - maxTimeOnDLQMillis );
+        
+        else
+        	expiryTime = MyInstant.now();
+        
         parkExpiringDLQEntries( crntTime, expiryTime );
         
         /* Done checking, now compute when we are going to check again. */
@@ -228,8 +235,9 @@ while (continueChecking)
                     {
                     /*
                      * Move the one record over to the Parking topic.
-                     * The process that monitors that topic will send out a
-                     * notification once it wakes and sees something new.
+                     * The thread that monitors that topic will send out a
+                     * notification when it next wakes and sees something new
+                     * that (which was sent there from this thread).
                      * 
                      */
                     
