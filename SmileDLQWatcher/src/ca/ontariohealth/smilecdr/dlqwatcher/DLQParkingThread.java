@@ -407,6 +407,9 @@ if ((maxHoursOnDLQ != null) && (maxHoursOnDLQ > 0))
     {
     maxTimeOnDLQHours  = maxHoursOnDLQ;
     maxTimeOnDLQMillis = Long.valueOf( maxTimeOnDLQHours.longValue() * 60L * 60L * 1000L );
+    
+    if (maxTimeOnDLQMillis <= 0)
+    	maxTimeOnDLQMillis = 1000L;  // Make it wait for a second before moving...
     }
 
 return;
