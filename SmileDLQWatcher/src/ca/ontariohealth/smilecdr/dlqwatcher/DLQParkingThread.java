@@ -219,7 +219,9 @@ while (continueChecking)
             }
         
         else
-            lastParkedOffset = rcrdOffset;
+        	{
+        	logr.debug( "About to park Parkable record at Kafka Offset: {}", rcrdOffset );
+        	}
         }
         
         DLQRecordsInterpreter dlqInterp  = new DLQRecordsInterpreter( dlqRecords, appConfig() );
@@ -293,6 +295,7 @@ while (continueChecking)
                     	    parkProducer.commitTransaction();
                     	
                         dlqConsumer.commitSync();
+                        lastParkedOffset = dlqRecord.offset();
                         }
                     
                     else
